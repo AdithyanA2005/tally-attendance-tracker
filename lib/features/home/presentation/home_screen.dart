@@ -51,15 +51,76 @@ class HomeScreen extends ConsumerWidget {
             child: Padding(
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
               child: todayClassesAsyncValue.maybeWhen(
-                data: (items) => Text(
-                  items.isEmpty
-                      ? 'No classes today'
-                      : '${items.length} classes scheduled',
-                  style: TextStyle(
-                    color: Theme.of(context).colorScheme.tertiary,
-                    fontWeight: FontWeight.w500,
-                    fontSize: 14,
-                  ),
+                data: (items) => Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      items.isEmpty
+                          ? 'No classes today'
+                          : '${items.length} classes scheduled',
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.tertiary,
+                        fontWeight: FontWeight.w500,
+                        fontSize: 14,
+                      ),
+                    ),
+                    if (items.isNotEmpty) ...[
+                      const SizedBox(height: 12),
+                      SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Row(
+                          children: [
+                            _BulkActionChip(
+                              icon: Icons.check_rounded,
+                              label: 'All Present',
+                              color: const Color(0xFF27AE60),
+                              onTap: () => _markAllClasses(
+                                ref,
+                                items,
+                                AttendanceStatus.present,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            _BulkActionChip(
+                              icon: Icons.close_rounded,
+                              label: 'All Absent',
+                              color: const Color(0xFFC0392B),
+                              onTap: () => _markAllClasses(
+                                ref,
+                                items,
+                                AttendanceStatus.absent,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            _BulkActionChip(
+                              icon: Icons.block_rounded,
+                              label: 'All Cancelled',
+                              color: const Color(0xFF607D8B),
+                              onTap: () => _markAllClasses(
+                                ref,
+                                items,
+                                AttendanceStatus.cancelled,
+                              ),
+                            ),
+                            // Only show Reset if at least one class is marked
+                            if (items.any(
+                              (item) => item.existingSession != null,
+                            )) ...[
+                              const SizedBox(width: 8),
+                              _BulkActionChip(
+                                icon: Icons.refresh_rounded,
+                                label: 'Reset All',
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onSurfaceVariant,
+                                onTap: () => _resetAllClasses(ref, items),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
                 orElse: () => const SizedBox.shrink(),
               ),
@@ -101,6 +162,66 @@ class HomeScreen extends ConsumerWidget {
         ],
       ),
     );
+  }
+
+  void _markAllClasses(
+    WidgetRef ref,
+    List<TodayClassItem> items,
+    AttendanceStatus status,
+  ) async {
+    HapticFeedback.mediumImpact();
+    final repo = ref.read(attendanceRepositoryProvider);
+
+    // Mark all classes with the given status
+    for (final item in items) {
+      final session = ClassSession(
+        id: item.existingSession?.id.isNotEmpty == true
+            ? item.existingSession!.id
+            : const Uuid().v4(),
+        subjectId: item.subject.id,
+        date: item.scheduledTime,
+        status: status,
+      );
+      await repo.logSession(session);
+    }
+
+    // Show confirmation snackbar
+    if (ref.context.mounted) {
+      ScaffoldMessenger.of(ref.context).showSnackBar(
+        SnackBar(
+          content: Text(
+            status == AttendanceStatus.present
+                ? 'Marked all ${items.length} classes as Present'
+                : 'Marked all ${items.length} classes as Absent',
+          ),
+          duration: const Duration(seconds: 2),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+  }
+
+  void _resetAllClasses(WidgetRef ref, List<TodayClassItem> items) async {
+    HapticFeedback.mediumImpact();
+    final repo = ref.read(attendanceRepositoryProvider);
+
+    // Delete all sessions for the displayed classes
+    for (final item in items) {
+      if (item.existingSession != null) {
+        await repo.deleteDuplicateSessions(date: item.scheduledTime);
+      }
+    }
+
+    // Show confirmation snackbar
+    if (ref.context.mounted) {
+      ScaffoldMessenger.of(ref.context).showSnackBar(
+        SnackBar(
+          content: Text('Reset all ${items.length} classes to unmarked'),
+          duration: const Duration(seconds: 2),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
   }
 
   Widget _buildEmptyState(BuildContext context) {
@@ -372,6 +493,54 @@ class _MiniActionButton extends StatelessWidget {
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _BulkActionChip extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color color;
+  final VoidCallback onTap;
+
+  const _BulkActionChip({
+    required this.icon,
+    required this.label,
+    required this.color,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: () {
+        HapticFeedback.lightImpact();
+        onTap();
+      },
+      borderRadius: BorderRadius.circular(20),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: color.withValues(alpha: 0.2), width: 1),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, color: color, size: 16),
+            const SizedBox(width: 6),
+            Text(
+              label,
+              style: TextStyle(
+                color: color,
+                fontWeight: FontWeight.w600,
+                fontSize: 13,
+              ),
+            ),
+          ],
         ),
       ),
     );
