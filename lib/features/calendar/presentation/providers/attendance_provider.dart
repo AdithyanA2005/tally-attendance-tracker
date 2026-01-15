@@ -11,16 +11,40 @@ final subjectsStreamProvider = StreamProvider<List<Subject>>((ref) {
   return repository.watchSubjects();
 });
 
-// Stream of stats for all subjects
+// Stream of all sessions (Reactive)
+final allSessionsStreamProvider = StreamProvider<List<ClassSession>>((ref) {
+  final repository = ref.watch(attendanceRepositoryProvider);
+  return repository.watchAllSessions();
+});
+
+// Stream of stats for all subjects (Reactive)
 final subjectStatsListProvider = Provider<AsyncValue<List<SubjectStats>>>((
   ref,
 ) {
   final subjectsAsync = ref.watch(subjectsStreamProvider);
-  final repository = ref.watch(attendanceRepositoryProvider);
+  final sessionsAsync = ref.watch(allSessionsStreamProvider);
 
-  return subjectsAsync.whenData((subjects) {
-    return subjects.map((subject) {
-      final sessions = repository.getSessions(subject.id);
+  if (subjectsAsync.isLoading || sessionsAsync.isLoading) {
+    return const AsyncValue.loading();
+  }
+
+  if (subjectsAsync.hasError) {
+    return AsyncValue.error(subjectsAsync.error!, subjectsAsync.stackTrace!);
+  }
+
+  if (sessionsAsync.hasError) {
+    return AsyncValue.error(sessionsAsync.error!, sessionsAsync.stackTrace!);
+  }
+
+  final subjects = subjectsAsync.value ?? [];
+  final allSessions = sessionsAsync.value ?? [];
+
+  return AsyncValue.data(
+    subjects.map((subject) {
+      // Filter sessions for this subject in-memory (Reactive)
+      final sessions = allSessions
+          .where((s) => s.subjectId == subject.id)
+          .toList();
 
       int present = 0;
       int absent = 0;
@@ -34,8 +58,6 @@ final subjectStatsListProvider = Provider<AsyncValue<List<SubjectStats>>>((
           absent++;
           conducted++;
         }
-        // Cancelled/Unmarked don't count towards conducted/present math in this specific model
-        // Prompt says: Conducted = Present + Absent. Cancelled DO NOT count.
       }
 
       final percentage = AttendanceCalculator.calculatePercentage(
@@ -69,8 +91,8 @@ final subjectStatsListProvider = Provider<AsyncValue<List<SubjectStats>>>((
         predictionNextClass: prediction,
         history: sessions,
       );
-    }).toList();
-  });
+    }).toList(),
+  );
 });
 
 final subjectStatsFamily = Provider.family<AsyncValue<SubjectStats?>, String>((

@@ -13,7 +13,7 @@ import '../../../../core/utils/string_utils.dart';
 import '../../calendar/data/models/session_model.dart';
 
 import '../../calendar/data/repositories/attendance_repository.dart';
-import '../../calendar/presentation/providers/attendance_provider.dart';
+
 import '../../calendar/presentation/widgets/edit_session_sheet.dart';
 import '../../settings/presentation/providers/today_classes_provider.dart';
 
@@ -303,8 +303,7 @@ class _TodayClassCard extends ConsumerWidget {
       status: status,
     );
     await ref.read(attendanceRepositoryProvider).logSession(session);
-    ref.invalidate(todayClassesProvider);
-    ref.invalidate(subjectStatsListProvider);
+    // Auto-updates via stream
   }
 
   void _showEditDialog(BuildContext context, WidgetRef ref) async {
@@ -330,9 +329,7 @@ class _TodayClassCard extends ConsumerWidget {
         isNew: item.existingSession == null,
       ),
     );
-
-    ref.invalidate(todayClassesProvider);
-    ref.invalidate(subjectStatsListProvider);
+    // Auto-updates via stream
   }
 }
 

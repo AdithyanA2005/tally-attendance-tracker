@@ -1,13 +1,15 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../data/repositories/attendance_repository.dart';
+
 import '../../data/models/session_model.dart';
 import '../../data/models/subject_model.dart';
 
-final calendarEventsProvider =
-    StreamProvider<Map<DateTime, List<ClassSession>>>((ref) {
-      final repository = ref.watch(attendanceRepositoryProvider);
+import 'attendance_provider.dart';
 
-      return repository.watchAllSessions().map((sessions) {
+final calendarEventsProvider =
+    Provider<AsyncValue<Map<DateTime, List<ClassSession>>>>((ref) {
+      final sessionsAsync = ref.watch(allSessionsStreamProvider);
+
+      return sessionsAsync.whenData((sessions) {
         final Map<DateTime, List<ClassSession>> events = {};
         for (var session in sessions) {
           final dateKeys = DateTime(
@@ -24,8 +26,17 @@ final calendarEventsProvider =
       });
     });
 
-// Helper to get subjects map synchronously/easily
+// Helper to get subjects map synchronously/easily (Reactive)
 final allSubjectsMapProvider = Provider<Map<String, Subject>>((ref) {
-  final subjects = ref.watch(attendanceRepositoryProvider).getSubjects();
-  return {for (var s in subjects) s.id: s};
+  final subjectsAsync = ref.watch(subjectsStreamProvider);
+  // Default to empty map if loading/error, or handle better?
+  // Screens using this usually expect a Map.
+  // If we return Map<String, Subject>, we must handle async state.
+  // But previously it was non-reactive getSubjects().
+
+  // Safe approach: return existing value or empty.
+  return subjectsAsync.maybeWhen(
+    data: (subjects) => {for (var s in subjects) s.id: s},
+    orElse: () => {},
+  );
 });
