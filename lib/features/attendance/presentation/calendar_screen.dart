@@ -1,0 +1,878 @@
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:table_calendar/table_calendar.dart';
+import 'package:uuid/uuid.dart';
+import 'package:intl/intl.dart';
+import 'providers/calendar_provider.dart';
+import 'providers/pending_attendance_provider.dart';
+import '../../timetable/data/models/timetable_entry_model.dart';
+import '../../settings/data/repositories/settings_repository.dart';
+import '../data/models/session_model.dart';
+import '../data/repositories/attendance_repository.dart';
+import '../data/models/subject_model.dart';
+import '../../../../core/presentation/animations/fade_in_slide.dart';
+
+class CalendarScreen extends ConsumerStatefulWidget {
+  const CalendarScreen({super.key});
+
+  @override
+  ConsumerState<CalendarScreen> createState() => _CalendarScreenState();
+}
+
+class _CalendarScreenState extends ConsumerState<CalendarScreen> {
+  DateTime _focusedDay = DateTime.now();
+  DateTime? _selectedDay;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedDay = _focusedDay;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final eventsAsync = ref.watch(calendarEventsProvider);
+    final subjectMap = ref.watch(allSubjectsMapProvider);
+    final timetableAsync = ref.watch(fullTimetableStreamProvider);
+    final settingsRepo = ref.watch(settingsRepositoryProvider);
+    final semesterStartDate = settingsRepo.getSemesterStartDate();
+
+    return Scaffold(
+      body: CustomScrollView(
+        slivers: [
+          SliverAppBar(
+            pinned: true,
+            backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+            surfaceTintColor: Theme.of(context).scaffoldBackgroundColor,
+            title: Text(
+              'Calendar',
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.onSurface,
+                fontWeight: FontWeight.bold,
+                fontSize: 20,
+              ),
+            ),
+            centerTitle: false,
+            actions: [
+              IconButton(
+                onPressed: () {
+                  HapticFeedback.lightImpact();
+                  _showAddExtraClassDialog(context);
+                },
+                icon: const Icon(Icons.add_rounded),
+                tooltip: 'Add Class',
+              ),
+              const SizedBox(width: 8),
+            ],
+          ),
+          eventsAsync.when(
+            data: (events) {
+              return timetableAsync.when(
+                data: (timetable) {
+                  final combinedEvents = _getCombinedDailySchedule(
+                    _selectedDay ?? _focusedDay,
+                    events,
+                    timetable,
+                    semesterStartDate,
+                  );
+
+                  return SliverList(
+                    delegate: SliverChildListDelegate([
+                      TableCalendar<ClassSession>(
+                        firstDay: DateTime.utc(2023, 1, 1),
+                        lastDay: DateTime.utc(2030, 12, 31),
+                        focusedDay: _focusedDay,
+                        selectedDayPredicate: (day) =>
+                            isSameDay(_selectedDay, day),
+                        onDaySelected: (selectedDay, focusedDay) {
+                          HapticFeedback.selectionClick();
+                          setState(() {
+                            _selectedDay = selectedDay;
+                            _focusedDay = focusedDay;
+                          });
+                        },
+                        eventLoader: (day) {
+                          // Use combined schedule to show markers for both saved and virtual sessions
+                          return timetableAsync.maybeWhen(
+                            data: (timetable) => _getCombinedDailySchedule(
+                              day,
+                              events,
+                              timetable,
+                              semesterStartDate,
+                            ),
+                            orElse: () => _getEventsForDay(day, events),
+                          );
+                        },
+                        calendarStyle: const CalendarStyle(
+                          outsideDaysVisible: false,
+                          defaultTextStyle: TextStyle(
+                            fontWeight: FontWeight.bold,
+                          ),
+                          weekendTextStyle: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: Colors.grey,
+                          ),
+                          tablePadding: EdgeInsets.only(bottom: 12),
+                        ),
+                        daysOfWeekHeight: 40,
+                        calendarBuilders: CalendarBuilders(
+                          selectedBuilder: (context, date, events) {
+                            return Container(
+                              margin: const EdgeInsets.all(6.0),
+                              alignment: Alignment.center,
+                              decoration: const BoxDecoration(
+                                color: Color(0xFF2D3436), // Obsidian Grey
+                                shape: BoxShape.circle,
+                              ),
+                              child: Text(
+                                '${date.day}',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                ),
+                              ),
+                            );
+                          },
+                          todayBuilder: (context, date, events) {
+                            return Container(
+                              margin: const EdgeInsets.all(6.0),
+                              alignment: Alignment.center,
+                              decoration: BoxDecoration(
+                                color: const Color(
+                                  0xFF2D3436,
+                                ).withValues(alpha: 0.1), // Soft Obsidian Tint
+                                shape: BoxShape.circle,
+                              ),
+                              child: Text(
+                                '${date.day}',
+                                style: const TextStyle(
+                                  color: Color(0xFF2D3436),
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                ),
+                              ),
+                            );
+                          },
+                          markerBuilder: (context, date, events) {
+                            if (events.isEmpty) return null;
+
+                            final sessions = events.cast<ClassSession>();
+                            final uniqueStatuses = sessions
+                                .where(
+                                  (s) => s.status != AttendanceStatus.cancelled,
+                                )
+                                .map((s) => s.status)
+                                .toSet();
+
+                            if (uniqueStatuses.isEmpty ||
+                                uniqueStatuses.length == 1) {
+                              return const SizedBox(); // Singular state or cancelled = No Dot
+                            }
+
+                            // Mixed state only
+                            final dotColor = const Color(
+                              0xFF2D3436,
+                            ); // Obsidian
+
+                            // Check if this date is the selected date
+                            final isSelected = isSameDay(date, _selectedDay);
+
+                            return Positioned(
+                              bottom: 10,
+                              child: Container(
+                                width: 5,
+                                height: 5,
+                                decoration: BoxDecoration(
+                                  color: isSelected
+                                      ? Colors.white
+                                      : dotColor, // Use calculated color
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                        headerStyle: HeaderStyle(
+                          titleCentered: true,
+                          formatButtonVisible: false,
+                          titleTextStyle: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Theme.of(context).colorScheme.onSurface,
+                          ),
+                          leftChevronIcon: Icon(
+                            Icons.chevron_left_rounded,
+                            color: Theme.of(context).colorScheme.onSurface,
+                          ),
+                          rightChevronIcon: Icon(
+                            Icons.chevron_right_rounded,
+                            color: Theme.of(context).colorScheme.onSurface,
+                          ),
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 24,
+                          vertical: 8,
+                        ),
+                        child: Divider(
+                          color: Theme.of(
+                            context,
+                          ).dividerColor.withOpacity(0.1),
+                        ),
+                      ),
+                      if (combinedEvents.isEmpty)
+                        Padding(
+                          padding: const EdgeInsets.all(32.0),
+                          child: Center(
+                            child: Column(
+                              children: [
+                                Icon(
+                                  Icons.event_note_rounded,
+                                  size: 48,
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.tertiary.withValues(alpha: 0.2),
+                                ),
+                                const SizedBox(height: 16),
+                                Text(
+                                  'No records for this day',
+                                  style: TextStyle(
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.tertiary,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        )
+                      else
+                        ...combinedEvents.asMap().entries.map((entry) {
+                          final index = entry.key;
+                          final session = entry.value;
+                          final subject =
+                              subjectMap[session.subjectId] ??
+                              Subject(
+                                id: '?',
+                                name: 'Unknown',
+                                minimumAttendancePercentage: 0,
+                                weeklyHours: 0,
+                                colorTag: 0xFF95A5A6, // Concrete Grey
+                              );
+
+                          return Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical:
+                                  6, // Slightly more vertical breathing room
+                            ),
+                            child: FadeInSlide(
+                              duration: const Duration(milliseconds: 500),
+                              delay: Duration(milliseconds: index * 100),
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  color: Theme.of(context).cardColor,
+                                  borderRadius: BorderRadius.circular(16),
+                                  border: Border.all(
+                                    color: Theme.of(
+                                      context,
+                                    ).dividerColor.withOpacity(0.1),
+                                  ),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.02),
+                                      blurRadius: 10,
+                                      offset: const Offset(0, 4),
+                                    ),
+                                  ],
+                                ),
+                                child: Material(
+                                  color: Colors.transparent,
+                                  child: InkWell(
+                                    onTap: () {
+                                      HapticFeedback.lightImpact();
+                                      _showEditDialog(
+                                        context,
+                                        session,
+                                        subject,
+                                        subjectMap.values.toList(),
+                                      );
+                                    },
+                                    borderRadius: BorderRadius.circular(16),
+                                    child: Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 16,
+                                        vertical: 16, // Consistent padding
+                                      ),
+                                      child: Row(
+                                        children: [
+                                          Container(
+                                            width: 12,
+                                            height: 12,
+                                            decoration: BoxDecoration(
+                                              color: subject.color,
+                                              shape: BoxShape.circle,
+                                              boxShadow: [
+                                                BoxShadow(
+                                                  color: subject.color
+                                                      .withValues(alpha: 0.4),
+                                                  blurRadius: 6,
+                                                  offset: const Offset(0, 2),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                          const SizedBox(width: 16),
+                                          Expanded(
+                                            child: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                Text(
+                                                  subject.name,
+                                                  style: const TextStyle(
+                                                    fontWeight: FontWeight.bold,
+                                                    fontSize: 16,
+                                                  ),
+                                                ),
+                                                const SizedBox(height: 4),
+                                                Text(
+                                                  DateFormat.jm().format(
+                                                    session.date,
+                                                  ),
+                                                  style: TextStyle(
+                                                    color: Theme.of(context)
+                                                        .colorScheme
+                                                        .onSurfaceVariant,
+                                                    fontSize: 13,
+                                                    fontWeight: FontWeight.w500,
+                                                  ),
+                                                ),
+                                                Builder(
+                                                  builder: (context) {
+                                                    // Check for substitution
+                                                    final scheduled = timetable
+                                                        .where((t) {
+                                                          if (t.dayOfWeek !=
+                                                              session
+                                                                  .date
+                                                                  .weekday) {
+                                                            return false;
+                                                          }
+                                                          final parts = t
+                                                              .startTime
+                                                              .split(':');
+                                                          final h = int.parse(
+                                                            parts[0],
+                                                          );
+                                                          final m = int.parse(
+                                                            parts[1],
+                                                          );
+                                                          return h ==
+                                                                  session
+                                                                      .date
+                                                                      .hour &&
+                                                              m ==
+                                                                  session
+                                                                      .date
+                                                                      .minute;
+                                                        })
+                                                        .firstOrNull;
+
+                                                    if (scheduled != null &&
+                                                        scheduled.subjectId !=
+                                                            session.subjectId) {
+                                                      final originalSubject =
+                                                          subjectMap[scheduled
+                                                              .subjectId] ??
+                                                          Subject(
+                                                            id: '?',
+                                                            name: 'Unknown',
+                                                            minimumAttendancePercentage:
+                                                                0,
+                                                            weeklyHours: 0,
+                                                            colorTag:
+                                                                0xFF95A5A6,
+                                                          );
+                                                      return Padding(
+                                                        padding:
+                                                            const EdgeInsets.only(
+                                                              top: 4,
+                                                            ),
+                                                        child: Container(
+                                                          padding:
+                                                              const EdgeInsets.symmetric(
+                                                                horizontal: 6,
+                                                                vertical: 2,
+                                                              ),
+                                                          decoration: BoxDecoration(
+                                                            color: Colors.orange
+                                                                .withValues(
+                                                                  alpha: 0.1,
+                                                                ),
+                                                            borderRadius:
+                                                                BorderRadius.circular(
+                                                                  8,
+                                                                ),
+                                                            border: Border.all(
+                                                              color: Colors
+                                                                  .orange
+                                                                  .withValues(
+                                                                    alpha: 0.3,
+                                                                  ),
+                                                              width: 1,
+                                                            ),
+                                                          ),
+                                                          child: Text(
+                                                            'Substituted: ${originalSubject.name}',
+                                                            style:
+                                                                const TextStyle(
+                                                                  fontSize: 10,
+                                                                  color: Colors
+                                                                      .orange,
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .bold,
+                                                                ),
+                                                          ),
+                                                        ),
+                                                      );
+                                                    }
+                                                    return const SizedBox.shrink();
+                                                  },
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 10,
+                                              vertical: 4,
+                                            ),
+                                            decoration: BoxDecoration(
+                                              color: _getStatusColor(
+                                                session.status,
+                                              ).withValues(alpha: 0.1),
+                                              borderRadius:
+                                                  BorderRadius.circular(12),
+                                              border: Border.all(
+                                                color: _getStatusColor(
+                                                  session.status,
+                                                ).withValues(alpha: 0.2),
+                                              ),
+                                            ),
+                                            child: Text(
+                                              session.status.name.toUpperCase(),
+                                              style: TextStyle(
+                                                color: _getStatusColor(
+                                                  session.status,
+                                                ),
+                                                fontSize: 11,
+                                                fontWeight: FontWeight.bold,
+                                                letterSpacing: 0.5,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          );
+                        }),
+                      const SizedBox(height: 40),
+                    ]),
+                  );
+                },
+                loading: () => const SliverFillRemaining(
+                  child: Center(child: CircularProgressIndicator()),
+                ),
+                error: (e, __) => SliverFillRemaining(
+                  child: Center(child: Text('Error loading timetable: $e')),
+                ),
+              );
+            },
+            loading: () => const SliverFillRemaining(
+              child: Center(child: CircularProgressIndicator()),
+            ),
+            error: (err, stack) =>
+                SliverFillRemaining(child: Center(child: Text('Error: $err'))),
+          ),
+          const SliverPadding(padding: EdgeInsets.only(bottom: 100)),
+        ],
+      ),
+    );
+  }
+
+  List<ClassSession> _getEventsForDay(
+    DateTime day,
+    Map<DateTime, List<ClassSession>> events,
+  ) {
+    final key = DateTime(day.year, day.month, day.day);
+    return events[key] ?? [];
+  }
+
+  Color _getStatusColor(AttendanceStatus status) {
+    switch (status) {
+      case AttendanceStatus.present:
+        return const Color(0xFF27AE60); // Sage
+      case AttendanceStatus.absent:
+        return const Color(0xFFC0392B); // Muted Red
+      case AttendanceStatus.cancelled:
+        return Colors.grey;
+      case AttendanceStatus.unmarked:
+        return Colors.black;
+    }
+  }
+
+  List<ClassSession> _getCombinedDailySchedule(
+    DateTime day,
+    Map<DateTime, List<ClassSession>> allEvents,
+    List<TimetableEntry> timetable,
+    DateTime semesterStart,
+  ) {
+    if (day.year < 2023) return []; // Optimization
+
+    final dayEvents = _getEventsForDay(day, allEvents);
+
+    // Check semester start
+    // If selected day is BEFORE semester start, ignore timetable
+    // Only show manually logged events (dayEvents)
+    final checkDate = DateTime(day.year, day.month, day.day);
+    // semesterStart usually has 00:00:00 time
+    // If checkDate is before semesterStart, return only what's logged
+    if (checkDate.isBefore(semesterStart)) {
+      return dayEvents..sort((a, b) => a.date.compareTo(b.date));
+    }
+
+    final weekday = day.weekday;
+    final scheduledForDay = timetable.where((e) => e.dayOfWeek == weekday);
+    final combined = <ClassSession>[];
+    final usedSessionIds = <String>{};
+
+    for (var entry in scheduledForDay) {
+      // Find matching session by time (Time takes precedence over SubjectId for swaps)
+      ClassSession? match;
+      try {
+        match = dayEvents.firstWhere((s) {
+          final timeParts = entry.startTime.split(':');
+          if (timeParts.length < 2) return false;
+          final h = int.parse(timeParts[0]);
+          final m = int.parse(timeParts[1]);
+
+          // Strict time match (Timetable slot vs Recorded Session time)
+          // If a session exists at this time, it FILLS this slot, even if subject differs (Swap)
+          return s.date.hour == h && s.date.minute == m;
+        });
+      } catch (_) {}
+
+      if (match != null) {
+        combined.add(match);
+        usedSessionIds.add(match.id);
+      } else {
+        // No session marked for this timeslot. Show pending (Unmarked).
+        final timeParts = entry.startTime.split(':');
+        final h = int.parse(timeParts[0]);
+        final m = int.parse(timeParts[1]);
+        final d = DateTime(day.year, day.month, day.day, h, m);
+
+        combined.add(
+          ClassSession(
+            id: 'virtual_${entry.id}_${day.toIso8601String()}',
+            subjectId: entry.subjectId,
+            date: d,
+            status: AttendanceStatus.unmarked,
+          ),
+        );
+      }
+    }
+
+    // Add extra sessions (not in timetable)
+    for (var s in dayEvents) {
+      if (!usedSessionIds.contains(s.id)) {
+        combined.add(s);
+      }
+    }
+
+    combined.sort((a, b) => a.date.compareTo(b.date));
+    return combined;
+  }
+
+  void _showEditDialog(
+    BuildContext context,
+    ClassSession session,
+    Subject currentSubject,
+    List<Subject> allSubjects,
+  ) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => _EditSessionSheet(
+        session: session,
+        initialSubject: currentSubject,
+        allSubjects: allSubjects,
+      ),
+    );
+  }
+
+  void _showAddExtraClassDialog(BuildContext context) {
+    // Determine time: if selected day is today, use now(), else use 9:00 AM of selected day
+    DateTime baseTime = _selectedDay ?? DateTime.now();
+    final now = DateTime.now();
+    if (isSameDay(baseTime, now)) {
+      baseTime = now;
+    } else {
+      baseTime = DateTime(baseTime.year, baseTime.month, baseTime.day, 9, 0);
+    }
+
+    // Default subject (first one or placeholder)
+    final allSubjects = ref.read(allSubjectsMapProvider).values.toList();
+    if (allSubjects.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No subjects found. Add subjects first.')),
+      );
+      return;
+    }
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => _EditSessionSheet(
+        session: ClassSession(
+          id: const Uuid().v4(),
+          subjectId: allSubjects.first.id,
+          date: baseTime,
+          status: AttendanceStatus.present,
+          isExtraClass: true,
+        ),
+        initialSubject: allSubjects.first,
+        allSubjects: allSubjects,
+        isNew: true,
+      ),
+    );
+  }
+}
+
+class _EditSessionSheet extends ConsumerStatefulWidget {
+  final ClassSession session;
+  final Subject initialSubject;
+  final List<Subject> allSubjects;
+  final bool isNew;
+
+  const _EditSessionSheet({
+    required this.session,
+    required this.initialSubject,
+    required this.allSubjects,
+    this.isNew = false,
+  });
+
+  @override
+  ConsumerState<_EditSessionSheet> createState() => _EditSessionSheetState();
+}
+
+class _EditSessionSheetState extends ConsumerState<_EditSessionSheet> {
+  late Subject _selectedSubject;
+  late AttendanceStatus _selectedStatus;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedSubject = widget.initialSubject;
+    // If opening an Unmarked class (virtual or saved), default to Present
+    // This forces the user to 'Mark' it if they are editing it.
+    _selectedStatus = widget.session.status == AttendanceStatus.unmarked
+        ? AttendanceStatus.present
+        : widget.session.status;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Container(
+      decoration: BoxDecoration(
+        color: theme.scaffoldBackgroundColor,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+      padding: EdgeInsets.fromLTRB(
+        24,
+        24,
+        24,
+        MediaQuery.of(context).viewInsets.bottom +
+            MediaQuery.of(context).padding.bottom +
+            24,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // Header
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                widget.isNew ? 'New Class' : 'Edit Class',
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              IconButton(
+                onPressed: () => Navigator.pop(context),
+                icon: const Icon(Icons.close_rounded),
+                style: IconButton.styleFrom(
+                  backgroundColor: theme.colorScheme.surfaceContainerHighest
+                      .withOpacity(0.3),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 24),
+
+          // Subject Dropdown
+          DropdownButtonFormField<Subject>(
+            icon: const Icon(Icons.keyboard_arrow_down_rounded),
+            decoration: InputDecoration(
+              labelText: 'Subject',
+              filled: true,
+              fillColor: theme.colorScheme.surfaceContainerHighest.withOpacity(
+                0.3,
+              ),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: BorderSide.none,
+              ),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 20,
+                vertical: 16,
+              ),
+            ),
+            initialValue: widget.allSubjects.contains(_selectedSubject)
+                ? _selectedSubject
+                : null,
+            items: widget.allSubjects
+                .map((s) => DropdownMenuItem(value: s, child: Text(s.name)))
+                .toList(),
+            onChanged: (val) {
+              if (val != null) setState(() => _selectedSubject = val);
+            },
+          ),
+          const SizedBox(height: 16),
+
+          // Status Dropdown
+          DropdownButtonFormField<AttendanceStatus>(
+            icon: const Icon(Icons.keyboard_arrow_down_rounded),
+            decoration: InputDecoration(
+              labelText: 'Status',
+              filled: true,
+              fillColor: theme.colorScheme.surfaceContainerHighest.withOpacity(
+                0.3,
+              ),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: BorderSide.none,
+              ),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 20,
+                vertical: 16,
+              ),
+            ),
+            initialValue: _selectedStatus,
+            items: AttendanceStatus.values
+                .where((s) => s != AttendanceStatus.unmarked)
+                .map(
+                  (s) => DropdownMenuItem(
+                    value: s,
+                    child: Text(s.name.toUpperCase()),
+                  ),
+                )
+                .toList(),
+            onChanged: (val) {
+              if (val != null) setState(() => _selectedStatus = val);
+            },
+          ),
+          const SizedBox(height: 32),
+
+          // Action Buttons Row
+          Row(
+            children: [
+              if (!widget.isNew) ...[
+                Expanded(
+                  child: TextButton(
+                    onPressed: () async {
+                      await ref
+                          .read(attendanceRepositoryProvider)
+                          .deleteDuplicateSessions(date: widget.session.date);
+                      if (context.mounted) Navigator.pop(context);
+                    },
+                    style: TextButton.styleFrom(
+                      foregroundColor: theme.colorScheme.error,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        side: BorderSide(
+                          color: theme.colorScheme.error.withOpacity(0.2),
+                        ),
+                      ),
+                    ),
+                    child: const Text('Reset'),
+                  ),
+                ),
+                const SizedBox(width: 16),
+              ],
+              Expanded(
+                child: FilledButton(
+                  onPressed: () async {
+                    String sessionId = widget.session.id;
+                    if (sessionId.startsWith('virtual_')) {
+                      sessionId = const Uuid().v4();
+                    }
+
+                    final newSession = ClassSession(
+                      id: sessionId,
+                      subjectId: _selectedSubject.id,
+                      date: widget.session.date,
+                      status: _selectedStatus,
+                      isExtraClass: widget.session.isExtraClass,
+                      notes: widget.session.notes,
+                    );
+
+                    if (widget.isNew || sessionId != widget.session.id) {
+                      await ref
+                          .read(attendanceRepositoryProvider)
+                          .logSession(newSession);
+                    } else {
+                      await ref
+                          .read(attendanceRepositoryProvider)
+                          .updateSession(newSession);
+                    }
+
+                    if (context.mounted) Navigator.pop(context);
+                  },
+                  style: FilledButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                  ),
+                  child: const Text(
+                    'Save',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
