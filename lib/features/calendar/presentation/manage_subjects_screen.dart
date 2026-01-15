@@ -40,7 +40,7 @@ class ManageSubjectsScreen extends ConsumerWidget {
               centerTitle: false,
             ),
             SliverPadding(
-              padding: const EdgeInsets.fromLTRB(20, 0, 20, 80),
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 80),
               sliver: subjectsAsync.when(
                 data: (subjects) {
                   if (subjects.isEmpty) {
@@ -159,8 +159,10 @@ class ManageSubjectsScreen extends ConsumerWidget {
           HapticFeedback.lightImpact();
           _showSubjectSheet(context, null);
         },
-        backgroundColor: const Color(0xFF2D3436), // Obsidian Grey
-        child: const Icon(Icons.add_rounded, color: Colors.white),
+        backgroundColor: Colors.white,
+        foregroundColor: const Color(0xFF2D3436),
+        elevation: 4,
+        child: const Icon(Icons.add_rounded),
       ),
     );
   }

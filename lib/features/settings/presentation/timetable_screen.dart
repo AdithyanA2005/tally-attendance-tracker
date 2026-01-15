@@ -67,7 +67,9 @@ class _TimetableScreenState extends ConsumerState<TimetableScreen> {
                           label: Text(
                             _days[index],
                             style: TextStyle(
-                              color: isSelected ? Colors.white : Colors.black,
+                              color: isSelected
+                                  ? Theme.of(context).colorScheme.onPrimary
+                                  : Theme.of(context).colorScheme.onSurface,
                               fontWeight: isSelected
                                   ? FontWeight.bold
                                   : FontWeight.w500,
@@ -78,14 +80,16 @@ class _TimetableScreenState extends ConsumerState<TimetableScreen> {
                             if (selected) setState(() => _selectedDay = dayNum);
                           },
                           showCheckmark: false,
-                          selectedColor: const Color(
-                            0xFF2D3436,
-                          ), // Obsidian Grey
-                          backgroundColor: Colors.white,
+                          selectedColor: Theme.of(context).colorScheme.primary,
+                          backgroundColor: Theme.of(
+                            context,
+                          ).colorScheme.surface,
                           side: isSelected
                               ? BorderSide.none
                               : BorderSide(
-                                  color: Colors.grey.withValues(alpha: 0.2),
+                                  color: Theme.of(
+                                    context,
+                                  ).dividerColor.withValues(alpha: 0.2),
                                 ),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(20),
@@ -154,13 +158,18 @@ class _TimetableScreenState extends ConsumerState<TimetableScreen> {
                                 decoration: BoxDecoration(
                                   color: Theme.of(context).cardColor,
                                   borderRadius: BorderRadius.circular(20),
+                                  border: Border.all(
+                                    color: Theme.of(
+                                      context,
+                                    ).dividerColor.withValues(alpha: 0.1),
+                                  ),
                                   boxShadow: [
                                     BoxShadow(
                                       color: Colors.black.withValues(
-                                        alpha: 0.05,
+                                        alpha: 0.02,
                                       ),
-                                      blurRadius: 24,
-                                      offset: const Offset(0, 8),
+                                      blurRadius: 10,
+                                      offset: const Offset(0, 4),
                                     ),
                                   ],
                                 ),
@@ -278,8 +287,10 @@ class _TimetableScreenState extends ConsumerState<TimetableScreen> {
           HapticFeedback.lightImpact();
           _showAddEntrySheet(context, ref);
         },
-        backgroundColor: const Color(0xFF2D3436), // Obsidian Grey
-        child: const Icon(Icons.add_rounded, color: Colors.white),
+        backgroundColor: Colors.white,
+        foregroundColor: const Color(0xFF2D3436),
+        elevation: 4,
+        child: const Icon(Icons.add_rounded),
       ),
     );
   }
@@ -309,27 +320,70 @@ class _AddEntrySheetState extends ConsumerState<_AddEntrySheet> {
   @override
   Widget build(BuildContext context) {
     final subjectsAsync = ref.watch(subjectsStreamProvider);
+    final theme = Theme.of(context);
 
-    return Padding(
-      padding: EdgeInsets.only(
-        bottom: MediaQuery.of(context).viewInsets.bottom,
-        left: 16,
-        right: 16,
-        top: 24,
+    return Container(
+      decoration: BoxDecoration(
+        color: theme.scaffoldBackgroundColor,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+      padding: EdgeInsets.fromLTRB(
+        24,
+        24,
+        24,
+        MediaQuery.of(context).viewInsets.bottom +
+            MediaQuery.of(context).padding.bottom +
+            24,
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(
-            'Add Class on ${_dayName(widget.selectedDay)}',
-            style: Theme.of(context).textTheme.titleLarge,
+          // Header
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Add Class on ${_dayName(widget.selectedDay)}',
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              IconButton(
+                onPressed: () => Navigator.pop(context),
+                icon: const Icon(Icons.close_rounded),
+                style: IconButton.styleFrom(
+                  backgroundColor: theme.colorScheme.surfaceContainerHighest
+                      .withValues(alpha: 0.3),
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 24),
+
+          // Subject Dropdown
           subjectsAsync.when(
             data: (subjects) => DropdownButtonFormField<Subject>(
-              initialValue: _selectedSubject,
-              hint: const Text('Select Subject'),
+              icon: const Icon(Icons.keyboard_arrow_down_rounded),
+              borderRadius: BorderRadius.circular(16),
+              decoration: InputDecoration(
+                labelText: 'Subject',
+                hintText: 'Select Subject',
+                filled: true,
+                fillColor: theme.colorScheme.surfaceContainerHighest.withValues(
+                  alpha: 0.3,
+                ),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: BorderSide.none,
+                ),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 16,
+                ),
+              ),
+              value: _selectedSubject,
               items: subjects
                   .map((s) => DropdownMenuItem(value: s, child: Text(s.name)))
                   .toList(),
@@ -339,25 +393,66 @@ class _AddEntrySheetState extends ConsumerState<_AddEntrySheet> {
             error: (_, __) => const Text('Error loading subjects'),
           ),
           const SizedBox(height: 16),
+
+          // Time and Duration Row
           Row(
             children: [
               Expanded(
-                child: OutlinedButton(
-                  onPressed: () async {
+                child: InkWell(
+                  onTap: () async {
                     final t = await showTimePicker(
                       context: context,
                       initialTime: _startTime,
                     );
                     if (t != null) setState(() => _startTime = t);
                   },
-                  child: Text('Start: ${_startTime.format(context)}'),
+                  borderRadius: BorderRadius.circular(16),
+                  child: InputDecorator(
+                    decoration: InputDecoration(
+                      labelText: 'Start Time',
+                      filled: true,
+                      fillColor: theme.colorScheme.surfaceContainerHighest
+                          .withValues(alpha: 0.3),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: BorderSide.none,
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 16,
+                      ),
+                      suffixIcon: const Icon(
+                        Icons.access_time_rounded,
+                        size: 20,
+                      ),
+                    ),
+                    child: Text(
+                      _startTime.format(context),
+                      style: const TextStyle(fontSize: 16),
+                    ),
+                  ),
                 ),
               ),
               const SizedBox(width: 16),
               Expanded(
                 child: DropdownButtonFormField<double>(
-                  initialValue: _duration,
-                  decoration: const InputDecoration(labelText: 'Duration'),
+                  icon: const Icon(Icons.keyboard_arrow_down_rounded),
+                  borderRadius: BorderRadius.circular(16),
+                  decoration: InputDecoration(
+                    labelText: 'Duration',
+                    filled: true,
+                    fillColor: theme.colorScheme.surfaceContainerHighest
+                        .withValues(alpha: 0.3),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: BorderSide.none,
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 16,
+                    ),
+                  ),
+                  value: _duration,
                   items: [0.5, 0.75, 50 / 60, 1.0, 1.5, 2.0, 3.0]
                       .map(
                         (d) => DropdownMenuItem(
@@ -371,7 +466,9 @@ class _AddEntrySheetState extends ConsumerState<_AddEntrySheet> {
               ),
             ],
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 32),
+
+          // Add Button
           FilledButton(
             onPressed: _selectedSubject == null
                 ? null
@@ -390,9 +487,18 @@ class _AddEntrySheetState extends ConsumerState<_AddEntrySheet> {
                     if (!context.mounted) return;
                     Navigator.pop(context);
                   },
-            child: const Text('Add Class'),
+            style: FilledButton.styleFrom(
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+            ),
+            child: const Text(
+              'Add Class',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 8),
         ],
       ),
     );
@@ -444,22 +550,65 @@ class _EditEntrySheetState extends ConsumerState<_EditEntrySheet> {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.only(
-        bottom: MediaQuery.of(context).viewInsets.bottom,
-        left: 16,
-        right: 16,
-        top: 24,
+    final theme = Theme.of(context);
+
+    return Container(
+      decoration: BoxDecoration(
+        color: theme.scaffoldBackgroundColor,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+      padding: EdgeInsets.fromLTRB(
+        24,
+        24,
+        24,
+        MediaQuery.of(context).viewInsets.bottom +
+            MediaQuery.of(context).padding.bottom +
+            24,
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text('Edit Class', style: Theme.of(context).textTheme.titleLarge),
-          const SizedBox(height: 16),
+          // Header
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'Edit Class',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              ),
+              IconButton(
+                onPressed: () => Navigator.pop(context),
+                icon: const Icon(Icons.close_rounded),
+                style: IconButton.styleFrom(
+                  backgroundColor: theme.colorScheme.surfaceContainerHighest
+                      .withValues(alpha: 0.3),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 24),
+
+          // Subject Dropdown
           DropdownButtonFormField<Subject>(
-            initialValue: _selectedSubject,
-            decoration: const InputDecoration(labelText: 'Subject'),
+            icon: const Icon(Icons.keyboard_arrow_down_rounded),
+            borderRadius: BorderRadius.circular(16),
+            decoration: InputDecoration(
+              labelText: 'Subject',
+              filled: true,
+              fillColor: theme.colorScheme.surfaceContainerHighest.withValues(
+                alpha: 0.3,
+              ),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: BorderSide.none,
+              ),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 20,
+                vertical: 16,
+              ),
+            ),
+            value: _selectedSubject,
             items: widget.subjects
                 .map((s) => DropdownMenuItem(value: s, child: Text(s.name)))
                 .toList(),
@@ -468,27 +617,66 @@ class _EditEntrySheetState extends ConsumerState<_EditEntrySheet> {
             },
           ),
           const SizedBox(height: 16),
+
+          // Time and Duration Row
           Row(
             children: [
               Expanded(
-                child: OutlinedButton(
-                  onPressed: () async {
+                child: InkWell(
+                  onTap: () async {
                     final t = await showTimePicker(
                       context: context,
                       initialTime: _startTime,
                     );
                     if (t != null) setState(() => _startTime = t);
                   },
-                  child: Text('Start: ${_startTime.format(context)}'),
+                  borderRadius: BorderRadius.circular(16),
+                  child: InputDecorator(
+                    decoration: InputDecoration(
+                      labelText: 'Start Time',
+                      filled: true,
+                      fillColor: theme.colorScheme.surfaceContainerHighest
+                          .withValues(alpha: 0.3),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: BorderSide.none,
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 16,
+                      ),
+                      suffixIcon: const Icon(
+                        Icons.access_time_rounded,
+                        size: 20,
+                      ),
+                    ),
+                    child: Text(
+                      _startTime.format(context),
+                      style: const TextStyle(fontSize: 16),
+                    ),
+                  ),
                 ),
               ),
               const SizedBox(width: 16),
               Expanded(
                 child: DropdownButtonFormField<double>(
-                  initialValue: _duration,
-                  decoration: const InputDecoration(
-                    labelText: 'Duration (hrs)',
+                  icon: const Icon(Icons.keyboard_arrow_down_rounded),
+                  borderRadius: BorderRadius.circular(16),
+                  decoration: InputDecoration(
+                    labelText: 'Duration',
+                    filled: true,
+                    fillColor: theme.colorScheme.surfaceContainerHighest
+                        .withValues(alpha: 0.3),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: BorderSide.none,
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 16,
+                    ),
                   ),
+                  value: _duration,
                   items: [0.5, 0.75, 50 / 60, 1.0, 1.5, 2.0, 3.0]
                       .map(
                         (d) => DropdownMenuItem(
@@ -502,7 +690,9 @@ class _EditEntrySheetState extends ConsumerState<_EditEntrySheet> {
               ),
             ],
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 32),
+
+          // Action Buttons
           Row(
             children: [
               Expanded(
@@ -513,10 +703,17 @@ class _EditEntrySheetState extends ConsumerState<_EditEntrySheet> {
                         .deleteTimetableEntry(widget.entry.id);
                     if (context.mounted) Navigator.pop(context);
                   },
-                  child: const Text(
-                    'Delete',
-                    style: TextStyle(color: Colors.red),
+                  style: TextButton.styleFrom(
+                    foregroundColor: theme.colorScheme.error,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      side: BorderSide(
+                        color: theme.colorScheme.error.withValues(alpha: 0.2),
+                      ),
+                    ),
                   ),
+                  child: const Text('Delete'),
                 ),
               ),
               const SizedBox(width: 16),
@@ -541,12 +738,21 @@ class _EditEntrySheetState extends ConsumerState<_EditEntrySheet> {
                         .updateTimetableEntry(updatedEntry);
                     if (context.mounted) Navigator.pop(context);
                   },
-                  child: const Text('Save Changes'),
+                  style: FilledButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                  ),
+                  child: const Text(
+                    'Save Changes',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 8),
         ],
       ),
     );

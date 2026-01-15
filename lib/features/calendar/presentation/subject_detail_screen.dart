@@ -167,6 +167,18 @@ class SubjectDetailScreen extends ConsumerWidget {
                           child: _buildAnalysisSection(context, stats),
                         ),
 
+                        const SizedBox(height: 48),
+
+                        // Subtle Divider
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 4),
+                          child: Divider(
+                            color: Theme.of(
+                              context,
+                            ).dividerColor.withValues(alpha: 0.1),
+                            thickness: 1,
+                          ),
+                        ),
                         const SizedBox(height: 32),
 
                         // History Header
@@ -190,7 +202,7 @@ class SubjectDetailScreen extends ConsumerWidget {
                             ),
                           ),
                         ),
-                        const SizedBox(height: 16),
+                        const SizedBox(height: 20),
 
                         // History List
                         FadeInSlide(

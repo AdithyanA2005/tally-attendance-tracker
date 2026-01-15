@@ -56,6 +56,42 @@ class AppTheme {
         color: _textSub.withValues(alpha: 0.1),
         thickness: 1,
       ),
+      timePickerTheme: TimePickerThemeData(
+        backgroundColor: _backgroundLight,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+        hourMinuteShape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        dayPeriodShape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        dayPeriodColor: WidgetStateColor.resolveWith(
+          (states) => states.contains(WidgetState.selected)
+              ? _primary
+              : _primary.withValues(alpha: 0.05),
+        ),
+        dayPeriodTextColor: WidgetStateColor.resolveWith(
+          (states) =>
+              states.contains(WidgetState.selected) ? Colors.white : _primary,
+        ),
+        hourMinuteColor: WidgetStateColor.resolveWith(
+          (states) => states.contains(WidgetState.selected)
+              ? _primary.withValues(alpha: 0.1)
+              : Colors.transparent,
+        ),
+        hourMinuteTextColor: WidgetStateColor.resolveWith(
+          (states) =>
+              states.contains(WidgetState.selected) ? _primary : _textSub,
+        ),
+        dialHandColor: _primary,
+        dialBackgroundColor: _primary.withValues(alpha: 0.05),
+        dialTextColor: WidgetStateColor.resolveWith(
+          (states) =>
+              states.contains(WidgetState.selected) ? Colors.white : _textDark,
+        ),
+        entryModeIconColor: _primary,
+        helpTextStyle: TextStyle(color: _textSub, fontSize: 14),
+      ),
     );
   }
 
@@ -88,6 +124,45 @@ class AppTheme {
           fontWeight: FontWeight.bold,
           letterSpacing: -0.5,
         ),
+      ),
+      timePickerTheme: TimePickerThemeData(
+        backgroundColor: const Color(0xFF1E1E1E),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+        hourMinuteShape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        dayPeriodShape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        dayPeriodColor: WidgetStateColor.resolveWith(
+          (states) => states.contains(WidgetState.selected)
+              ? Colors.white
+              : Colors.white.withValues(alpha: 0.05),
+        ),
+        dayPeriodTextColor: WidgetStateColor.resolveWith(
+          (states) => states.contains(WidgetState.selected)
+              ? const Color(0xFF1E1E1E)
+              : Colors.white,
+        ),
+        hourMinuteColor: WidgetStateColor.resolveWith(
+          (states) => states.contains(WidgetState.selected)
+              ? Colors.white.withValues(alpha: 0.1)
+              : Colors.transparent,
+        ),
+        hourMinuteTextColor: WidgetStateColor.resolveWith(
+          (states) => states.contains(WidgetState.selected)
+              ? Colors.white
+              : const Color(0xFFAAAAAA),
+        ),
+        dialHandColor: Colors.white,
+        dialBackgroundColor: Colors.white.withValues(alpha: 0.05),
+        dialTextColor: WidgetStateColor.resolveWith(
+          (states) => states.contains(WidgetState.selected)
+              ? const Color(0xFF1E1E1E)
+              : Colors.white,
+        ),
+        entryModeIconColor: Colors.white,
+        helpTextStyle: const TextStyle(color: Color(0xFFAAAAAA), fontSize: 14),
       ),
     );
   }

@@ -196,7 +196,6 @@ class InsightsScreen extends ConsumerWidget {
 
   Widget _buildMinimalSubjectCard(BuildContext context, SubjectStats subject) {
     final isSafe = subject.isSafe;
-    final color = isSafe ? const Color(0xFF27AE60) : const Color(0xFFC0392B);
     final theme = Theme.of(context);
 
     return AppCard(
