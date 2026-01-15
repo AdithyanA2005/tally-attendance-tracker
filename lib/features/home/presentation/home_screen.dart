@@ -444,112 +444,154 @@ class _TodayClassCard extends ConsumerWidget {
         ),
         child: ClipRRect(
           borderRadius: BorderRadius.circular(16),
-          child: Material(
-            color: Colors.transparent,
-            child: Column(
-              children: [
-                InkWell(
-                  onTap: () => _showEditDialog(context, ref),
-                  borderRadius: const BorderRadius.vertical(
-                    top: Radius.circular(16),
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Column(
+          child: Dismissible(
+            key: ValueKey('${item.subject.id}_${item.entry.startTime}'),
+            direction: DismissDirection.horizontal,
+            confirmDismiss: (direction) async {
+              if (direction == DismissDirection.startToEnd) {
+                // Swipe Right -> Present
+                _mark(context, ref, AttendanceStatus.present);
+                HapticFeedback.mediumImpact();
+              } else {
+                // Swipe Left -> Absent
+                _mark(context, ref, AttendanceStatus.absent);
+                HapticFeedback.mediumImpact();
+              }
+              return false;
+            },
+            background: Container(
+              alignment: Alignment.centerLeft,
+              padding: const EdgeInsets.only(left: 24),
+              color: const Color(0xFF27AE60), // Green for Present
+              child: const Icon(
+                Icons.check_circle_rounded,
+                color: Colors.white,
+                size: 32,
+              ),
+            ),
+            secondaryBackground: Container(
+              alignment: Alignment.centerRight,
+              padding: const EdgeInsets.only(right: 24),
+              color: const Color(0xFFC0392B), // Red for Absent
+              child: const Icon(
+                Icons.cancel_rounded,
+                color: Colors.white,
+                size: 32,
+              ),
+            ),
+            child: Container(
+              decoration: BoxDecoration(
+                color: theme.cardColor,
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Material(
+                color: Colors.transparent,
+                child: Column(
+                  children: [
+                    InkWell(
+                      onTap: () => _showEditDialog(context, ref),
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
-                              item.entry.startTime,
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.bold,
-                                color: isNow
-                                    ? theme.colorScheme.primary
-                                    : theme.colorScheme.onSurface,
-                              ),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  item.entry.startTime,
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold,
+                                    color: isNow
+                                        ? theme.colorScheme.primary
+                                        : theme.colorScheme.onSurface,
+                                  ),
+                                ),
+                                Text(
+                                  formatDuration(item.entry.durationInHours),
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: theme.colorScheme.tertiary,
+                                  ),
+                                ),
+                              ],
                             ),
-                            Text(
-                              formatDuration(item.entry.durationInHours),
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: theme.colorScheme.tertiary,
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: Text(
+                                          item.subject.name,
+                                          style: TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.w600,
+                                            color: theme.colorScheme.onSurface,
+                                          ),
+                                        ),
+                                      ),
+                                      if (isNow) ...[
+                                        const SizedBox(width: 8),
+                                        const _PulseIndicator(),
+                                      ],
+                                    ],
+                                  ),
+                                  if (item.subject.id !=
+                                      item.originalSubject.id)
+                                    Padding(
+                                      padding: const EdgeInsets.only(top: 4),
+                                      child: Text(
+                                        'Substituted for ${item.originalSubject.name}',
+                                        style: const TextStyle(
+                                          fontSize: 12,
+                                          color: Colors.orange,
+                                        ),
+                                      ),
+                                    ),
+                                ],
                               ),
                             ),
                           ],
                         ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: Text(
-                                      item.subject.name,
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w600,
-                                        color: theme.colorScheme.onSurface,
-                                      ),
-                                    ),
-                                  ),
-                                  if (isNow) ...[
-                                    const SizedBox(width: 8),
-                                    const _PulseIndicator(),
-                                  ],
-                                ],
-                              ),
-                              if (item.subject.id != item.originalSubject.id)
-                                Padding(
-                                  padding: const EdgeInsets.only(top: 4),
-                                  child: Text(
-                                    'Substituted for ${item.originalSubject.name}',
-                                    style: const TextStyle(
-                                      fontSize: 12,
-                                      color: Colors.orange,
-                                    ),
-                                  ),
-                                ),
-                            ],
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
-                  ),
-                ),
-                Container(
-                  height: 1,
-                  color: theme.dividerColor.withValues(alpha: 0.05),
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(8),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: _MiniActionButton(
-                          label: 'Present',
-                          icon: Icons.check_rounded,
-                          color: const Color(0xFF27AE60),
-                          onTap: () => _mark(ref, AttendanceStatus.present),
-                        ),
+                    Container(
+                      height: 1,
+                      color: theme.dividerColor.withValues(alpha: 0.05),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.all(8),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: _MiniActionButton(
+                              label: 'Present',
+                              icon: Icons.check_rounded,
+                              color: const Color(0xFF27AE60),
+                              onTap: () =>
+                                  _mark(context, ref, AttendanceStatus.present),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: _MiniActionButton(
+                              label: 'Absent',
+                              icon: Icons.close_rounded,
+                              color: const Color(0xFFC0392B),
+                              onTap: () =>
+                                  _mark(context, ref, AttendanceStatus.absent),
+                            ),
+                          ),
+                        ],
                       ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: _MiniActionButton(
-                          label: 'Absent',
-                          icon: Icons.close_rounded,
-                          color: const Color(0xFFC0392B),
-                          onTap: () => _mark(ref, AttendanceStatus.absent),
-                        ),
-                      ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
-              ],
+              ),
             ),
           ),
         ),
@@ -574,9 +616,17 @@ class _TodayClassCard extends ConsumerWidget {
     return AppTheme.statusColors[status] ?? Colors.black;
   }
 
-  void _mark(WidgetRef ref, AttendanceStatus status) async {
+  void _mark(
+    BuildContext context,
+    WidgetRef ref,
+    AttendanceStatus status,
+  ) async {
     HapticFeedback.lightImpact();
-    // Re-use existing logic
+
+    // Save the previous state to restore if undone
+    final previousStatus = item.existingSession?.status;
+    final isNew = item.existingSession == null;
+
     final session = ClassSession(
       id: item.existingSession?.id.isNotEmpty == true
           ? item.existingSession!.id
@@ -585,8 +635,36 @@ class _TodayClassCard extends ConsumerWidget {
       date: item.scheduledTime,
       status: status,
     );
-    await ref.read(attendanceRepositoryProvider).logSession(session);
-    // Auto-updates via stream
+
+    final repo = ref.read(attendanceRepositoryProvider);
+    await repo.logSession(session);
+
+    if (!context.mounted) return;
+
+    ScaffoldMessenger.of(context).clearSnackBars();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        behavior: SnackBarBehavior.floating,
+        content: Text(
+          'Marked as ${status.name.toUpperCase()}',
+          style: const TextStyle(fontWeight: FontWeight.w600),
+        ),
+        action: SnackBarAction(
+          label: 'UNDO',
+          onPressed: () async {
+            if (isNew) {
+              // If it was new, we should delete it to "unmark" it.
+              // Assuming repo has deleteSession. If not, we set to cancelled.
+              // For now, we'll try to delete if the ID exists.
+              await repo.deleteSession(session.id);
+            } else if (previousStatus != null) {
+              // Restore previous status
+              await repo.logSession(session.copyWith(status: previousStatus));
+            }
+          },
+        ),
+      ),
+    );
   }
 
   void _showEditDialog(BuildContext context, WidgetRef ref) async {

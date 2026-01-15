@@ -42,4 +42,22 @@ class ClassSession extends HiveObject {
     this.isExtraClass = false,
     this.notes,
   });
+
+  ClassSession copyWith({
+    String? id,
+    String? subjectId,
+    DateTime? date,
+    AttendanceStatus? status,
+    bool? isExtraClass,
+    String? notes,
+  }) {
+    return ClassSession(
+      id: id ?? this.id,
+      subjectId: subjectId ?? this.subjectId,
+      date: date ?? this.date,
+      status: status ?? this.status,
+      isExtraClass: isExtraClass ?? this.isExtraClass,
+      notes: notes ?? this.notes,
+    );
+  }
 }
