@@ -359,7 +359,6 @@ class _TodayClassCard extends ConsumerWidget {
     );
 
     final isNow = nowTime.isAfter(startTime) && nowTime.isBefore(endTime);
-    final isPast = nowTime.isAfter(endTime);
 
     if (isMarked) {
       return Container(
@@ -414,183 +413,179 @@ class _TodayClassCard extends ConsumerWidget {
       );
     }
 
-    return Opacity(
-      opacity: isPast ? 0.6 : 1.0,
-      child: Container(
-        decoration: BoxDecoration(
-          color: theme.cardColor,
-          borderRadius: BorderRadius.circular(16),
-          border: isNow
-              ? Border.all(
-                  color: theme.colorScheme.primary.withValues(alpha: 0.3),
-                  width: 1,
-                )
-              : Border.all(color: theme.dividerColor.withValues(alpha: 0.1)),
-          boxShadow: [
-            if (isNow)
-              BoxShadow(
-                color: theme.colorScheme.primary.withValues(alpha: 0.25),
-                blurRadius: 20,
-                offset: const Offset(0, 8),
-                spreadRadius: -2,
+    return Container(
+      decoration: BoxDecoration(
+        color: theme.cardColor,
+        borderRadius: BorderRadius.circular(16),
+        border: isNow
+            ? Border.all(
+                color: theme.colorScheme.primary.withValues(alpha: 0.15),
+                width: 1,
               )
-            else
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.02),
-                blurRadius: 10,
-                offset: const Offset(0, 4),
-              ),
-          ],
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(16),
-          child: Dismissible(
-            key: ValueKey('${item.subject.id}_${item.entry.startTime}'),
-            direction: DismissDirection.horizontal,
-            confirmDismiss: (direction) async {
-              if (direction == DismissDirection.startToEnd) {
-                // Swipe Right -> Present
-                _mark(context, ref, AttendanceStatus.present);
-                HapticFeedback.mediumImpact();
-              } else {
-                // Swipe Left -> Absent
-                _mark(context, ref, AttendanceStatus.absent);
-                HapticFeedback.mediumImpact();
-              }
-              return false;
-            },
-            background: Container(
-              alignment: Alignment.centerLeft,
-              padding: const EdgeInsets.only(left: 24),
-              color: const Color(0xFF27AE60), // Green for Present
-              child: const Icon(
-                Icons.check_circle_rounded,
-                color: Colors.white,
-                size: 32,
-              ),
+            : Border.all(color: theme.dividerColor.withValues(alpha: 0.1)),
+        boxShadow: [
+          if (isNow)
+            BoxShadow(
+              color: theme.colorScheme.primary.withValues(alpha: 0.12),
+              blurRadius: 16,
+              offset: const Offset(0, 6),
+              spreadRadius: 0,
+            )
+          else
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.02),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
             ),
-            secondaryBackground: Container(
-              alignment: Alignment.centerRight,
-              padding: const EdgeInsets.only(right: 24),
-              color: const Color(0xFFC0392B), // Red for Absent
-              child: const Icon(
-                Icons.cancel_rounded,
-                color: Colors.white,
-                size: 32,
-              ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(16),
+        child: Dismissible(
+          key: ValueKey('${item.subject.id}_${item.entry.startTime}'),
+          direction: DismissDirection.horizontal,
+          confirmDismiss: (direction) async {
+            if (direction == DismissDirection.startToEnd) {
+              // Swipe Right -> Present
+              _mark(context, ref, AttendanceStatus.present);
+              HapticFeedback.mediumImpact();
+            } else {
+              // Swipe Left -> Absent
+              _mark(context, ref, AttendanceStatus.absent);
+              HapticFeedback.mediumImpact();
+            }
+            return false;
+          },
+          background: Container(
+            alignment: Alignment.centerLeft,
+            padding: const EdgeInsets.only(left: 24),
+            color: const Color(0xFF27AE60), // Green for Present
+            child: const Icon(
+              Icons.check_circle_rounded,
+              color: Colors.white,
+              size: 32,
             ),
-            child: Container(
-              decoration: BoxDecoration(
-                color: theme.cardColor,
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Material(
-                color: Colors.transparent,
-                child: Column(
-                  children: [
-                    InkWell(
-                      onTap: () => _showEditDialog(context, ref),
-                      child: Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Column(
+          ),
+          secondaryBackground: Container(
+            alignment: Alignment.centerRight,
+            padding: const EdgeInsets.only(right: 24),
+            color: const Color(0xFFC0392B), // Red for Absent
+            child: const Icon(
+              Icons.cancel_rounded,
+              color: Colors.white,
+              size: 32,
+            ),
+          ),
+          child: Container(
+            decoration: BoxDecoration(
+              color: theme.cardColor,
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Material(
+              color: Colors.transparent,
+              child: Column(
+                children: [
+                  InkWell(
+                    onTap: () => _showEditDialog(context, ref),
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                item.entry.startTime,
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                  color: isNow
+                                      ? theme.colorScheme.primary
+                                      : theme.colorScheme.onSurface,
+                                ),
+                              ),
+                              Text(
+                                formatDuration(item.entry.durationInHours),
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: theme.colorScheme.tertiary,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(
-                                  item.entry.startTime,
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.bold,
-                                    color: isNow
-                                        ? theme.colorScheme.primary
-                                        : theme.colorScheme.onSurface,
-                                  ),
-                                ),
-                                Text(
-                                  formatDuration(item.entry.durationInHours),
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color: theme.colorScheme.tertiary,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(width: 16),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
-                                    children: [
-                                      Expanded(
-                                        child: Text(
-                                          item.subject.name,
-                                          style: TextStyle(
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.w600,
-                                            color: theme.colorScheme.onSurface,
-                                          ),
-                                        ),
-                                      ),
-                                      if (isNow) ...[
-                                        const SizedBox(width: 8),
-                                        const _PulseIndicator(),
-                                      ],
-                                    ],
-                                  ),
-                                  if (item.subject.id !=
-                                      item.originalSubject.id)
-                                    Padding(
-                                      padding: const EdgeInsets.only(top: 4),
+                                Row(
+                                  children: [
+                                    Expanded(
                                       child: Text(
-                                        'Substituted for ${item.originalSubject.name}',
-                                        style: const TextStyle(
-                                          fontSize: 12,
-                                          color: Colors.orange,
+                                        item.subject.name,
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w600,
+                                          color: theme.colorScheme.onSurface,
                                         ),
                                       ),
                                     ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    Container(
-                      height: 1,
-                      color: theme.dividerColor.withValues(alpha: 0.05),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.all(8),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: _MiniActionButton(
-                              label: 'Present',
-                              icon: Icons.check_rounded,
-                              color: const Color(0xFF27AE60),
-                              onTap: () =>
-                                  _mark(context, ref, AttendanceStatus.present),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: _MiniActionButton(
-                              label: 'Absent',
-                              icon: Icons.close_rounded,
-                              color: const Color(0xFFC0392B),
-                              onTap: () =>
-                                  _mark(context, ref, AttendanceStatus.absent),
+                                    if (isNow) ...[
+                                      const SizedBox(width: 8),
+                                      const _PulseIndicator(),
+                                    ],
+                                  ],
+                                ),
+                                if (item.subject.id != item.originalSubject.id)
+                                  Padding(
+                                    padding: const EdgeInsets.only(top: 4),
+                                    child: Text(
+                                      'Substituted for ${item.originalSubject.name}',
+                                      style: const TextStyle(
+                                        fontSize: 12,
+                                        color: Colors.orange,
+                                      ),
+                                    ),
+                                  ),
+                              ],
                             ),
                           ),
                         ],
                       ),
                     ),
-                  ],
-                ),
+                  ),
+                  Container(
+                    height: 1,
+                    color: theme.dividerColor.withValues(alpha: 0.05),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.all(8),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: _MiniActionButton(
+                            label: 'Present',
+                            icon: Icons.check_rounded,
+                            color: const Color(0xFF27AE60),
+                            onTap: () =>
+                                _mark(context, ref, AttendanceStatus.present),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: _MiniActionButton(
+                            label: 'Absent',
+                            icon: Icons.close_rounded,
+                            color: const Color(0xFFC0392B),
+                            onTap: () =>
+                                _mark(context, ref, AttendanceStatus.absent),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
