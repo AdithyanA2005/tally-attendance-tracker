@@ -492,6 +492,16 @@ class _TodayClassCard extends ConsumerWidget {
                       child: Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
+                          // Minimal Color Strip Indicator
+                          Container(
+                            width: 4,
+                            height: 48,
+                            decoration: BoxDecoration(
+                              color: item.subject.color,
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -554,10 +564,6 @@ class _TodayClassCard extends ConsumerWidget {
                         ],
                       ),
                     ),
-                  ),
-                  Container(
-                    height: 1,
-                    color: theme.dividerColor.withValues(alpha: 0.05),
                   ),
                   Padding(
                     padding: const EdgeInsets.all(8),

@@ -227,10 +227,10 @@ class InsightsScreen extends ConsumerWidget {
                     Row(
                       children: [
                         Container(
-                          width: 6,
-                          height: 6,
+                          width: 8,
+                          height: 8,
                           decoration: BoxDecoration(
-                            color: color,
+                            color: subject.subject.color,
                             shape: BoxShape.circle,
                           ),
                         ),
