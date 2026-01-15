@@ -9,12 +9,15 @@ class AppCard extends StatelessWidget {
   final VoidCallback? onTap;
   final Color? backgroundColor;
 
+  final BoxBorder? border;
+
   const AppCard({
     super.key,
     required this.child,
     this.padding,
     this.onTap,
     this.backgroundColor,
+    this.border,
   });
 
   @override
@@ -24,7 +27,9 @@ class AppCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: backgroundColor ?? theme.cardColor,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: theme.dividerColor.withValues(alpha: 0.1)),
+        border:
+            border ??
+            Border.all(color: theme.dividerColor.withValues(alpha: 0.1)),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.02),

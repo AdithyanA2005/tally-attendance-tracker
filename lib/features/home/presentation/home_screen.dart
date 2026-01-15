@@ -6,7 +6,7 @@ import 'package:uuid/uuid.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/presentation/animations/fade_in_slide.dart';
-import '../../../../core/presentation/widgets/app_card.dart';
+
 import '../../../../core/presentation/widgets/timeline_item.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/utils/string_utils.dart';
@@ -352,6 +352,15 @@ class _TodayClassCard extends ConsumerWidget {
     final isMarked = item.currentStatus != AttendanceStatus.unmarked;
     final theme = Theme.of(context);
 
+    final nowTime = DateTime.now();
+    final startTime = item.scheduledTime;
+    final endTime = startTime.add(
+      Duration(minutes: (item.entry.durationInHours * 60).toInt()),
+    );
+
+    final isNow = nowTime.isAfter(startTime) && nowTime.isBefore(endTime);
+    final isPast = nowTime.isAfter(endTime);
+
     if (isMarked) {
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -405,97 +414,144 @@ class _TodayClassCard extends ConsumerWidget {
       );
     }
 
-    return AppCard(
-      padding: EdgeInsets.zero,
-      child: InkWell(
-        onTap: () => _showEditDialog(context, ref),
-        borderRadius: BorderRadius.circular(16),
-        child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+    return Opacity(
+      opacity: isPast ? 0.6 : 1.0,
+      child: Container(
+        decoration: BoxDecoration(
+          color: theme.cardColor,
+          borderRadius: BorderRadius.circular(16),
+          border: isNow
+              ? Border.all(
+                  color: theme.colorScheme.primary.withValues(alpha: 0.3),
+                  width: 1,
+                )
+              : Border.all(color: theme.dividerColor.withValues(alpha: 0.1)),
+          boxShadow: [
+            if (isNow)
+              BoxShadow(
+                color: theme.colorScheme.primary.withValues(alpha: 0.25),
+                blurRadius: 20,
+                offset: const Offset(0, 8),
+                spreadRadius: -2,
+              )
+            else
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.02),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(16),
+          child: Material(
+            color: Colors.transparent,
+            child: Column(
+              children: [
+                InkWell(
+                  onTap: () => _showEditDialog(context, ref),
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(16),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              item.entry.startTime,
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                                color: isNow
+                                    ? theme.colorScheme.primary
+                                    : theme.colorScheme.onSurface,
+                              ),
+                            ),
+                            Text(
+                              formatDuration(item.entry.durationInHours),
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: theme.colorScheme.tertiary,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      item.subject.name,
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w600,
+                                        color: theme.colorScheme.onSurface,
+                                      ),
+                                    ),
+                                  ),
+                                  if (isNow) ...[
+                                    const SizedBox(width: 8),
+                                    const _PulseIndicator(),
+                                  ],
+                                ],
+                              ),
+                              if (item.subject.id != item.originalSubject.id)
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 4),
+                                  child: Text(
+                                    'Substituted for ${item.originalSubject.name}',
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.orange,
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                Container(
+                  height: 1,
+                  color: theme.dividerColor.withValues(alpha: 0.05),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(8),
+                  child: Row(
                     children: [
-                      Text(
-                        item.entry.startTime,
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                          color: theme.colorScheme.onSurface,
+                      Expanded(
+                        child: _MiniActionButton(
+                          label: 'Present',
+                          icon: Icons.check_rounded,
+                          color: const Color(0xFF27AE60),
+                          onTap: () => _mark(ref, AttendanceStatus.present),
                         ),
                       ),
-                      Text(
-                        formatDuration(item.entry.durationInHours),
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: theme.colorScheme.tertiary,
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: _MiniActionButton(
+                          label: 'Absent',
+                          icon: Icons.close_rounded,
+                          color: const Color(0xFFC0392B),
+                          onTap: () => _mark(ref, AttendanceStatus.absent),
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          item.subject.name,
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                            color: theme.colorScheme.onSurface,
-                          ),
-                        ),
-                        if (item.subject.id != item.originalSubject.id)
-                          Padding(
-                            padding: const EdgeInsets.only(top: 4),
-                            child: Text(
-                              'Substituted for ${item.originalSubject.name}',
-                              style: const TextStyle(
-                                fontSize: 12,
-                                color: Colors.orange,
-                              ),
-                            ),
-                          ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
-            Container(
-              height: 1,
-              color: theme.dividerColor.withValues(alpha: 0.05),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(8),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: _MiniActionButton(
-                      label: 'Present',
-                      icon: Icons.check_rounded,
-                      color: const Color(0xFF27AE60),
-                      onTap: () => _mark(ref, AttendanceStatus.present),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: _MiniActionButton(
-                      label: 'Absent',
-                      icon: Icons.close_rounded,
-                      color: const Color(0xFFC0392B),
-                      onTap: () => _mark(ref, AttendanceStatus.absent),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );
@@ -711,4 +767,75 @@ class _EmptyStateActionButton extends StatelessWidget {
       ),
     );
   }
+}
+
+class _PulseIndicator extends StatefulWidget {
+  const _PulseIndicator();
+
+  @override
+  State<_PulseIndicator> createState() => _PulseIndicatorState();
+}
+
+class _PulseIndicatorState extends State<_PulseIndicator>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1500),
+    )..repeat();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final primary = Theme.of(context).colorScheme.primary;
+
+    return RepaintBoundary(
+      child: CustomPaint(
+        painter: _RadarPainter(_controller, primary),
+        size: const Size(12, 12),
+      ),
+    );
+  }
+}
+
+class _RadarPainter extends CustomPainter {
+  final Animation<double> _animation;
+  final Color _color;
+
+  _RadarPainter(this._animation, this._color) : super(repaint: _animation);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width / 2, size.height / 2);
+    final radius = size.width / 2;
+
+    // Draw expanding ring
+    final ringPaint = Paint()
+      ..color = _color.withValues(alpha: 0.3 * (1 - _animation.value))
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.5;
+
+    final ringRadius = radius * 0.4 + (radius * 1.6 * _animation.value);
+    canvas.drawCircle(center, ringRadius, ringPaint);
+
+    // Draw main solid dot
+    final dotPaint = Paint()
+      ..color = _color
+      ..style = PaintingStyle.fill;
+
+    canvas.drawCircle(center, radius * 0.5, dotPaint);
+  }
+
+  @override
+  bool shouldRepaint(covariant _RadarPainter oldDelegate) => true;
 }
