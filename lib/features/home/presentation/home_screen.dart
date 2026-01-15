@@ -17,6 +17,10 @@ import '../../calendar/presentation/providers/attendance_provider.dart';
 import '../../calendar/presentation/widgets/edit_session_sheet.dart';
 import '../../settings/presentation/providers/today_classes_provider.dart';
 
+/// The dashboard of the application showing today's schedule.
+///
+/// Displays an overview of classes for the current day, allowing quick
+/// attendance marking and navigation to session details.
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
 

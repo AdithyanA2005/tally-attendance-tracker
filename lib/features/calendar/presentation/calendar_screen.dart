@@ -18,6 +18,10 @@ import '../../../../core/presentation/widgets/empty_state.dart';
 import '../../../../core/presentation/widgets/status_badge.dart';
 import '../../../../core/theme/app_theme.dart';
 
+/// The main calendar interface for the application.
+///
+/// Displays a monthly view using [TableCalendar] and a daily schedule list.
+/// Handles session interactions, substitutions, and extra class creation.
 class CalendarScreen extends ConsumerStatefulWidget {
   const CalendarScreen({super.key});
 
@@ -474,16 +478,14 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     List<TimetableEntry> timetable,
     DateTime semesterStart,
   ) {
-    if (day.year < 2023) return []; // Optimization
+    // Optimization: Skip calculations for dates well before app usage
+    if (day.year < 2023) return [];
 
     final dayEvents = _getEventsForDay(day, allEvents);
 
-    // Check semester start
-    // If selected day is BEFORE semester start, ignore timetable
-    // Only show manually logged events (dayEvents)
+    // If selected day is before the official semester start, ignore the timetable
+    // and only show manually logged extra sessions.
     final checkDate = DateTime(day.year, day.month, day.day);
-    // semesterStart usually has 00:00:00 time
-    // If checkDate is before semesterStart, return only what's logged
     if (checkDate.isBefore(semesterStart)) {
       return dayEvents..sort((a, b) => a.date.compareTo(b.date));
     }
@@ -503,8 +505,9 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
           final h = int.parse(timeParts[0]);
           final m = int.parse(timeParts[1]);
 
-          // Strict time match (Timetable slot vs Recorded Session time)
-          // If a session exists at this time, it FILLS this slot, even if subject differs (Swap)
+          // Match Timetable slot with Session record.
+          // If a session exists at this exact time, it overrides the default timetable subject
+          // (e.g. a substitution or swap).
           return s.date.hour == h && s.date.minute == m;
         });
       } catch (_) {}

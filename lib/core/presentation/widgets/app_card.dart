@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 
+/// A consistent card container used throughout the application.
+///
+/// Provides standardized border, shadow, and background styles.
 class AppCard extends StatelessWidget {
   final Widget child;
   final EdgeInsetsGeometry? padding;

@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 
+/// A widget to display when no data is available.
+///
+/// Shows an icon, title, and subtitle to guide the user.
 class EmptyState extends StatelessWidget {
   final IconData icon;
   final String title;

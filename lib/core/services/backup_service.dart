@@ -15,6 +15,10 @@ import '../../features/settings/data/models/timetable_entry_model.dart';
 import '../../features/settings/data/repositories/settings_repository.dart';
 import '../data/local_storage_service.dart';
 
+/// Service handling data import/export functionality.
+///
+/// Supports generating a JSON backup of all app data (Subjects, Sessions, Timetable)
+/// and restoring it. Uses `file_saver` for downloads and `file_picker` for uploads.
 class BackupService {
   final LocalStorageService _localStorage;
   final SettingsRepository _settingsRepo;
@@ -22,13 +26,11 @@ class BackupService {
   BackupService(this._localStorage, this._settingsRepo);
 
   Future<String> _generateBackupJson() async {
-    // 1. Gather all data
     final subjects = _localStorage.subjectBox.values.toList();
     final sessions = _localStorage.sessionBox.values.toList();
     final timetable = _localStorage.timetableBox.values.toList();
     final semesterStartDate = _settingsRepo.getSemesterStartDate();
 
-    // 2. Serialize
     final data = {
       'meta': {
         'version': 1,
@@ -118,7 +120,7 @@ class BackupService {
         throw Exception('Invalid backup file format');
       }
 
-      // 3. Clear existing data
+      // Clear existing data
       await _localStorage.subjectBox.clear();
       await _localStorage.sessionBox.clear();
       await _localStorage.timetableBox.clear();

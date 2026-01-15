@@ -3,6 +3,10 @@ import '../../features/calendar/data/models/subject_model.dart';
 import '../../features/calendar/data/models/session_model.dart';
 import '../../features/settings/data/models/timetable_entry_model.dart';
 
+/// Service responsible for initializing and accessing Hive local storage boxes.
+///
+/// This handles TypeAdapters registration and opening specific boxes for
+/// Subjects, Sessions, and Timetable entries.
 class LocalStorageService {
   static const String subjectBoxName = 'subjects';
   static const String sessionBoxName = 'sessions';
