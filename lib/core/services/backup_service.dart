@@ -85,7 +85,7 @@ class BackupService {
     await FileSaver.instance.saveAs(
       name: fileName,
       bytes: Uint8List.fromList(utf8.encode(jsonString)),
-      ext: 'json',
+      fileExtension: 'json',
       mimeType: MimeType.json,
     );
   }
@@ -97,7 +97,9 @@ class BackupService {
         'attendance_backup_${DateTime.now().millisecondsSinceEpoch}.json';
     final file = File('${tempDir.path}/$fileName');
     await file.writeAsString(jsonString);
-    await Share.shareXFiles([XFile(file.path)], text: 'My Attendance Backup');
+    await SharePlus.instance.share(
+      ShareParams(text: 'My Attendance Backup', files: [XFile(file.path)]),
+    );
   }
 
   Future<void> importData() async {

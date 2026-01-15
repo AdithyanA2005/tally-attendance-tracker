@@ -1,0 +1,27 @@
+Running Gradle task 'assembleDebug'...                          
+e: file:///home/adi/.pub-cache/hosted/pub.dev/share_plus-12.0.1/android/src/main/kotlin/dev/fluttercommunity/plus/share/MethodCallHandler.kt:10:26 Unresolved reference 'ShareSuccessManager'.
+e: file:///home/adi/.pub-cache/hosted/pub.dev/share_plus-12.0.1/android/src/main/kotlin/dev/fluttercommunity/plus/share/MethodCallHandler.kt:21:21 Unresolved reference 'setCallback'.
+e: file:///home/adi/.pub-cache/hosted/pub.dev/share_plus-12.0.1/android/src/main/kotlin/dev/fluttercommunity/plus/share/Share.kt:22:26 Unresolved reference 'ShareSuccessManager'.
+e: file:///home/adi/.pub-cache/hosted/pub.dev/share_plus-12.0.1/android/src/main/kotlin/dev/fluttercommunity/plus/share/Share.kt:126:41 Unresolved reference 'SharePlusPendingIntent'.
+e: file:///home/adi/.pub-cache/hosted/pub.dev/share_plus-12.0.1/android/src/main/kotlin/dev/fluttercommunity/plus/share/Share.kt:126:71 Cannot infer type for type parameter 'T'. Specify it explicitly.
+e: file:///home/adi/.pub-cache/hosted/pub.dev/share_plus-12.0.1/android/src/main/kotlin/dev/fluttercommunity/plus/share/Share.kt:126:71 Unresolved reference. None of the following candidates is applicable because of a receiver type mismatch:
+val <T> KClass<T>.java: Class<T>
+e: file:///home/adi/.pub-cache/hosted/pub.dev/share_plus-12.0.1/android/src/main/kotlin/dev/fluttercommunity/plus/share/Share.kt:158:59 Unresolved reference 'ShareSuccessManager'.
+e: file:///home/adi/.pub-cache/hosted/pub.dev/share_plus-12.0.1/android/src/main/kotlin/dev/fluttercommunity/plus/share/Share.kt:166:25 Unresolved reference 'unavailable'.
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':share_plus:compileDebugKotlin'.
+> A failure occurred while executing org.jetbrains.kotlin.compilerRunner.GradleCompilerRunnerWithWorkers$GradleKotlinCompilerWorkAction
+   > Compilation error. See log for more details
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights.
+> Get more help at https://help.gradle.org.
+
+BUILD FAILED in 9s
+Running Gradle task 'assembleDebug'...                              9.5s
+Gradle task assembleDebug failed with exit code 1
