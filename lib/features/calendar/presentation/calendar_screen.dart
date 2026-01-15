@@ -177,9 +177,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                             }
 
                             // Mixed state only
-                            final dotColor = const Color(
-                              0xFF2D3436,
-                            ); // Obsidian
+                            const dotColor = Color(0xFF2D3436); // Obsidian
 
                             // Check if this date is the selected date
                             final isSelected = isSameDay(date, _selectedDay);
@@ -225,7 +223,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                         child: Divider(
                           color: Theme.of(
                             context,
-                          ).dividerColor.withOpacity(0.1),
+                          ).dividerColor.withValues(alpha: 0.1),
                         ),
                       ),
                       if (combinedEvents.isEmpty)

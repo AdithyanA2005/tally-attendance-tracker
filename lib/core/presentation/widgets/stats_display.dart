@@ -19,7 +19,7 @@ class StatsDisplay extends StatelessWidget {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon, size: 24, color: color.withOpacity(0.8)),
+        Icon(icon, size: 24, color: color.withValues(alpha: 0.8)),
         const SizedBox(height: 8),
         Text(
           value,

@@ -123,7 +123,7 @@ class SubjectDetailScreen extends ConsumerWidget {
                               height: 40,
                               color: Theme.of(
                                 context,
-                              ).dividerColor.withOpacity(0.1),
+                              ).dividerColor.withValues(alpha: 0.1),
                             ),
                             Expanded(
                               child: StatsDisplay(
@@ -139,7 +139,7 @@ class SubjectDetailScreen extends ConsumerWidget {
                               height: 40,
                               color: Theme.of(
                                 context,
-                              ).dividerColor.withOpacity(0.1),
+                              ).dividerColor.withValues(alpha: 0.1),
                             ),
                             Expanded(
                               child: StatsDisplay(
@@ -212,11 +212,11 @@ class SubjectDetailScreen extends ConsumerWidget {
             color: Theme.of(context).cardColor,
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: Theme.of(context).dividerColor.withOpacity(0.1),
+              color: Theme.of(context).dividerColor.withValues(alpha: 0.1),
             ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.02),
+                color: Colors.black.withValues(alpha: 0.02),
                 blurRadius: 10,
                 offset: const Offset(0, 4),
               ),
@@ -227,7 +227,7 @@ class SubjectDetailScreen extends ConsumerWidget {
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF2980B9).withOpacity(0.1),
+                  color: const Color(0xFF2980B9).withValues(alpha: 0.1),
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(
@@ -269,19 +269,19 @@ class SubjectDetailScreen extends ConsumerWidget {
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             color: stats.isSafe
-                ? const Color(0xFF27AE60).withOpacity(0.05)
-                : const Color(0xFFC0392B).withOpacity(0.05),
+                ? const Color(0xFF27AE60).withValues(alpha: 0.05)
+                : const Color(0xFFC0392B).withValues(alpha: 0.05),
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
               color: stats.isSafe
-                  ? const Color(0xFF27AE60).withOpacity(0.1)
-                  : const Color(0xFFC0392B).withOpacity(0.1),
+                  ? const Color(0xFF27AE60).withValues(alpha: 0.1)
+                  : const Color(0xFFC0392B).withValues(alpha: 0.1),
             ),
             boxShadow: [
               BoxShadow(
                 color: stats.isSafe
-                    ? const Color(0xFF27AE60).withOpacity(0.05)
-                    : const Color(0xFFC0392B).withOpacity(0.05),
+                    ? const Color(0xFF27AE60).withValues(alpha: 0.05)
+                    : const Color(0xFFC0392B).withValues(alpha: 0.05),
                 blurRadius: 10,
                 offset: const Offset(0, 4),
               ),

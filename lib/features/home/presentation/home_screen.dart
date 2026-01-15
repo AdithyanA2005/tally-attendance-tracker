@@ -121,27 +121,29 @@ class _TodayClassCard extends ConsumerWidget {
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
-          color: theme.cardColor.withOpacity(0.3),
+          color: theme.cardColor.withValues(alpha: 0.3),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: theme.dividerColor.withOpacity(0.05)),
+          border: Border.all(color: theme.dividerColor.withValues(alpha: 0.05)),
         ),
         child: Row(
           children: [
             Icon(
               _getStatusIcon(item.currentStatus),
               size: 20,
-              color: _getStatusColor(item.currentStatus).withOpacity(0.5),
+              color: _getStatusColor(item.currentStatus).withValues(alpha: 0.5),
             ),
             const SizedBox(width: 12),
             Expanded(
               child: Text(
                 item.subject.name,
                 style: TextStyle(
-                  color: theme.colorScheme.onSurface.withOpacity(0.5),
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
                   fontWeight: FontWeight.w500,
                   fontSize: 14,
                   decoration: TextDecoration.lineThrough,
-                  decorationColor: theme.colorScheme.onSurface.withOpacity(0.3),
+                  decorationColor: theme.colorScheme.onSurface.withValues(
+                    alpha: 0.3,
+                  ),
                 ),
               ),
             ),
@@ -229,13 +231,16 @@ class _TodayClassCard extends ConsumerWidget {
                   borderRadius: BorderRadius.circular(20),
                   child: Icon(
                     Icons.more_horiz_rounded,
-                    color: theme.colorScheme.onSurface.withOpacity(0.3),
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.3),
                   ),
                 ),
               ],
             ),
           ),
-          Container(height: 1, color: theme.dividerColor.withOpacity(0.05)),
+          Container(
+            height: 1,
+            color: theme.dividerColor.withValues(alpha: 0.05),
+          ),
           Padding(
             padding: const EdgeInsets.all(8),
             child: Row(
@@ -351,7 +356,7 @@ class _MiniActionButton extends StatelessWidget {
           padding: const EdgeInsets.symmetric(vertical: 12),
           decoration: BoxDecoration(
             // Use the specific color tint to differentiate (Green tint vs Red tint)
-            color: color.withOpacity(0.1),
+            color: color.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(16),
           ),
           child: Row(

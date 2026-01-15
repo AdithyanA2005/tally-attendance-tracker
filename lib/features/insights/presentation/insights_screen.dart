@@ -172,7 +172,7 @@ class InsightsScreen extends ConsumerWidget {
         Container(
           width: 1,
           height: 40,
-          color: Theme.of(context).dividerColor.withOpacity(0.2),
+          color: Theme.of(context).dividerColor.withValues(alpha: 0.2),
         ),
         Expanded(
           child: StatsDisplay(

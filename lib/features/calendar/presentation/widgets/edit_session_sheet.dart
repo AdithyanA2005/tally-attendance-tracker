@@ -75,7 +75,7 @@ class _EditSessionSheetState extends ConsumerState<EditSessionSheet> {
                 icon: const Icon(Icons.close_rounded),
                 style: IconButton.styleFrom(
                   backgroundColor: theme.colorScheme.surfaceContainerHighest
-                      .withOpacity(0.3),
+                      .withValues(alpha: 0.3),
                 ),
               ),
             ],
@@ -89,8 +89,8 @@ class _EditSessionSheetState extends ConsumerState<EditSessionSheet> {
             decoration: InputDecoration(
               labelText: 'Subject',
               filled: true,
-              fillColor: theme.colorScheme.surfaceContainerHighest.withOpacity(
-                0.3,
+              fillColor: theme.colorScheme.surfaceContainerHighest.withValues(
+                alpha: 0.3,
               ),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(16),
@@ -121,8 +121,8 @@ class _EditSessionSheetState extends ConsumerState<EditSessionSheet> {
             decoration: InputDecoration(
               labelText: 'Status',
               filled: true,
-              fillColor: theme.colorScheme.surfaceContainerHighest.withOpacity(
-                0.3,
+              fillColor: theme.colorScheme.surfaceContainerHighest.withValues(
+                alpha: 0.3,
               ),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(16),
@@ -168,7 +168,7 @@ class _EditSessionSheetState extends ConsumerState<EditSessionSheet> {
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(16),
                       side: BorderSide(
-                        color: theme.colorScheme.error.withOpacity(0.2),
+                        color: theme.colorScheme.error.withValues(alpha: 0.2),
                       ),
                     ),
                   ),

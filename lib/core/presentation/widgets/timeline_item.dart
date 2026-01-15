@@ -41,7 +41,7 @@ class TimelineItem extends StatelessWidget {
                     width: 2,
                     color:
                         lineColor ??
-                        Theme.of(context).dividerColor.withOpacity(0.2),
+                        Theme.of(context).dividerColor.withValues(alpha: 0.2),
                   ),
                 ),
             ],
