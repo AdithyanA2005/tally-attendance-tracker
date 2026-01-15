@@ -34,15 +34,17 @@ class ShellScreen extends StatelessWidget {
           data: NavigationBarThemeData(
             height: 70,
             backgroundColor: Colors.transparent,
-            indicatorColor: const Color(
-              0xFF2D3436,
-            ).withValues(alpha: 0.1), // Subtle Obsidian Tint
+            indicatorColor: Theme.of(context).brightness == Brightness.light
+                ? const Color(0xFF2D3436).withValues(alpha: 0.1)
+                : Theme.of(context).colorScheme.primary.withValues(alpha: 0.15),
             labelTextStyle: WidgetStateProperty.resolveWith((states) {
               if (states.contains(WidgetState.selected)) {
-                return const TextStyle(
+                return TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFF2D3436),
+                  color: Theme.of(context).brightness == Brightness.light
+                      ? const Color(0xFF2D3436)
+                      : Theme.of(context).colorScheme.primary,
                 );
               }
               return TextStyle(
@@ -53,7 +55,11 @@ class ShellScreen extends StatelessWidget {
             }),
             iconTheme: WidgetStateProperty.resolveWith((states) {
               if (states.contains(WidgetState.selected)) {
-                return const IconThemeData(color: Color(0xFF2D3436));
+                return IconThemeData(
+                  color: Theme.of(context).brightness == Brightness.light
+                      ? const Color(0xFF2D3436)
+                      : Theme.of(context).colorScheme.primary,
+                );
               }
               return IconThemeData(
                 color: Theme.of(context).colorScheme.onSurfaceVariant,

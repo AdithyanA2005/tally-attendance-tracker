@@ -95,8 +95,8 @@ class AppTheme {
   static const Map<AttendanceStatus, Color> statusColors = {
     AttendanceStatus.present: Color(0xFF27AE60), // Sage Green
     AttendanceStatus.absent: Color(0xFFC0392B), // Muted Red
-    AttendanceStatus.cancelled: Colors.grey,
-    AttendanceStatus.unmarked: Colors.black,
+    AttendanceStatus.cancelled: Color(0xFF607D8B), // Slate Grey
+    AttendanceStatus.unmarked: Color(0xFF9E9E9E),
   };
 
   static const List<Color> subjectColors = [

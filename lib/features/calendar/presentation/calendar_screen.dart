@@ -127,17 +127,23 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                         daysOfWeekHeight: 40,
                         calendarBuilders: CalendarBuilders(
                           selectedBuilder: (context, date, events) {
+                            final isDark =
+                                Theme.of(context).brightness == Brightness.dark;
                             return Container(
                               margin: const EdgeInsets.all(6.0),
                               alignment: Alignment.center,
-                              decoration: const BoxDecoration(
-                                color: Color(0xFF2D3436), // Obsidian Grey
+                              decoration: BoxDecoration(
+                                color: isDark
+                                    ? Theme.of(context).colorScheme.primary
+                                    : const Color(0xFF2D3436),
                                 shape: BoxShape.circle,
                               ),
                               child: Text(
                                 '${date.day}',
-                                style: const TextStyle(
-                                  color: Colors.white,
+                                style: TextStyle(
+                                  color: isDark
+                                      ? Theme.of(context).colorScheme.surface
+                                      : Colors.white,
                                   fontWeight: FontWeight.bold,
                                   fontSize: 16,
                                 ),
@@ -145,19 +151,26 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                             );
                           },
                           todayBuilder: (context, date, events) {
+                            final isDark =
+                                Theme.of(context).brightness == Brightness.dark;
                             return Container(
                               margin: const EdgeInsets.all(6.0),
                               alignment: Alignment.center,
                               decoration: BoxDecoration(
-                                color: const Color(
-                                  0xFF2D3436,
-                                ).withValues(alpha: 0.1), // Soft Obsidian Tint
+                                color: isDark
+                                    ? Theme.of(context).colorScheme.primary
+                                          .withValues(alpha: 0.12)
+                                    : const Color(
+                                        0xFF2D3436,
+                                      ).withValues(alpha: 0.1),
                                 shape: BoxShape.circle,
                               ),
                               child: Text(
                                 '${date.day}',
-                                style: const TextStyle(
-                                  color: Color(0xFF2D3436),
+                                style: TextStyle(
+                                  color: isDark
+                                      ? Theme.of(context).colorScheme.primary
+                                      : const Color(0xFF2D3436),
                                   fontWeight: FontWeight.bold,
                                   fontSize: 16,
                                 ),
