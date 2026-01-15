@@ -467,7 +467,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                   loading: () => const SliverFillRemaining(
                     child: Center(child: CircularProgressIndicator()),
                   ),
-                  error: (e, __) => SliverFillRemaining(
+                  error: (e, _) => SliverFillRemaining(
                     child: Center(child: Text('Error loading timetable: $e')),
                   ),
                 );

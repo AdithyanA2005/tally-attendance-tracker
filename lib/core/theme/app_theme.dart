@@ -90,7 +90,7 @@ class AppTheme {
               states.contains(WidgetState.selected) ? Colors.white : _textDark,
         ),
         entryModeIconColor: _primary,
-        helpTextStyle: TextStyle(color: _textSub, fontSize: 14),
+        helpTextStyle: const TextStyle(color: _textSub, fontSize: 14),
       ),
     );
   }

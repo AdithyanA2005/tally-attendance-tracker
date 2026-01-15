@@ -383,14 +383,14 @@ class _AddEntrySheetState extends ConsumerState<_AddEntrySheet> {
                   vertical: 16,
                 ),
               ),
-              value: _selectedSubject,
+              initialValue: _selectedSubject,
               items: subjects
                   .map((s) => DropdownMenuItem(value: s, child: Text(s.name)))
                   .toList(),
               onChanged: (val) => setState(() => _selectedSubject = val),
             ),
             loading: () => const LinearProgressIndicator(),
-            error: (_, __) => const Text('Error loading subjects'),
+            error: (_, _) => const Text('Error loading subjects'),
           ),
           const SizedBox(height: 16),
 
@@ -452,7 +452,7 @@ class _AddEntrySheetState extends ConsumerState<_AddEntrySheet> {
                       vertical: 16,
                     ),
                   ),
-                  value: _duration,
+                  initialValue: _duration,
                   items: [0.5, 0.75, 50 / 60, 1.0, 1.5, 2.0, 3.0]
                       .map(
                         (d) => DropdownMenuItem(
@@ -608,7 +608,7 @@ class _EditEntrySheetState extends ConsumerState<_EditEntrySheet> {
                 vertical: 16,
               ),
             ),
-            value: _selectedSubject,
+            initialValue: _selectedSubject,
             items: widget.subjects
                 .map((s) => DropdownMenuItem(value: s, child: Text(s.name)))
                 .toList(),
@@ -676,7 +676,7 @@ class _EditEntrySheetState extends ConsumerState<_EditEntrySheet> {
                       vertical: 16,
                     ),
                   ),
-                  value: _duration,
+                  initialValue: _duration,
                   items: [0.5, 0.75, 50 / 60, 1.0, 1.5, 2.0, 3.0]
                       .map(
                         (d) => DropdownMenuItem(
