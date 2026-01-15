@@ -3,10 +3,10 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:uuid/uuid.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../../core/presentation/animations/fade_in_slide.dart';
 import '../../../../core/presentation/widgets/app_card.dart';
-import '../../../../core/presentation/widgets/empty_state.dart';
 import '../../../../core/presentation/widgets/timeline_item.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/utils/string_utils.dart';
@@ -233,10 +233,112 @@ class HomeScreen extends ConsumerWidget {
   }
 
   Widget _buildEmptyState(BuildContext context) {
-    return const EmptyState(
-      icon: Icons.check_circle_outline_rounded,
-      title: 'All caught up!',
-      subtitle: 'No classes scheduled for today.',
+    final now = DateTime.now();
+    final isWeekend =
+        now.weekday == DateTime.saturday || now.weekday == DateTime.sunday;
+    final dayName = [
+      'Monday',
+      'Tuesday',
+      'Wednesday',
+      'Thursday',
+      'Friday',
+      'Saturday',
+      'Sunday',
+    ][now.weekday - 1];
+
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            // Animated Icon
+            TweenAnimationBuilder<double>(
+              tween: Tween(begin: 0.0, end: 1.0),
+              duration: const Duration(milliseconds: 800),
+              curve: Curves.elasticOut,
+              builder: (context, value, child) {
+                return Transform.scale(
+                  scale: value,
+                  child: Icon(
+                    isWeekend
+                        ? Icons.weekend_rounded
+                        : Icons.free_breakfast_rounded,
+                    size: 80,
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.primary.withValues(alpha: 0.3),
+                  ),
+                );
+              },
+            ),
+            const SizedBox(height: 24),
+
+            // Title
+            Text(
+              isWeekend ? 'Enjoy Your Weekend!' : 'No Classes Today!',
+              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: Theme.of(context).colorScheme.onSurface,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 8),
+
+            // Subtitle
+            Text(
+              isWeekend
+                  ? 'Relax and recharge for the week ahead'
+                  : 'It\'s $dayName - Enjoy your free time',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 40),
+
+            // Quick Actions
+            Text(
+              'QUICK ACTIONS',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 1.5,
+                color: Theme.of(context).colorScheme.tertiary,
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            // Action Buttons
+            _EmptyStateActionButton(
+              icon: Icons.calendar_month_rounded,
+              label: 'View Timetable',
+              onTap: () {
+                HapticFeedback.lightImpact();
+                context.go('/timetable');
+              },
+            ),
+            const SizedBox(height: 12),
+            _EmptyStateActionButton(
+              icon: Icons.insights_rounded,
+              label: 'Check Insights',
+              onTap: () {
+                HapticFeedback.lightImpact();
+                context.go('/insights');
+              },
+            ),
+            const SizedBox(height: 12),
+            _EmptyStateActionButton(
+              icon: Icons.add_circle_outline_rounded,
+              label: 'Add Extra Class',
+              onTap: () {
+                HapticFeedback.lightImpact();
+                context.go('/calendar');
+              },
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -547,6 +649,62 @@ class _BulkActionChip extends StatelessWidget {
                 fontWeight: FontWeight.w600,
                 fontSize: 13,
               ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _EmptyStateActionButton extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  const _EmptyStateActionButton({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        decoration: BoxDecoration(
+          color: Theme.of(
+            context,
+          ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.1),
+            width: 1,
+          ),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, size: 20, color: Theme.of(context).colorScheme.primary),
+            const SizedBox(width: 12),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+                color: Theme.of(context).colorScheme.onSurface,
+              ),
+            ),
+            const Spacer(),
+            Icon(
+              Icons.arrow_forward_ios_rounded,
+              size: 16,
+              color: Theme.of(
+                context,
+              ).colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
             ),
           ],
         ),
