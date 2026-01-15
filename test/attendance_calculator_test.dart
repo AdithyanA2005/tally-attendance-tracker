@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:attendance_intelligence/features/attendance/domain/attendance_calculator.dart';
+import 'package:attendance_intelligence/features/calendar/domain/attendance_calculator.dart';
 
 void main() {
   group('AttendanceCalculator', () {

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../attendance/presentation/providers/attendance_provider.dart';
+import 'providers/attendance_provider.dart';
 import 'package:attendance_intelligence/core/presentation/animations/fade_in_slide.dart';
 import '../data/models/subject_model.dart';
 import '../data/repositories/attendance_repository.dart';

@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'providers/insights_provider.dart';
-import '../../attendance/domain/entities/subject_stats.dart';
+import '../../calendar/domain/entities/subject_stats.dart';
 import '../../../core/presentation/animations/fade_in_slide.dart';
 
 class InsightsScreen extends ConsumerWidget {

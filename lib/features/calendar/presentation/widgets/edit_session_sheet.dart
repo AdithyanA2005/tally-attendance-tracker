@@ -1,0 +1,221 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../../data/models/session_model.dart';
+import '../../data/models/subject_model.dart';
+import '../../data/repositories/attendance_repository.dart';
+
+class EditSessionSheet extends ConsumerStatefulWidget {
+  final ClassSession session;
+  final Subject initialSubject;
+  final List<Subject> allSubjects;
+  final bool isNew;
+
+  const EditSessionSheet({
+    super.key,
+    required this.session,
+    required this.initialSubject,
+    required this.allSubjects,
+    this.isNew = false,
+  });
+
+  @override
+  ConsumerState<EditSessionSheet> createState() => _EditSessionSheetState();
+}
+
+class _EditSessionSheetState extends ConsumerState<EditSessionSheet> {
+  late Subject _selectedSubject;
+  late AttendanceStatus _selectedStatus;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedSubject = widget.initialSubject;
+    _selectedStatus = widget.session.status == AttendanceStatus.unmarked
+        ? AttendanceStatus.present
+        : widget.session.status;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Container(
+      decoration: BoxDecoration(
+        color: theme.scaffoldBackgroundColor,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+      padding: EdgeInsets.fromLTRB(
+        24,
+        24,
+        24,
+        MediaQuery.of(context).viewInsets.bottom +
+            MediaQuery.of(context).padding.bottom +
+            24,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // Header
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                (widget.isNew && widget.session.isExtraClass)
+                    ? 'New Class'
+                    : 'Edit Class',
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              IconButton(
+                onPressed: () => Navigator.pop(context),
+                icon: const Icon(Icons.close_rounded),
+                style: IconButton.styleFrom(
+                  backgroundColor: theme.colorScheme.surfaceContainerHighest
+                      .withOpacity(0.3),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 24),
+
+          // Subject Dropdown
+          DropdownButtonFormField<Subject>(
+            icon: const Icon(Icons.keyboard_arrow_down_rounded),
+            borderRadius: BorderRadius.circular(16),
+            decoration: InputDecoration(
+              labelText: 'Subject',
+              filled: true,
+              fillColor: theme.colorScheme.surfaceContainerHighest.withOpacity(
+                0.3,
+              ),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: BorderSide.none,
+              ),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 20,
+                vertical: 16,
+              ),
+            ),
+            initialValue: widget.allSubjects.firstWhere(
+              (s) => s.id == _selectedSubject.id,
+              orElse: () => _selectedSubject,
+            ),
+            items: widget.allSubjects
+                .map((s) => DropdownMenuItem(value: s, child: Text(s.name)))
+                .toList(),
+            onChanged: (val) {
+              if (val != null) setState(() => _selectedSubject = val);
+            },
+          ),
+          const SizedBox(height: 16),
+
+          // Status Dropdown
+          DropdownButtonFormField<AttendanceStatus>(
+            icon: const Icon(Icons.keyboard_arrow_down_rounded),
+            borderRadius: BorderRadius.circular(16),
+            decoration: InputDecoration(
+              labelText: 'Status',
+              filled: true,
+              fillColor: theme.colorScheme.surfaceContainerHighest.withOpacity(
+                0.3,
+              ),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: BorderSide.none,
+              ),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 20,
+                vertical: 16,
+              ),
+            ),
+            initialValue: _selectedStatus,
+            items: AttendanceStatus.values
+                .where((s) => s != AttendanceStatus.unmarked)
+                .map(
+                  (s) => DropdownMenuItem(
+                    value: s,
+                    child: Text(s.name.toUpperCase()),
+                  ),
+                )
+                .toList(),
+            onChanged: (val) {
+              if (val != null) setState(() => _selectedStatus = val);
+            },
+          ),
+          const SizedBox(height: 32),
+
+          // Action Buttons
+          Row(
+            children: [
+              // Always show Reset button to allow clearing/cancelling back to default
+              Expanded(
+                child: TextButton(
+                  onPressed: () async {
+                    // Reset logic: Delete specific override for this date
+                    await ref
+                        .read(attendanceRepositoryProvider)
+                        .deleteDuplicateSessions(date: widget.session.date);
+                    if (context.mounted) Navigator.pop(context);
+                  },
+                  style: TextButton.styleFrom(
+                    foregroundColor: theme.colorScheme.error,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      side: BorderSide(
+                        color: theme.colorScheme.error.withOpacity(0.2),
+                      ),
+                    ),
+                  ),
+                  child: const Text('Reset'),
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: FilledButton(
+                  onPressed: () async {
+                    final updatedSession = ClassSession(
+                      id: widget.session.id,
+                      subjectId: _selectedSubject.id,
+                      date: widget.session.date,
+                      status: _selectedStatus,
+                      isExtraClass: widget.session.isExtraClass,
+                      notes: widget.session.notes,
+                    );
+                    if (widget.isNew) {
+                      await ref
+                          .read(attendanceRepositoryProvider)
+                          .logSession(updatedSession);
+                    } else {
+                      await ref
+                          .read(attendanceRepositoryProvider)
+                          .updateSession(updatedSession);
+                    }
+                    if (context.mounted) Navigator.pop(context);
+                  },
+                  style: FilledButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                  ),
+                  child: const Text(
+                    'Save',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          // Extra bottom padding for safety
+          const SizedBox(height: 8),
+        ],
+      ),
+    );
+  }
+}

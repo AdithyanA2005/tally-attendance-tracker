@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../attendance/presentation/providers/attendance_provider.dart';
-import '../../../attendance/domain/entities/subject_stats.dart';
+import '../../../calendar/presentation/providers/attendance_provider.dart';
+import '../../../calendar/domain/entities/subject_stats.dart';
 
 class InsightStats {
   final double overallPercentage;

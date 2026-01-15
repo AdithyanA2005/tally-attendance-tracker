@@ -1,8 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../attendance/data/repositories/attendance_repository.dart';
+import '../../../calendar/data/repositories/attendance_repository.dart';
 import '../../data/models/timetable_entry_model.dart';
-import '../../../attendance/data/models/session_model.dart';
-import '../../../attendance/data/models/subject_model.dart';
+import '../../../calendar/data/models/session_model.dart';
+import '../../../calendar/data/models/subject_model.dart';
 
 final todayClassesProvider = StreamProvider<List<TodayClassItem>>((ref) {
   final repository = ref.watch(attendanceRepositoryProvider);

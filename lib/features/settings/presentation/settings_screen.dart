@@ -3,7 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
-import '../../attendance/data/repositories/attendance_repository.dart';
+import '../../calendar/data/repositories/attendance_repository.dart';
 import '../data/repositories/settings_repository.dart';
 import '../../../../core/services/backup_service.dart';
 

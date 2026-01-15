@@ -1,7 +1,7 @@
 import 'package:hive_flutter/hive_flutter.dart';
-import '../../features/attendance/data/models/subject_model.dart';
-import '../../features/attendance/data/models/session_model.dart';
-import '../../features/timetable/data/models/timetable_entry_model.dart';
+import '../../features/calendar/data/models/subject_model.dart';
+import '../../features/calendar/data/models/session_model.dart';
+import '../../features/settings/data/models/timetable_entry_model.dart';
 
 class LocalStorageService {
   static const String subjectBoxName = 'subjects';

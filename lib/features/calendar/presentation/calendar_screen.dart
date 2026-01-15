@@ -6,10 +6,11 @@ import 'package:uuid/uuid.dart';
 import 'package:intl/intl.dart';
 import 'providers/calendar_provider.dart';
 import 'providers/pending_attendance_provider.dart';
-import '../../timetable/data/models/timetable_entry_model.dart';
+import '../../settings/data/models/timetable_entry_model.dart';
 import '../../settings/data/repositories/settings_repository.dart';
 import '../data/models/session_model.dart';
 import '../data/repositories/attendance_repository.dart';
+import 'widgets/edit_session_sheet.dart';
 import '../data/models/subject_model.dart';
 import '../../../../core/presentation/animations/fade_in_slide.dart';
 
@@ -614,7 +615,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => _EditSessionSheet(
+      builder: (context) => EditSessionSheet(
         session: session,
         initialSubject: currentSubject,
         allSubjects: allSubjects,
@@ -645,7 +646,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => _EditSessionSheet(
+      builder: (context) => EditSessionSheet(
         session: ClassSession(
           id: const Uuid().v4(),
           subjectId: allSubjects.first.id,
@@ -656,222 +657,6 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
         initialSubject: allSubjects.first,
         allSubjects: allSubjects,
         isNew: true,
-      ),
-    );
-  }
-}
-
-class _EditSessionSheet extends ConsumerStatefulWidget {
-  final ClassSession session;
-  final Subject initialSubject;
-  final List<Subject> allSubjects;
-  final bool isNew;
-
-  const _EditSessionSheet({
-    required this.session,
-    required this.initialSubject,
-    required this.allSubjects,
-    this.isNew = false,
-  });
-
-  @override
-  ConsumerState<_EditSessionSheet> createState() => _EditSessionSheetState();
-}
-
-class _EditSessionSheetState extends ConsumerState<_EditSessionSheet> {
-  late Subject _selectedSubject;
-  late AttendanceStatus _selectedStatus;
-
-  @override
-  void initState() {
-    super.initState();
-    _selectedSubject = widget.initialSubject;
-    // If opening an Unmarked class (virtual or saved), default to Present
-    // This forces the user to 'Mark' it if they are editing it.
-    _selectedStatus = widget.session.status == AttendanceStatus.unmarked
-        ? AttendanceStatus.present
-        : widget.session.status;
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Container(
-      decoration: BoxDecoration(
-        color: theme.scaffoldBackgroundColor,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-      ),
-      padding: EdgeInsets.fromLTRB(
-        24,
-        24,
-        24,
-        MediaQuery.of(context).viewInsets.bottom +
-            MediaQuery.of(context).padding.bottom +
-            24,
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          // Header
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                widget.isNew ? 'New Class' : 'Edit Class',
-                style: const TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              IconButton(
-                onPressed: () => Navigator.pop(context),
-                icon: const Icon(Icons.close_rounded),
-                style: IconButton.styleFrom(
-                  backgroundColor: theme.colorScheme.surfaceContainerHighest
-                      .withOpacity(0.3),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 24),
-
-          // Subject Dropdown
-          DropdownButtonFormField<Subject>(
-            icon: const Icon(Icons.keyboard_arrow_down_rounded),
-            decoration: InputDecoration(
-              labelText: 'Subject',
-              filled: true,
-              fillColor: theme.colorScheme.surfaceContainerHighest.withOpacity(
-                0.3,
-              ),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(16),
-                borderSide: BorderSide.none,
-              ),
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 20,
-                vertical: 16,
-              ),
-            ),
-            initialValue: widget.allSubjects.contains(_selectedSubject)
-                ? _selectedSubject
-                : null,
-            items: widget.allSubjects
-                .map((s) => DropdownMenuItem(value: s, child: Text(s.name)))
-                .toList(),
-            onChanged: (val) {
-              if (val != null) setState(() => _selectedSubject = val);
-            },
-          ),
-          const SizedBox(height: 16),
-
-          // Status Dropdown
-          DropdownButtonFormField<AttendanceStatus>(
-            icon: const Icon(Icons.keyboard_arrow_down_rounded),
-            decoration: InputDecoration(
-              labelText: 'Status',
-              filled: true,
-              fillColor: theme.colorScheme.surfaceContainerHighest.withOpacity(
-                0.3,
-              ),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(16),
-                borderSide: BorderSide.none,
-              ),
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 20,
-                vertical: 16,
-              ),
-            ),
-            initialValue: _selectedStatus,
-            items: AttendanceStatus.values
-                .where((s) => s != AttendanceStatus.unmarked)
-                .map(
-                  (s) => DropdownMenuItem(
-                    value: s,
-                    child: Text(s.name.toUpperCase()),
-                  ),
-                )
-                .toList(),
-            onChanged: (val) {
-              if (val != null) setState(() => _selectedStatus = val);
-            },
-          ),
-          const SizedBox(height: 32),
-
-          // Action Buttons Row
-          Row(
-            children: [
-              if (!widget.isNew) ...[
-                Expanded(
-                  child: TextButton(
-                    onPressed: () async {
-                      await ref
-                          .read(attendanceRepositoryProvider)
-                          .deleteDuplicateSessions(date: widget.session.date);
-                      if (context.mounted) Navigator.pop(context);
-                    },
-                    style: TextButton.styleFrom(
-                      foregroundColor: theme.colorScheme.error,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                        side: BorderSide(
-                          color: theme.colorScheme.error.withOpacity(0.2),
-                        ),
-                      ),
-                    ),
-                    child: const Text('Reset'),
-                  ),
-                ),
-                const SizedBox(width: 16),
-              ],
-              Expanded(
-                child: FilledButton(
-                  onPressed: () async {
-                    String sessionId = widget.session.id;
-                    if (sessionId.startsWith('virtual_')) {
-                      sessionId = const Uuid().v4();
-                    }
-
-                    final newSession = ClassSession(
-                      id: sessionId,
-                      subjectId: _selectedSubject.id,
-                      date: widget.session.date,
-                      status: _selectedStatus,
-                      isExtraClass: widget.session.isExtraClass,
-                      notes: widget.session.notes,
-                    );
-
-                    if (widget.isNew || sessionId != widget.session.id) {
-                      await ref
-                          .read(attendanceRepositoryProvider)
-                          .logSession(newSession);
-                    } else {
-                      await ref
-                          .read(attendanceRepositoryProvider)
-                          .updateSession(newSession);
-                    }
-
-                    if (context.mounted) Navigator.pop(context);
-                  },
-                  style: FilledButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                  ),
-                  child: const Text(
-                    'Save',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ],
       ),
     );
   }

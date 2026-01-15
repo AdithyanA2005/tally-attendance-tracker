@@ -1,12 +1,12 @@
 import 'package:go_router/go_router.dart';
 
 import '../../features/home/presentation/home_screen.dart';
-import '../../features/timetable/presentation/timetable_screen.dart';
-import '../../features/attendance/presentation/subject_detail_screen.dart';
+import '../../features/settings/presentation/timetable_screen.dart';
+import '../../features/calendar/presentation/subject_detail_screen.dart';
 import '../../features/insights/presentation/insights_screen.dart';
 import '../../features/settings/presentation/settings_screen.dart';
-import '../../features/attendance/presentation/calendar_screen.dart';
-import '../../features/attendance/presentation/manage_subjects_screen.dart';
+import '../../features/calendar/presentation/calendar_screen.dart';
+import '../../features/calendar/presentation/manage_subjects_screen.dart';
 
 import 'shell_screen.dart';
 

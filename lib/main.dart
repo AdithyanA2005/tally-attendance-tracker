@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'core/theme/app_theme.dart';
 import 'core/presentation/app_router.dart';
 import 'core/data/local_storage_service.dart';
-import 'features/attendance/data/repositories/attendance_repository.dart';
+import 'features/calendar/data/repositories/attendance_repository.dart';
 import 'features/settings/data/repositories/settings_repository.dart';
 
 void main() async {
