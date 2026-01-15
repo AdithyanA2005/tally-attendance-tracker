@@ -39,6 +39,11 @@ android {
             signingConfig = signingConfigs.getByName("debug")
         }
     }
+
+    // Suppress "obsolete option" warnings (e.g. source value 8)
+    tasks.withType<JavaCompile>().configureEach {
+        options.compilerArgs.add("-Xlint:-options")
+    }
 }
 
 flutter {

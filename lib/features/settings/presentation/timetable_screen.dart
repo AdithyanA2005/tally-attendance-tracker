@@ -84,7 +84,9 @@ class _TimetableScreenState extends ConsumerState<TimetableScreen> {
                           backgroundColor: Colors.white,
                           side: isSelected
                               ? BorderSide.none
-                              : BorderSide(color: Colors.grey.withOpacity(0.2)),
+                              : BorderSide(
+                                  color: Colors.grey.withValues(alpha: 0.2),
+                                ),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(20),
                           ),
@@ -115,7 +117,7 @@ class _TimetableScreenState extends ConsumerState<TimetableScreen> {
                                   size: 64,
                                   color: Theme.of(
                                     context,
-                                  ).colorScheme.primary.withOpacity(0.3),
+                                  ).colorScheme.primary.withValues(alpha: 0.3),
                                 ),
                                 const SizedBox(height: 16),
                                 Text(
@@ -154,7 +156,9 @@ class _TimetableScreenState extends ConsumerState<TimetableScreen> {
                                   borderRadius: BorderRadius.circular(20),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: Colors.black.withOpacity(0.05),
+                                      color: Colors.black.withValues(
+                                        alpha: 0.05,
+                                      ),
                                       blurRadius: 24,
                                       offset: const Offset(0, 8),
                                     ),
@@ -183,8 +187,8 @@ class _TimetableScreenState extends ConsumerState<TimetableScreen> {
                                             width: 50,
                                             height: 50,
                                             decoration: BoxDecoration(
-                                              color: subject.color.withOpacity(
-                                                0.1,
+                                              color: subject.color.withValues(
+                                                alpha: 0.1,
                                               ),
                                               borderRadius:
                                                   BorderRadius.circular(16),
@@ -324,7 +328,7 @@ class _AddEntrySheetState extends ConsumerState<_AddEntrySheet> {
           const SizedBox(height: 16),
           subjectsAsync.when(
             data: (subjects) => DropdownButtonFormField<Subject>(
-              value: _selectedSubject,
+              initialValue: _selectedSubject,
               hint: const Text('Select Subject'),
               items: subjects
                   .map((s) => DropdownMenuItem(value: s, child: Text(s.name)))
@@ -352,7 +356,7 @@ class _AddEntrySheetState extends ConsumerState<_AddEntrySheet> {
               const SizedBox(width: 16),
               Expanded(
                 child: DropdownButtonFormField<double>(
-                  value: _duration,
+                  initialValue: _duration,
                   decoration: const InputDecoration(labelText: 'Duration'),
                   items: [0.5, 0.75, 50 / 60, 1.0, 1.5, 2.0, 3.0]
                       .map(
@@ -454,7 +458,7 @@ class _EditEntrySheetState extends ConsumerState<_EditEntrySheet> {
           Text('Edit Class', style: Theme.of(context).textTheme.titleLarge),
           const SizedBox(height: 16),
           DropdownButtonFormField<Subject>(
-            value: _selectedSubject,
+            initialValue: _selectedSubject,
             decoration: const InputDecoration(labelText: 'Subject'),
             items: widget.subjects
                 .map((s) => DropdownMenuItem(value: s, child: Text(s.name)))
@@ -481,7 +485,7 @@ class _EditEntrySheetState extends ConsumerState<_EditEntrySheet> {
               const SizedBox(width: 16),
               Expanded(
                 child: DropdownButtonFormField<double>(
-                  value: _duration,
+                  initialValue: _duration,
                   decoration: const InputDecoration(
                     labelText: 'Duration (hrs)',
                   ),

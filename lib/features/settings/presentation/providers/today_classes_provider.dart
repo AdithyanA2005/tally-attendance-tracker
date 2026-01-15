@@ -31,12 +31,15 @@ final todayClassesProvider = Provider<AsyncValue<List<TodayClassItem>>>((ref) {
   }
 
   // 4. Handle errors
-  if (timetableAsync.hasError)
+  if (timetableAsync.hasError) {
     return AsyncValue.error(timetableAsync.error!, timetableAsync.stackTrace!);
-  if (sessionsAsync.hasError)
+  }
+  if (sessionsAsync.hasError) {
     return AsyncValue.error(sessionsAsync.error!, sessionsAsync.stackTrace!);
-  if (subjectsAsync.hasError)
+  }
+  if (subjectsAsync.hasError) {
     return AsyncValue.error(subjectsAsync.error!, subjectsAsync.stackTrace!);
+  }
 
   // 5. Combine data
   return AsyncValue.data(
