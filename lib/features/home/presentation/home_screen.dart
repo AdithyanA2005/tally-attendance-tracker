@@ -315,7 +315,7 @@ class HomeScreen extends ConsumerWidget {
               label: 'View Timetable',
               onTap: () {
                 HapticFeedback.lightImpact();
-                context.go('/timetable');
+                context.push('/timetable');
               },
             ),
             const SizedBox(height: 12),
@@ -324,7 +324,7 @@ class HomeScreen extends ConsumerWidget {
               label: 'Check Insights',
               onTap: () {
                 HapticFeedback.lightImpact();
-                context.go('/insights');
+                context.push('/insights');
               },
             ),
             const SizedBox(height: 12),
@@ -333,7 +333,7 @@ class HomeScreen extends ConsumerWidget {
               label: 'Add Extra Class',
               onTap: () {
                 HapticFeedback.lightImpact();
-                context.go('/calendar');
+                context.push('/calendar');
               },
             ),
           ],
