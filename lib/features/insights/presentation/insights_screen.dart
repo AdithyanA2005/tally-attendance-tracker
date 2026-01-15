@@ -23,77 +23,83 @@ class InsightsScreen extends ConsumerWidget {
           final sortedSubjects = List<SubjectStats>.from(stats.subjectStats)
             ..sort((a, b) => a.percentage.compareTo(b.percentage));
 
-          return CustomScrollView(
-            slivers: [
-              SliverAppBar(
-                pinned: true,
-                floating: true,
-                snap: true,
-                backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-                surfaceTintColor: Theme.of(context).scaffoldBackgroundColor,
-                title: Text(
-                  'Insights',
-                  style: TextStyle(
-                    color: Theme.of(context).colorScheme.onSurface,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 20,
+          return RefreshIndicator(
+            onRefresh: () async {
+              ref.invalidate(insightsProvider);
+              await Future.delayed(const Duration(milliseconds: 500));
+            },
+            child: CustomScrollView(
+              slivers: [
+                SliverAppBar(
+                  pinned: true,
+                  floating: true,
+                  snap: true,
+                  backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+                  surfaceTintColor: Theme.of(context).scaffoldBackgroundColor,
+                  title: Text(
+                    'Insights',
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.onSurface,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 20,
+                    ),
                   ),
+                  centerTitle: false,
                 ),
-                centerTitle: false,
-              ),
-              SliverPadding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                sliver: SliverList(
-                  delegate: SliverChildListDelegate([
-                    const SizedBox(height: 10),
-                    // 1. Hero Stat (Big Typography)
-                    FadeInSlide(
-                      duration: const Duration(milliseconds: 600),
-                      child: _buildHeroStat(context, stats.overallPercentage),
-                    ),
-                    const SizedBox(height: 32),
+                SliverPadding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  sliver: SliverList(
+                    delegate: SliverChildListDelegate([
+                      const SizedBox(height: 10),
+                      // 1. Hero Stat (Big Typography)
+                      FadeInSlide(
+                        duration: const Duration(milliseconds: 600),
+                        child: _buildHeroStat(context, stats.overallPercentage),
+                      ),
+                      const SizedBox(height: 32),
 
-                    // 2. Quick Stats (Flat & Clean)
-                    FadeInSlide(
-                      duration: const Duration(milliseconds: 700),
-                      child: _buildQuickStatsRow(context, stats),
-                    ),
-                    const SizedBox(height: 40),
+                      // 2. Quick Stats (Flat & Clean)
+                      FadeInSlide(
+                        duration: const Duration(milliseconds: 700),
+                        child: _buildQuickStatsRow(context, stats),
+                      ),
+                      const SizedBox(height: 40),
 
-                    // 3. Subject List Header
-                    FadeInSlide(
-                      duration: const Duration(milliseconds: 800),
-                      child: Text(
-                        'PERFORMANCE',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 1.5,
-                          color: Theme.of(context).colorScheme.tertiary,
+                      // 3. Subject List Header
+                      FadeInSlide(
+                        duration: const Duration(milliseconds: 800),
+                        child: Text(
+                          'PERFORMANCE',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 1.5,
+                            color: Theme.of(context).colorScheme.tertiary,
+                          ),
                         ),
                       ),
-                    ),
-                    const SizedBox(height: 16),
+                      const SizedBox(height: 16),
 
-                    // 4. Unified Subject List
-                    ...sortedSubjects.asMap().entries.map((entry) {
-                      final index = entry.key;
-                      final subject = entry.value;
-                      return FadeInSlide(
-                        duration: const Duration(milliseconds: 800),
-                        delay: Duration(milliseconds: 100 * index),
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 6),
-                          child: _buildMinimalSubjectCard(context, subject),
-                        ),
-                      );
-                    }),
+                      // 4. Unified Subject List
+                      ...sortedSubjects.asMap().entries.map((entry) {
+                        final index = entry.key;
+                        final subject = entry.value;
+                        return FadeInSlide(
+                          duration: const Duration(milliseconds: 800),
+                          delay: Duration(milliseconds: 100 * index),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 6),
+                            child: _buildMinimalSubjectCard(context, subject),
+                          ),
+                        );
+                      }),
 
-                    const SizedBox(height: 100),
-                  ]),
+                      const SizedBox(height: 100),
+                    ]),
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           );
         },
         loading: () => const Center(child: CircularProgressIndicator()),

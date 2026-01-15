@@ -30,136 +30,144 @@ class HomeScreen extends ConsumerWidget {
     final now = DateTime.now();
 
     return Scaffold(
-      body: CustomScrollView(
-        slivers: [
-          SliverAppBar(
-            pinned: true,
-            backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-            surfaceTintColor: Theme.of(context).scaffoldBackgroundColor,
-            title: Text(
-              DateFormat('EEEE, d MMMM').format(now),
-              style: TextStyle(
-                color: Theme.of(context).colorScheme.onSurface,
-                fontWeight: FontWeight.bold,
-                fontSize: 24,
-                letterSpacing: -0.5,
+      body: RefreshIndicator(
+        onRefresh: () async {
+          // Invalidate the provider to trigger a refresh
+          ref.invalidate(todayClassesProvider);
+          // Wait a bit for the refresh to complete
+          await Future.delayed(const Duration(milliseconds: 500));
+        },
+        child: CustomScrollView(
+          slivers: [
+            SliverAppBar(
+              pinned: true,
+              backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+              surfaceTintColor: Theme.of(context).scaffoldBackgroundColor,
+              title: Text(
+                DateFormat('EEEE, d MMMM').format(now),
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurface,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 24,
+                  letterSpacing: -0.5,
+                ),
               ),
+              centerTitle: false,
             ),
-            centerTitle: false,
-          ),
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-              child: todayClassesAsyncValue.maybeWhen(
-                data: (items) => Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      items.isEmpty
-                          ? 'No classes today'
-                          : '${items.length} classes scheduled',
-                      style: TextStyle(
-                        color: Theme.of(context).colorScheme.tertiary,
-                        fontWeight: FontWeight.w500,
-                        fontSize: 14,
-                      ),
-                    ),
-                    if (items.isNotEmpty) ...[
-                      const SizedBox(height: 12),
-                      SingleChildScrollView(
-                        scrollDirection: Axis.horizontal,
-                        child: Row(
-                          children: [
-                            _BulkActionChip(
-                              icon: Icons.check_rounded,
-                              label: 'All Present',
-                              color: const Color(0xFF27AE60),
-                              onTap: () => _markAllClasses(
-                                ref,
-                                items,
-                                AttendanceStatus.present,
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            _BulkActionChip(
-                              icon: Icons.close_rounded,
-                              label: 'All Absent',
-                              color: const Color(0xFFC0392B),
-                              onTap: () => _markAllClasses(
-                                ref,
-                                items,
-                                AttendanceStatus.absent,
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            _BulkActionChip(
-                              icon: Icons.block_rounded,
-                              label: 'All Cancelled',
-                              color: const Color(0xFF607D8B),
-                              onTap: () => _markAllClasses(
-                                ref,
-                                items,
-                                AttendanceStatus.cancelled,
-                              ),
-                            ),
-                            // Only show Reset if at least one class is marked
-                            if (items.any(
-                              (item) => item.existingSession != null,
-                            )) ...[
-                              const SizedBox(width: 8),
-                              _BulkActionChip(
-                                icon: Icons.refresh_rounded,
-                                label: 'Reset All',
-                                color: Theme.of(
-                                  context,
-                                ).colorScheme.onSurfaceVariant,
-                                onTap: () => _resetAllClasses(ref, items),
-                              ),
-                            ],
-                          ],
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                child: todayClassesAsyncValue.maybeWhen(
+                  data: (items) => Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        items.isEmpty
+                            ? 'No classes today'
+                            : '${items.length} classes scheduled',
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.tertiary,
+                          fontWeight: FontWeight.w500,
+                          fontSize: 14,
                         ),
                       ),
+                      if (items.isNotEmpty) ...[
+                        const SizedBox(height: 12),
+                        SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: Row(
+                            children: [
+                              _BulkActionChip(
+                                icon: Icons.check_rounded,
+                                label: 'All Present',
+                                color: const Color(0xFF27AE60),
+                                onTap: () => _markAllClasses(
+                                  ref,
+                                  items,
+                                  AttendanceStatus.present,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              _BulkActionChip(
+                                icon: Icons.close_rounded,
+                                label: 'All Absent',
+                                color: const Color(0xFFC0392B),
+                                onTap: () => _markAllClasses(
+                                  ref,
+                                  items,
+                                  AttendanceStatus.absent,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              _BulkActionChip(
+                                icon: Icons.block_rounded,
+                                label: 'All Cancelled',
+                                color: const Color(0xFF607D8B),
+                                onTap: () => _markAllClasses(
+                                  ref,
+                                  items,
+                                  AttendanceStatus.cancelled,
+                                ),
+                              ),
+                              // Only show Reset if at least one class is marked
+                              if (items.any(
+                                (item) => item.existingSession != null,
+                              )) ...[
+                                const SizedBox(width: 8),
+                                _BulkActionChip(
+                                  icon: Icons.refresh_rounded,
+                                  label: 'Reset All',
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onSurfaceVariant,
+                                  onTap: () => _resetAllClasses(ref, items),
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
+                      ],
                     ],
-                  ],
+                  ),
+                  orElse: () => const SizedBox.shrink(),
                 ),
-                orElse: () => const SizedBox.shrink(),
               ),
             ),
-          ),
-          SliverPadding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
-            sliver: SliverList(
-              delegate: SliverChildListDelegate([
-                FadeInSlide(
-                  duration: const Duration(milliseconds: 600),
-                  child: todayClassesAsyncValue.when(
-                    data: (items) {
-                      if (items.isEmpty) {
-                        return _buildEmptyState(context);
-                      }
-                      return ListView.builder(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        itemCount: items.length,
-                        itemBuilder: (context, index) {
-                          final item = items[index];
-                          final isLast = index == items.length - 1;
-                          return TimelineItem(
-                            isLast: isLast,
-                            child: _TodayClassCard(item: item),
-                          );
-                        },
-                      );
-                    },
-                    loading: () =>
-                        const Center(child: CircularProgressIndicator()),
-                    error: (e, st) => Text('Error: $e'),
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
+              sliver: SliverList(
+                delegate: SliverChildListDelegate([
+                  FadeInSlide(
+                    duration: const Duration(milliseconds: 600),
+                    child: todayClassesAsyncValue.when(
+                      data: (items) {
+                        if (items.isEmpty) {
+                          return _buildEmptyState(context);
+                        }
+                        return ListView.builder(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          itemCount: items.length,
+                          itemBuilder: (context, index) {
+                            final item = items[index];
+                            final isLast = index == items.length - 1;
+                            return TimelineItem(
+                              isLast: isLast,
+                              child: _TodayClassCard(item: item),
+                            );
+                          },
+                        );
+                      },
+                      loading: () =>
+                          const Center(child: CircularProgressIndicator()),
+                      error: (e, st) => Text('Error: $e'),
+                    ),
                   ),
-                ),
-              ]),
+                ]),
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
