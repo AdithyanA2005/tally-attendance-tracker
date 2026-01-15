@@ -3,8 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'providers/insights_provider.dart';
+import '../../calendar/data/models/session_model.dart';
 import '../../calendar/domain/entities/subject_stats.dart';
 import '../../../core/presentation/animations/fade_in_slide.dart';
+import '../../../core/presentation/widgets/app_card.dart';
+import '../../../core/presentation/widgets/stats_display.dart';
+import '../../../core/theme/app_theme.dart';
 
 class InsightsScreen extends ConsumerWidget {
   const InsightsScreen({super.key});
@@ -100,7 +104,9 @@ class InsightsScreen extends ConsumerWidget {
 
   Widget _buildHeroStat(BuildContext context, double percentage) {
     final isGood = percentage >= 75;
-    final color = isGood ? const Color(0xFF27AE60) : const Color(0xFFC0392B);
+    final color = isGood
+        ? AppTheme.statusColors[AttendanceStatus.present]!
+        : AppTheme.statusColors[AttendanceStatus.absent]!;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -156,12 +162,11 @@ class InsightsScreen extends ConsumerWidget {
     return Row(
       children: [
         Expanded(
-          child: _buildMinimalStatItem(
-            context,
-            'Skippable',
-            '${stats.totalClassesSkippable}',
-            Icons.pause_circle_outline_rounded,
-            const Color(0xFF27AE60),
+          child: StatsDisplay(
+            label: 'Skippable',
+            value: '${stats.totalClassesSkippable}',
+            icon: Icons.pause_circle_outline_rounded,
+            color: AppTheme.statusColors[AttendanceStatus.present]!,
           ),
         ),
         Container(
@@ -170,44 +175,13 @@ class InsightsScreen extends ConsumerWidget {
           color: Theme.of(context).dividerColor.withOpacity(0.2),
         ),
         Expanded(
-          child: _buildMinimalStatItem(
-            context,
-            'To Attend',
-            '${stats.totalClassesNeeded}',
-            Icons.play_circle_outline_rounded,
-            const Color(0xFFE67E22),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildMinimalStatItem(
-    BuildContext context,
-    String label,
-    String value,
-    IconData icon,
-    Color color,
-  ) {
-    return Column(
-      children: [
-        Icon(icon, size: 24, color: color.withOpacity(0.8)),
-        const SizedBox(height: 8),
-        Text(
-          value,
-          style: TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-            color: Theme.of(context).colorScheme.onSurface,
-          ),
-        ),
-        Text(
-          label.toUpperCase(),
-          style: TextStyle(
-            fontSize: 10,
-            fontWeight: FontWeight.bold,
-            letterSpacing: 1,
-            color: Theme.of(context).colorScheme.tertiary,
+          child: StatsDisplay(
+            label: 'To Attend',
+            value: '${stats.totalClassesNeeded}',
+            icon: Icons.play_circle_outline_rounded,
+            color: const Color(
+              0xFFE67E22,
+            ), // Orange for "To Attend" (Warning/Action)
           ),
         ),
       ],
@@ -219,100 +193,87 @@ class InsightsScreen extends ConsumerWidget {
     final color = isSafe ? const Color(0xFF27AE60) : const Color(0xFFC0392B);
     final theme = Theme.of(context);
 
-    return Container(
-      decoration: BoxDecoration(
-        color: theme.cardColor,
+    return AppCard(
+      padding: EdgeInsets.zero,
+      backgroundColor: theme.cardColor,
+      child: InkWell(
+        onTap: () {
+          HapticFeedback.lightImpact();
+          context.push('/subject/${subject.subject.id}');
+        },
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: theme.dividerColor.withOpacity(0.1)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.02),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: () {
-            HapticFeedback.lightImpact();
-            context.push('/subject/${subject.subject.id}');
-          },
-          borderRadius: BorderRadius.circular(16),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        subject.subject.name,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Row(
-                        children: [
-                          Container(
-                            width: 6,
-                            height: 6,
-                            decoration: BoxDecoration(
-                              color: color,
-                              shape: BoxShape.circle,
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            isSafe
-                                ? '${subject.classesSkippable} skips available'
-                                : 'Attend next ${subject.classesNeededFor75}',
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500,
-                              color: Theme.of(
-                                context,
-                              ).colorScheme.onSurfaceVariant,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      '${subject.percentage.toStringAsFixed(1)}%',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Theme.of(context).colorScheme.onSurface,
-                        fontFeatures: const [FontFeature.tabularFigures()],
+                      subject.subject.name,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
-                    Text(
-                      '${subject.present}/${subject.conducted}',
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: Theme.of(context).colorScheme.tertiary,
-                      ),
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        Container(
+                          width: 6,
+                          height: 6,
+                          decoration: BoxDecoration(
+                            color: color,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          isSafe
+                              ? '${subject.classesSkippable} skips available'
+                              : 'Attend next ${subject.classesNeededFor75}',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
-                const SizedBox(width: 12),
-                Icon(
-                  Icons.arrow_forward_ios_rounded,
-                  size: 12,
-                  color: Theme.of(context).dividerColor,
-                ),
-              ],
-            ),
+              ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    '${subject.percentage.toStringAsFixed(1)}%',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Theme.of(context).colorScheme.onSurface,
+                      fontFeatures: const [FontFeature.tabularFigures()],
+                    ),
+                  ),
+                  Text(
+                    '${subject.present}/${subject.conducted}',
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: Theme.of(context).colorScheme.tertiary,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(width: 12),
+              Icon(
+                Icons.arrow_forward_ios_rounded,
+                size: 12,
+                color: Theme.of(context).dividerColor,
+              ),
+            ],
           ),
         ),
       ),

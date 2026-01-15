@@ -1,9 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../data/models/session_model.dart';
 import '../domain/entities/subject_stats.dart';
 import 'providers/attendance_provider.dart';
 import '../../../../core/presentation/animations/fade_in_slide.dart';
 import 'widgets/subject_history_list.dart';
+import '../../../../core/presentation/widgets/stats_display.dart';
+import '../../../../core/presentation/widgets/app_card.dart';
+import '../../../../core/presentation/widgets/status_badge.dart';
+import '../../../../core/theme/app_theme.dart';
 
 class SubjectDetailScreen extends ConsumerWidget {
   final String subjectId;
@@ -87,60 +92,30 @@ class SubjectDetailScreen extends ConsumerWidget {
                             ],
                           ),
                           const SizedBox(height: 8),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 6,
-                            ),
-                            decoration: BoxDecoration(
-                              color: stats.isSafe
-                                  ? const Color(0xFF27AE60).withOpacity(0.1)
-                                  : const Color(0xFFC0392B).withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            child: Text(
-                              stats.isSafe ? 'Safe Zone' : 'Attention Required',
-                              style: TextStyle(
-                                color: stats.isSafe
-                                    ? const Color(0xFF27AE60)
-                                    : const Color(0xFFC0392B),
-                                fontWeight: FontWeight.bold,
-                                fontSize: 13,
-                              ),
-                            ),
+                          StatusBadge(
+                            text: stats.isSafe
+                                ? 'Safe Zone'
+                                : 'Attention Required',
+                            color: stats.isSafe
+                                ? const Color(0xFF27AE60)
+                                : const Color(0xFFC0392B),
                           ),
                         ],
                       ),
                       const SizedBox(height: 40),
 
                       // Minimal Stats Row
-                      Container(
+                      AppCard(
                         padding: const EdgeInsets.symmetric(vertical: 16),
-                        decoration: BoxDecoration(
-                          color: Theme.of(context).cardColor,
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(
-                            color: Theme.of(
-                              context,
-                            ).dividerColor.withOpacity(0.1),
-                          ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.02),
-                              blurRadius: 10,
-                              offset: const Offset(0, 4),
-                            ),
-                          ],
-                        ),
                         child: Row(
                           children: [
                             Expanded(
-                              child: _buildMinimalStatItem(
-                                context,
-                                'Present',
-                                '${stats.present}',
-                                Icons.check_circle_outline_rounded,
-                                const Color(0xFF27AE60),
+                              child: StatsDisplay(
+                                label: 'Present',
+                                value: '${stats.present}',
+                                icon: Icons.check_circle_outline_rounded,
+                                color: AppTheme
+                                    .statusColors[AttendanceStatus.present]!,
                               ),
                             ),
                             Container(
@@ -151,12 +126,12 @@ class SubjectDetailScreen extends ConsumerWidget {
                               ).dividerColor.withOpacity(0.1),
                             ),
                             Expanded(
-                              child: _buildMinimalStatItem(
-                                context,
-                                'Absent',
-                                '${stats.absent}',
-                                Icons.cancel_outlined,
-                                const Color(0xFFC0392B),
+                              child: StatsDisplay(
+                                label: 'Absent',
+                                value: '${stats.absent}',
+                                icon: Icons.cancel_outlined,
+                                color: AppTheme
+                                    .statusColors[AttendanceStatus.absent]!,
                               ),
                             ),
                             Container(
@@ -167,12 +142,11 @@ class SubjectDetailScreen extends ConsumerWidget {
                               ).dividerColor.withOpacity(0.1),
                             ),
                             Expanded(
-                              child: _buildMinimalStatItem(
-                                context,
-                                'Skippable',
-                                '${stats.classesSkippable}',
-                                Icons.pause_circle_outline_rounded,
-                                const Color(0xFF2980B9),
+                              child: StatsDisplay(
+                                label: 'Skippable',
+                                value: '${stats.classesSkippable}',
+                                icon: Icons.pause_circle_outline_rounded,
+                                color: const Color(0xFF2980B9),
                               ),
                             ),
                           ],
@@ -339,38 +313,6 @@ class SubjectDetailScreen extends ConsumerWidget {
                 ),
               ),
             ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildMinimalStatItem(
-    BuildContext context,
-    String label,
-    String value,
-    IconData icon,
-    Color color,
-  ) {
-    return Column(
-      children: [
-        Icon(icon, size: 24, color: color.withOpacity(0.8)),
-        const SizedBox(height: 8),
-        Text(
-          value,
-          style: TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-            color: Theme.of(context).colorScheme.onSurface,
-          ),
-        ),
-        Text(
-          label.toUpperCase(),
-          style: TextStyle(
-            fontSize: 10,
-            fontWeight: FontWeight.bold,
-            letterSpacing: 1,
-            color: Theme.of(context).colorScheme.tertiary,
           ),
         ),
       ],

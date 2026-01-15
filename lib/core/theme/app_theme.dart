@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../features/calendar/data/models/session_model.dart';
 
 class AppTheme {
   static final TextTheme _textTheme = GoogleFonts.outfitTextTheme();
@@ -90,4 +91,22 @@ class AppTheme {
       ),
     );
   }
+
+  static const Map<AttendanceStatus, Color> statusColors = {
+    AttendanceStatus.present: Color(0xFF27AE60), // Sage Green
+    AttendanceStatus.absent: Color(0xFFC0392B), // Muted Red
+    AttendanceStatus.cancelled: Colors.grey,
+    AttendanceStatus.unmarked: Colors.black,
+  };
+
+  static const List<Color> subjectColors = [
+    Color(0xFF2C3E50), // Midnight Blue
+    Color(0xFF8E44AD), // Muted Purple
+    Color(0xFF27AE60), // Sage Green
+    Color(0xFFD35400), // Burnt Orange
+    Color(0xFFC0392B), // Muted Red
+    Color(0xFF16A085), // Muted Teal
+    Color(0xFF2980B9), // Muted Blue
+    Color(0xFFD81B60), // Deep Pink
+  ];
 }

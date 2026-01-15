@@ -9,10 +9,14 @@ import 'providers/pending_attendance_provider.dart';
 import '../../settings/data/models/timetable_entry_model.dart';
 import '../../settings/data/repositories/settings_repository.dart';
 import '../data/models/session_model.dart';
-import '../data/repositories/attendance_repository.dart';
+
 import 'widgets/edit_session_sheet.dart';
 import '../data/models/subject_model.dart';
 import '../../../../core/presentation/animations/fade_in_slide.dart';
+import '../../../../core/presentation/widgets/app_card.dart';
+import '../../../../core/presentation/widgets/empty_state.dart';
+import '../../../../core/presentation/widgets/status_badge.dart';
+import '../../../../core/theme/app_theme.dart';
 
 class CalendarScreen extends ConsumerStatefulWidget {
   const CalendarScreen({super.key});
@@ -225,30 +229,13 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                         ),
                       ),
                       if (combinedEvents.isEmpty)
-                        Padding(
-                          padding: const EdgeInsets.all(32.0),
-                          child: Center(
-                            child: Column(
-                              children: [
-                                Icon(
-                                  Icons.event_note_rounded,
-                                  size: 48,
-                                  color: Theme.of(
-                                    context,
-                                  ).colorScheme.tertiary.withValues(alpha: 0.2),
-                                ),
-                                const SizedBox(height: 16),
-                                Text(
-                                  'No records for this day',
-                                  style: TextStyle(
-                                    color: Theme.of(
-                                      context,
-                                    ).colorScheme.tertiary,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              ],
-                            ),
+                        const Padding(
+                          padding: EdgeInsets.all(32.0),
+                          child: EmptyState(
+                            icon: Icons.event_note_rounded,
+                            title: 'No records for this day',
+                            subtitle:
+                                'Attendance marking is disabled for future dates.',
                           ),
                         )
                       else
@@ -268,218 +255,178 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                           return Padding(
                             padding: const EdgeInsets.symmetric(
                               horizontal: 16,
-                              vertical:
-                                  6, // Slightly more vertical breathing room
+                              vertical: 6,
                             ),
                             child: FadeInSlide(
                               duration: const Duration(milliseconds: 500),
                               delay: Duration(milliseconds: index * 100),
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  color: Theme.of(context).cardColor,
-                                  borderRadius: BorderRadius.circular(16),
-                                  border: Border.all(
-                                    color: Theme.of(
+                              child: AppCard(
+                                padding: EdgeInsets.zero,
+                                backgroundColor: Theme.of(context).cardColor,
+                                child: InkWell(
+                                  onTap: () {
+                                    HapticFeedback.lightImpact();
+                                    _showEditDialog(
                                       context,
-                                    ).dividerColor.withOpacity(0.1),
-                                  ),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.black.withOpacity(0.02),
-                                      blurRadius: 10,
-                                      offset: const Offset(0, 4),
+                                      session,
+                                      subject,
+                                      subjectMap.values.toList(),
+                                    );
+                                  },
+                                  borderRadius: BorderRadius.circular(16),
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 16,
+                                      vertical: 16, // Consistent padding
                                     ),
-                                  ],
-                                ),
-                                child: Material(
-                                  color: Colors.transparent,
-                                  child: InkWell(
-                                    onTap: () {
-                                      HapticFeedback.lightImpact();
-                                      _showEditDialog(
-                                        context,
-                                        session,
-                                        subject,
-                                        subjectMap.values.toList(),
-                                      );
-                                    },
-                                    borderRadius: BorderRadius.circular(16),
-                                    child: Padding(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 16,
-                                        vertical: 16, // Consistent padding
-                                      ),
-                                      child: Row(
-                                        children: [
-                                          Container(
-                                            width: 12,
-                                            height: 12,
-                                            decoration: BoxDecoration(
-                                              color: subject.color,
-                                              shape: BoxShape.circle,
-                                              boxShadow: [
-                                                BoxShadow(
-                                                  color: subject.color
-                                                      .withValues(alpha: 0.4),
-                                                  blurRadius: 6,
-                                                  offset: const Offset(0, 2),
+                                    child: Row(
+                                      children: [
+                                        Container(
+                                          width: 12,
+                                          height: 12,
+                                          decoration: BoxDecoration(
+                                            color: subject.color,
+                                            shape: BoxShape.circle,
+                                            boxShadow: [
+                                              BoxShadow(
+                                                color: subject.color.withValues(
+                                                  alpha: 0.4,
                                                 ),
-                                              ],
-                                            ),
+                                                blurRadius: 6,
+                                                offset: const Offset(0, 2),
+                                              ),
+                                            ],
                                           ),
-                                          const SizedBox(width: 16),
-                                          Expanded(
-                                            child: Column(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
-                                              children: [
-                                                Text(
-                                                  subject.name,
-                                                  style: const TextStyle(
-                                                    fontWeight: FontWeight.bold,
-                                                    fontSize: 16,
-                                                  ),
+                                        ),
+                                        const SizedBox(width: 16),
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                subject.name,
+                                                style: const TextStyle(
+                                                  fontWeight: FontWeight.bold,
+                                                  fontSize: 16,
                                                 ),
-                                                const SizedBox(height: 4),
-                                                Text(
-                                                  DateFormat.jm().format(
-                                                    session.date,
-                                                  ),
-                                                  style: TextStyle(
-                                                    color: Theme.of(context)
-                                                        .colorScheme
-                                                        .onSurfaceVariant,
-                                                    fontSize: 13,
-                                                    fontWeight: FontWeight.w500,
-                                                  ),
+                                              ),
+                                              const SizedBox(height: 4),
+                                              Text(
+                                                DateFormat.jm().format(
+                                                  session.date,
                                                 ),
-                                                Builder(
-                                                  builder: (context) {
-                                                    // Check for substitution
-                                                    final scheduled = timetable
-                                                        .where((t) {
-                                                          if (t.dayOfWeek !=
-                                                              session
-                                                                  .date
-                                                                  .weekday) {
-                                                            return false;
-                                                          }
-                                                          final parts = t
-                                                              .startTime
-                                                              .split(':');
-                                                          final h = int.parse(
-                                                            parts[0],
-                                                          );
-                                                          final m = int.parse(
-                                                            parts[1],
-                                                          );
-                                                          return h ==
-                                                                  session
-                                                                      .date
-                                                                      .hour &&
-                                                              m ==
-                                                                  session
-                                                                      .date
-                                                                      .minute;
-                                                        })
-                                                        .firstOrNull;
+                                                style: TextStyle(
+                                                  color: Theme.of(context)
+                                                      .colorScheme
+                                                      .onSurfaceVariant,
+                                                  fontSize: 13,
+                                                  fontWeight: FontWeight.w500,
+                                                ),
+                                              ),
+                                              Builder(
+                                                builder: (context) {
+                                                  // Check for substitution
+                                                  final scheduled = timetable
+                                                      .where((t) {
+                                                        if (t.dayOfWeek !=
+                                                            session
+                                                                .date
+                                                                .weekday) {
+                                                          return false;
+                                                        }
+                                                        final parts = t
+                                                            .startTime
+                                                            .split(':');
+                                                        final h = int.parse(
+                                                          parts[0],
+                                                        );
+                                                        final m = int.parse(
+                                                          parts[1],
+                                                        );
+                                                        return h ==
+                                                                session
+                                                                    .date
+                                                                    .hour &&
+                                                            m ==
+                                                                session
+                                                                    .date
+                                                                    .minute;
+                                                      })
+                                                      .firstOrNull;
 
-                                                    if (scheduled != null &&
-                                                        scheduled.subjectId !=
-                                                            session.subjectId) {
-                                                      final originalSubject =
-                                                          subjectMap[scheduled
-                                                              .subjectId] ??
-                                                          Subject(
-                                                            id: '?',
-                                                            name: 'Unknown',
-                                                            minimumAttendancePercentage:
-                                                                0,
-                                                            weeklyHours: 0,
-                                                            colorTag:
-                                                                0xFF95A5A6,
-                                                          );
-                                                      return Padding(
+                                                  if (scheduled != null &&
+                                                      scheduled.subjectId !=
+                                                          session.subjectId) {
+                                                    final originalSubject =
+                                                        subjectMap[scheduled
+                                                            .subjectId] ??
+                                                        Subject(
+                                                          id: '?',
+                                                          name: 'Unknown',
+                                                          minimumAttendancePercentage:
+                                                              0,
+                                                          weeklyHours: 0,
+                                                          colorTag: 0xFF95A5A6,
+                                                        );
+                                                    return Padding(
+                                                      padding:
+                                                          const EdgeInsets.only(
+                                                            top: 4,
+                                                          ),
+                                                      child: Container(
                                                         padding:
-                                                            const EdgeInsets.only(
-                                                              top: 4,
+                                                            const EdgeInsets.symmetric(
+                                                              horizontal: 6,
+                                                              vertical: 2,
                                                             ),
-                                                        child: Container(
-                                                          padding:
-                                                              const EdgeInsets.symmetric(
-                                                                horizontal: 6,
-                                                                vertical: 2,
+                                                        decoration: BoxDecoration(
+                                                          color: Colors.orange
+                                                              .withValues(
+                                                                alpha: 0.1,
                                                               ),
-                                                          decoration: BoxDecoration(
+                                                          borderRadius:
+                                                              BorderRadius.circular(
+                                                                8,
+                                                              ),
+                                                          border: Border.all(
                                                             color: Colors.orange
                                                                 .withValues(
-                                                                  alpha: 0.1,
+                                                                  alpha: 0.3,
                                                                 ),
-                                                            borderRadius:
-                                                                BorderRadius.circular(
-                                                                  8,
-                                                                ),
-                                                            border: Border.all(
-                                                              color: Colors
-                                                                  .orange
-                                                                  .withValues(
-                                                                    alpha: 0.3,
-                                                                  ),
-                                                              width: 1,
-                                                            ),
-                                                          ),
-                                                          child: Text(
-                                                            'Substituted: ${originalSubject.name}',
-                                                            style:
-                                                                const TextStyle(
-                                                                  fontSize: 10,
-                                                                  color: Colors
-                                                                      .orange,
-                                                                  fontWeight:
-                                                                      FontWeight
-                                                                          .bold,
-                                                                ),
+                                                            width: 1,
                                                           ),
                                                         ),
-                                                      );
-                                                    }
-                                                    return const SizedBox.shrink();
-                                                  },
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                          Container(
-                                            padding: const EdgeInsets.symmetric(
-                                              horizontal: 10,
-                                              vertical: 4,
-                                            ),
-                                            decoration: BoxDecoration(
-                                              color: _getStatusColor(
-                                                session.status,
-                                              ).withValues(alpha: 0.1),
-                                              borderRadius:
-                                                  BorderRadius.circular(12),
-                                              border: Border.all(
-                                                color: _getStatusColor(
-                                                  session.status,
-                                                ).withValues(alpha: 0.2),
+                                                        child: Text(
+                                                          'Substituted: ${originalSubject.name}',
+                                                          style:
+                                                              const TextStyle(
+                                                                fontSize: 10,
+                                                                color: Colors
+                                                                    .orange,
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .bold,
+                                                              ),
+                                                        ),
+                                                      ),
+                                                    );
+                                                  }
+                                                  return const SizedBox.shrink();
+                                                },
                                               ),
-                                            ),
-                                            child: Text(
-                                              session.status.name.toUpperCase(),
-                                              style: TextStyle(
-                                                color: _getStatusColor(
-                                                  session.status,
-                                                ),
-                                                fontSize: 11,
-                                                fontWeight: FontWeight.bold,
-                                                letterSpacing: 0.5,
-                                              ),
-                                            ),
+                                            ],
                                           ),
-                                        ],
-                                      ),
+                                        ),
+                                        StatusBadge(
+                                          text: session.status.name
+                                              .toUpperCase(),
+                                          color: _getStatusColor(
+                                            session.status,
+                                          ),
+                                          isOutlined: true,
+                                        ),
+                                      ],
                                     ),
                                   ),
                                 ),
@@ -520,16 +467,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
   }
 
   Color _getStatusColor(AttendanceStatus status) {
-    switch (status) {
-      case AttendanceStatus.present:
-        return const Color(0xFF27AE60); // Sage
-      case AttendanceStatus.absent:
-        return const Color(0xFFC0392B); // Muted Red
-      case AttendanceStatus.cancelled:
-        return Colors.grey;
-      case AttendanceStatus.unmarked:
-        return Colors.black;
-    }
+    return AppTheme.statusColors[status] ?? Colors.black;
   }
 
   List<ClassSession> _getCombinedDailySchedule(

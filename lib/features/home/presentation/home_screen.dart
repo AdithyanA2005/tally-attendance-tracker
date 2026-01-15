@@ -5,6 +5,10 @@ import 'package:intl/intl.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../../../core/presentation/animations/fade_in_slide.dart';
+import '../../../../core/presentation/widgets/app_card.dart';
+import '../../../../core/presentation/widgets/empty_state.dart';
+import '../../../../core/presentation/widgets/timeline_item.dart';
+import '../../../../core/theme/app_theme.dart';
 import '../../../../core/utils/string_utils.dart';
 import '../../calendar/data/models/session_model.dart';
 
@@ -75,52 +79,9 @@ class HomeScreen extends ConsumerWidget {
                         itemBuilder: (context, index) {
                           final item = items[index];
                           final isLast = index == items.length - 1;
-                          return IntrinsicHeight(
-                            child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                // Timeline Line
-                                Column(
-                                  children: [
-                                    Container(
-                                      width: 12,
-                                      height: 12,
-                                      decoration: BoxDecoration(
-                                        color: Theme.of(
-                                          context,
-                                        ).colorScheme.primary,
-                                        shape: BoxShape.circle,
-                                        border: Border.all(
-                                          color: Theme.of(
-                                            context,
-                                          ).scaffoldBackgroundColor,
-                                          width: 2,
-                                        ),
-                                      ),
-                                    ),
-                                    if (!isLast)
-                                      Expanded(
-                                        child: Container(
-                                          width: 2,
-                                          color: Theme.of(
-                                            context,
-                                          ).dividerColor.withOpacity(0.2),
-                                        ),
-                                      ),
-                                  ],
-                                ),
-                                const SizedBox(width: 16),
-                                // Content
-                                Expanded(
-                                  child: Padding(
-                                    padding: const EdgeInsets.only(
-                                      bottom: 24.0,
-                                    ),
-                                    child: _TodayClassCard(item: item),
-                                  ),
-                                ),
-                              ],
-                            ),
+                          return TimelineItem(
+                            isLast: isLast,
+                            child: _TodayClassCard(item: item),
                           );
                         },
                       );
@@ -139,34 +100,10 @@ class HomeScreen extends ConsumerWidget {
   }
 
   Widget _buildEmptyState(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(32),
-      alignment: Alignment.center,
-      child: Column(
-        children: [
-          Icon(
-            Icons.check_circle_outline_rounded,
-            size: 48,
-            color: Theme.of(context).colorScheme.tertiary.withOpacity(0.5),
-          ),
-          const SizedBox(height: 16),
-          Text(
-            'All caught up!',
-            style: TextStyle(
-              color: Theme.of(context).colorScheme.onSurface,
-              fontWeight: FontWeight.bold,
-              fontSize: 16,
-            ),
-          ),
-          Text(
-            'No classes scheduled for today.',
-            style: TextStyle(
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
-              fontSize: 14,
-            ),
-          ),
-        ],
-      ),
+    return const EmptyState(
+      icon: Icons.check_circle_outline_rounded,
+      title: 'All caught up!',
+      subtitle: 'No classes scheduled for today.',
     );
   }
 }
@@ -231,19 +168,8 @@ class _TodayClassCard extends ConsumerWidget {
       );
     }
 
-    return Container(
-      decoration: BoxDecoration(
-        color: theme.cardColor,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: theme.dividerColor.withOpacity(0.05)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.02),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
+    return AppCard(
+      padding: EdgeInsets.zero,
       child: Column(
         children: [
           Padding(
@@ -353,16 +279,7 @@ class _TodayClassCard extends ConsumerWidget {
   }
 
   Color _getStatusColor(AttendanceStatus status) {
-    switch (status) {
-      case AttendanceStatus.present:
-        return const Color(0xFF27AE60);
-      case AttendanceStatus.absent:
-        return const Color(0xFFC0392B);
-      case AttendanceStatus.cancelled:
-        return Colors.grey;
-      default:
-        return Colors.black;
-    }
+    return AppTheme.statusColors[status] ?? Colors.black;
   }
 
   void _mark(WidgetRef ref, AttendanceStatus status) async {

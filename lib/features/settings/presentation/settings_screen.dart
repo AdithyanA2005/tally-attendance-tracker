@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import '../../calendar/data/repositories/attendance_repository.dart';
 import '../data/repositories/settings_repository.dart';
 import '../../../../core/services/backup_service.dart';
+import '../../../../core/presentation/widgets/section_header.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -39,7 +40,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           ),
           SliverList(
             delegate: SliverChildListDelegate([
-              const _SectionHeader(title: 'Semester'),
+              const SectionHeader(title: 'Semester'),
               ListTile(
                 leading: const Icon(Icons.date_range_rounded),
                 title: const Text('Semester Start Date'),
@@ -61,7 +62,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 },
               ),
               const Divider(),
-              const _SectionHeader(title: 'Academics'),
+              const SectionHeader(title: 'Academics'),
               ListTile(
                 leading: const Icon(Icons.calendar_month),
                 title: const Text('Timetable'),
@@ -77,7 +78,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 onTap: () => context.push('/manage_subjects'),
               ),
               const Divider(),
-              const _SectionHeader(title: 'Backup & Restore'),
+              const SectionHeader(title: 'Backup & Restore'),
               ListTile(
                 title: const Text('Share Backup'),
                 subtitle: const Text('Send backup file via other apps.'),
@@ -110,7 +111,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 },
               ),
               const Divider(),
-              const _SectionHeader(title: 'Danger Zone'),
+              const SectionHeader(title: 'Danger Zone'),
               ListTile(
                 title: const Text(
                   'Factory Reset App',
@@ -126,7 +127,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 },
               ),
               const Divider(),
-              const _SectionHeader(title: 'App'),
+              const SectionHeader(title: 'App'),
               const ListTile(
                 leading: Icon(Icons.notifications),
                 title: Text('Notifications'),
@@ -237,25 +238,5 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         context.go('/');
       }
     }
-  }
-}
-
-class _SectionHeader extends StatelessWidget {
-  final String title;
-  const _SectionHeader({required this.title});
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-      child: Text(
-        title,
-        style: TextStyle(
-          color: Theme.of(context).colorScheme.primary,
-          fontWeight: FontWeight.bold,
-          fontSize: 12,
-        ),
-      ),
-    );
   }
 }

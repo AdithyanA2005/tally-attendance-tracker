@@ -4,6 +4,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'providers/attendance_provider.dart';
 import 'package:attendance_intelligence/core/presentation/animations/fade_in_slide.dart';
+import '../../../../core/presentation/widgets/app_card.dart';
+import '../../../../core/presentation/widgets/empty_state.dart';
+import '../../../../core/presentation/widgets/info_tag.dart';
+import '../../../../core/presentation/widgets/color_picker.dart';
+import '../../../../core/theme/app_theme.dart';
 import '../data/models/subject_model.dart';
 import '../data/repositories/attendance_repository.dart';
 
@@ -36,30 +41,12 @@ class ManageSubjectsScreen extends ConsumerWidget {
             sliver: subjectsAsync.when(
               data: (subjects) {
                 if (subjects.isEmpty) {
-                  return SliverFillRemaining(
+                  return const SliverFillRemaining(
                     hasScrollBody: false,
-                    child: Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.book_outlined,
-                            size: 64,
-                            color: Theme.of(
-                              context,
-                            ).colorScheme.tertiary.withValues(alpha: 0.3),
-                          ),
-                          const SizedBox(height: 16),
-                          Text(
-                            'No subjects added yet.',
-                            style: TextStyle(
-                              color: Theme.of(context).colorScheme.tertiary,
-                              fontSize: 16,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ],
-                      ),
+                    child: EmptyState(
+                      icon: Icons.book_outlined,
+                      title: 'No Subjects Added',
+                      subtitle: 'Tap the + button to add your first subject.',
                     ),
                   );
                 }
@@ -72,93 +59,75 @@ class ManageSubjectsScreen extends ConsumerWidget {
                       child: FadeInSlide(
                         duration: const Duration(milliseconds: 500),
                         delay: Duration(milliseconds: index * 100),
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: Theme.of(context).cardColor,
+                        child: AppCard(
+                          padding: EdgeInsets.zero,
+                          backgroundColor: Theme.of(context).cardColor,
+                          child: InkWell(
+                            onTap: () {
+                              HapticFeedback.lightImpact();
+                              _showSubjectSheet(context, subject);
+                            },
                             borderRadius: BorderRadius.circular(16),
-                            border: Border.all(
-                              color: Theme.of(
-                                context,
-                              ).dividerColor.withOpacity(0.1),
-                            ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.02),
-                                blurRadius: 10,
-                                offset: const Offset(0, 4),
-                              ),
-                            ],
-                          ),
-                          child: Material(
-                            color: Colors.transparent,
-                            child: InkWell(
-                              onTap: () {
-                                HapticFeedback.lightImpact();
-                                _showSubjectSheet(context, subject);
-                              },
-                              borderRadius: BorderRadius.circular(16),
-                              child: Padding(
-                                padding: const EdgeInsets.all(20),
-                                child: Row(
-                                  children: [
-                                    Container(
-                                      width: 50,
-                                      height: 50,
-                                      decoration: BoxDecoration(
-                                        color: subject.color.withOpacity(0.1),
-                                        borderRadius: BorderRadius.circular(12),
+                            child: Padding(
+                              padding: const EdgeInsets.all(20),
+                              child: Row(
+                                children: [
+                                  Container(
+                                    width: 50,
+                                    height: 50,
+                                    decoration: BoxDecoration(
+                                      color: subject.color.withOpacity(0.1),
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    alignment: Alignment.center,
+                                    child: Text(
+                                      subject.name.substring(0, 1),
+                                      style: TextStyle(
+                                        color: subject.color,
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.bold,
                                       ),
-                                      alignment: Alignment.center,
-                                      child: Text(
-                                        subject.name.substring(0, 1),
-                                        style: TextStyle(
-                                          color: subject.color,
-                                          fontSize: 20,
-                                          fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 16),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          subject.name,
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.w600,
+                                            fontSize: 16,
+                                          ),
                                         ),
-                                      ),
-                                    ),
-                                    const SizedBox(width: 16),
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            subject.name,
-                                            style: const TextStyle(
-                                              fontWeight: FontWeight.w600,
-                                              fontSize: 16,
+                                        const SizedBox(height: 4),
+                                        Row(
+                                          children: [
+                                            InfoTag(
+                                              icon: Icons.track_changes_rounded,
+                                              label:
+                                                  '${subject.minimumAttendancePercentage.toInt()}% Target',
+                                              color: Theme.of(
+                                                context,
+                                              ).colorScheme.tertiary,
                                             ),
-                                          ),
-                                          const SizedBox(height: 4),
-                                          Row(
-                                            children: [
-                                              _InfoTag(
-                                                icon:
-                                                    Icons.track_changes_rounded,
-                                                label:
-                                                    '${subject.minimumAttendancePercentage.toInt()}% Target',
-                                                color: Theme.of(
-                                                  context,
-                                                ).colorScheme.tertiary,
-                                              ),
-                                              const SizedBox(width: 12),
-                                              _InfoTag(
-                                                icon: Icons.access_time_rounded,
-                                                label:
-                                                    '${subject.weeklyHours}h/week',
-                                                color: Theme.of(
-                                                  context,
-                                                ).colorScheme.tertiary,
-                                              ),
-                                            ],
-                                          ),
-                                        ],
-                                      ),
+                                            const SizedBox(width: 12),
+                                            InfoTag(
+                                              icon: Icons.access_time_rounded,
+                                              label:
+                                                  '${subject.weeklyHours}h/week',
+                                              color: Theme.of(
+                                                context,
+                                              ).colorScheme.tertiary,
+                                            ),
+                                          ],
+                                        ),
+                                      ],
                                     ),
-                                  ],
-                                ),
+                                  ),
+                                ],
                               ),
                             ),
                           ),
@@ -198,36 +167,6 @@ class ManageSubjectsScreen extends ConsumerWidget {
   }
 }
 
-class _InfoTag extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final Color color;
-
-  const _InfoTag({
-    required this.icon,
-    required this.label,
-    required this.color,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Icon(icon, size: 14, color: color.withValues(alpha: 0.7)),
-        const SizedBox(width: 4),
-        Text(
-          label,
-          style: TextStyle(
-            color: color.withValues(alpha: 0.7),
-            fontSize: 12,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
 class _SubjectFormSheet extends ConsumerStatefulWidget {
   final Subject? subjectToEdit;
   const _SubjectFormSheet({this.subjectToEdit});
@@ -242,17 +181,6 @@ class _SubjectFormSheetState extends ConsumerState<_SubjectFormSheet> {
   late TextEditingController _minAttendanceController;
   late TextEditingController _weeklyHoursController;
   late Color _selectedColor;
-
-  final List<Color> _colors = [
-    const Color(0xFF2C3E50), // Midnight Blue (Swapped from 2nd last)
-    const Color(0xFF8E44AD), // Muted Purple
-    const Color(0xFF27AE60), // Sage Green
-    const Color(0xFFD35400), // Burnt Orange
-    const Color(0xFFC0392B), // Muted Red
-    const Color(0xFF16A085), // Muted Teal
-    const Color(0xFF2980B9), // Muted Blue (Swapped from 1st)
-    const Color(0xFFD81B60), // Deep Pink
-  ];
 
   @override
   void initState() {
@@ -384,35 +312,11 @@ class _SubjectFormSheetState extends ConsumerState<_SubjectFormSheet> {
             const SizedBox(height: 16),
             const Text('Color Tag'),
             const SizedBox(height: 8),
-            Wrap(
-              spacing: 12,
-              runSpacing: 12,
-              children: _colors.map((color) {
-                return GestureDetector(
-                  onTap: () => setState(() => _selectedColor = color),
-                  child: Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: color,
-                      shape: BoxShape.circle,
-                      border: _selectedColor == color
-                          ? Border.all(color: Colors.white, width: 3)
-                          : null,
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.2),
-                          blurRadius: 4,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: _selectedColor == color
-                        ? const Icon(Icons.check, color: Colors.white)
-                        : null,
-                  ),
-                );
-              }).toList(),
+            ColorPicker(
+              colors: AppTheme.subjectColors,
+              selectedColor: _selectedColor,
+              onColorSelected: (color) =>
+                  setState(() => _selectedColor = color),
             ),
             const SizedBox(height: 24),
             Row(

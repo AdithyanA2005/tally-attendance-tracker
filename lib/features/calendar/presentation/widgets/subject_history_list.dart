@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:grouped_list/grouped_list.dart';
 import '../../data/models/session_model.dart';
+import '../../../../core/presentation/widgets/empty_state.dart';
 
 class SubjectHistoryList extends StatelessWidget {
   final List<ClassSession> history;
@@ -11,26 +12,11 @@ class SubjectHistoryList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (history.isEmpty) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(32.0),
-          child: Column(
-            children: [
-              Icon(
-                Icons.history_toggle_off_rounded,
-                size: 48,
-                color: Theme.of(context).colorScheme.outline.withOpacity(0.5),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                'No history yet',
-                style: TextStyle(
-                  color: Theme.of(context).colorScheme.outline,
-                  fontSize: 14,
-                ),
-              ),
-            ],
-          ),
+      return const Center(
+        child: EmptyState(
+          icon: Icons.history_toggle_off_rounded,
+          title: 'No history yet',
+          subtitle: 'Classes will appear here once marked.',
         ),
       );
     }
