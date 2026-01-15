@@ -39,7 +39,7 @@ class AttendanceApp extends ConsumerWidget {
       title: 'Tally',
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
-      themeMode: ThemeMode.light, // Forces light theme as requested
+      themeMode: ThemeMode.system,
       routerConfig: appRouter,
     );
   }
