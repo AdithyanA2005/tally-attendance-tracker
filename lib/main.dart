@@ -36,7 +36,7 @@ class AttendanceApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return MaterialApp.router(
-      title: 'Attendance Intelligence',
+      title: 'Tally',
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
       themeMode: ThemeMode.light, // Forces light theme as requested
