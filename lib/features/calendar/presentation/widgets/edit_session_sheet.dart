@@ -152,30 +152,32 @@ class _EditSessionSheetState extends ConsumerState<EditSessionSheet> {
           // Action Buttons
           Row(
             children: [
-              // Always show Reset button to allow clearing/cancelling back to default
-              Expanded(
-                child: TextButton(
-                  onPressed: () async {
-                    // Reset logic: Delete specific override for this date
-                    await ref
-                        .read(attendanceRepositoryProvider)
-                        .deleteDuplicateSessions(date: widget.session.date);
-                    if (context.mounted) Navigator.pop(context);
-                  },
-                  style: TextButton.styleFrom(
-                    foregroundColor: theme.colorScheme.error,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      side: BorderSide(
-                        color: theme.colorScheme.error.withValues(alpha: 0.2),
+              // Only show Reset button for existing sessions
+              if (!widget.isNew) ...[
+                Expanded(
+                  child: TextButton(
+                    onPressed: () async {
+                      // Reset logic: Delete specific override for this date
+                      await ref
+                          .read(attendanceRepositoryProvider)
+                          .deleteDuplicateSessions(date: widget.session.date);
+                      if (context.mounted) Navigator.pop(context);
+                    },
+                    style: TextButton.styleFrom(
+                      foregroundColor: theme.colorScheme.error,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        side: BorderSide(
+                          color: theme.colorScheme.error.withValues(alpha: 0.2),
+                        ),
                       ),
                     ),
+                    child: const Text('Reset'),
                   ),
-                  child: const Text('Reset'),
                 ),
-              ),
-              const SizedBox(width: 16),
+                const SizedBox(width: 16),
+              ],
               Expanded(
                 child: FilledButton(
                   onPressed: () async {
