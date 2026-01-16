@@ -70,9 +70,9 @@ class InsightsScreen extends ConsumerWidget {
                         const SizedBox(height: 32),
 
                         // 3. Anomalies Section
-                        FadeInSlide(
-                          duration: const Duration(milliseconds: 750),
-                          child: const AnomalySection(),
+                        const FadeInSlide(
+                          duration: Duration(milliseconds: 750),
+                          child: AnomalySection(),
                         ),
 
                         const SizedBox(height: 16),

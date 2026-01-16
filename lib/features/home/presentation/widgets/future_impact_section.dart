@@ -68,7 +68,7 @@ class FutureImpactSection extends ConsumerWidget {
         );
       },
       loading: () => const SizedBox.shrink(),
-      error: (_, __) => const SizedBox.shrink(),
+      error: (error, stack) => const SizedBox.shrink(),
     );
   }
 }
@@ -98,7 +98,7 @@ class _SubjectImpactCard extends StatelessWidget {
                   shape: BoxShape.circle,
                   boxShadow: [
                     BoxShadow(
-                      color: subjectColor.withOpacity(0.4),
+                      color: subjectColor.withValues(alpha: 0.4),
                       blurRadius: 6,
                       offset: const Offset(0, 2),
                     ),
@@ -147,7 +147,7 @@ class _SubjectImpactCard extends StatelessWidget {
               Container(
                 width: 1,
                 height: 32,
-                color: Theme.of(context).dividerColor.withOpacity(0.1),
+                color: Theme.of(context).dividerColor.withValues(alpha: 0.1),
               ),
               Expanded(
                 child: _buildOutcome(
@@ -185,7 +185,7 @@ class _SubjectImpactCard extends StatelessWidget {
             Icon(icon, size: 14, color: color),
             const SizedBox(width: 6),
             Text(
-              percentage.toStringAsFixed(1) + '%',
+              '${percentage.toStringAsFixed(1)}%',
               style: TextStyle(
                 fontWeight: FontWeight.bold,
                 fontSize: 16,

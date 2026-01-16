@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import '../../../../../features/calendar/data/models/session_model.dart';
 import '../../../data/models/attendance_anomaly.dart';
-import '../../../../../core/theme/app_theme.dart';
-import '../../../../../core/presentation/widgets/status_badge.dart';
 
 class AnomalyDetailsSheet extends StatelessWidget {
   final SubjectAnomalySummary summary;
@@ -26,7 +23,7 @@ class AnomalyDetailsSheet extends StatelessWidget {
             width: 40,
             height: 4,
             decoration: BoxDecoration(
-              color: Theme.of(context).dividerColor.withOpacity(0.2),
+              color: Theme.of(context).dividerColor.withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(2),
             ),
           ),
@@ -151,7 +148,7 @@ class AnomalyDetailsSheet extends StatelessWidget {
               : EdgeInsets.zero,
           decoration: isHighlight
               ? BoxDecoration(
-                  color: color.withOpacity(0.1),
+                  color: color.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                 )
               : null,
@@ -174,7 +171,7 @@ class AnomalyDetailsSheet extends StatelessWidget {
         color: Theme.of(context).colorScheme.surfaceContainer,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: Theme.of(context).dividerColor.withOpacity(0.05),
+          color: Theme.of(context).dividerColor.withValues(alpha: 0.05),
         ),
       ),
       padding: const EdgeInsets.all(16),
@@ -200,7 +197,7 @@ class AnomalyDetailsSheet extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: Colors.orange.withOpacity(0.1),
+                  color: Colors.orange.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(

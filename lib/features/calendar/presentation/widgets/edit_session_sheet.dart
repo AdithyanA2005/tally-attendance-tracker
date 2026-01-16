@@ -292,7 +292,7 @@ class _EditSessionSheetState extends ConsumerState<EditSessionSheet> {
                       vertical: 16,
                     ),
                   ),
-                  value: _durationMinutes,
+                  initialValue: _durationMinutes,
                   items: durationOptions
                       .map(
                         (d) => DropdownMenuItem(

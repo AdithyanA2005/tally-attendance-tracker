@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../../../data/models/attendance_anomaly.dart';
-import '../../../../../core/theme/app_theme.dart';
 import 'anomaly_details_sheet.dart';
 
 class AnomalyCard extends StatelessWidget {
@@ -16,11 +15,11 @@ class AnomalyCard extends StatelessWidget {
         color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: Theme.of(context).dividerColor.withOpacity(0.05),
+          color: Theme.of(context).dividerColor.withValues(alpha: 0.05),
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.02),
+            color: Colors.black.withValues(alpha: 0.02),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -76,7 +75,7 @@ class AnomalyCard extends StatelessWidget {
                         vertical: 4,
                       ),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF27AE60).withOpacity(0.1),
+                        color: const Color(0xFF27AE60).withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Row(
