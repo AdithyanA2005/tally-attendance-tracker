@@ -92,6 +92,40 @@ class AppTheme {
         entryModeIconColor: _primary,
         helpTextStyle: const TextStyle(color: _textSub, fontSize: 14),
       ),
+      dialogTheme: DialogThemeData(
+        backgroundColor: _backgroundLight,
+        surfaceTintColor: Colors.transparent,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+        titleTextStyle: _textTheme.titleLarge?.copyWith(
+          color: _textDark,
+          fontWeight: FontWeight.bold,
+          fontSize: 20,
+        ),
+        contentTextStyle: _textTheme.bodyMedium?.copyWith(
+          color: _textSub,
+          fontSize: 15,
+          height: 1.5,
+        ),
+        actionsPadding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+      ),
+      textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          textStyle: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+        ),
+      ),
+      filledButtonTheme: FilledButtonThemeData(
+        style: FilledButton.styleFrom(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          textStyle: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+        ),
+      ),
     );
   }
 
@@ -103,6 +137,12 @@ class AppTheme {
         seedColor: _primary,
         brightness: Brightness.dark,
         surface: const Color(0xFF1E1E1E),
+        surfaceContainerHighest: const Color(
+          0xFF2A2A2A,
+        ), // Neutral gray instead of tinted
+        surfaceContainer: const Color(0xFF252525),
+        surfaceContainerLow: const Color(0xFF212121),
+        surfaceContainerLowest: const Color(0xFF1A1A1A),
         primary: Colors.white,
         secondary: _accent,
         tertiary: const Color(0xFFAAAAAA),
@@ -163,6 +203,40 @@ class AppTheme {
         ),
         entryModeIconColor: Colors.white,
         helpTextStyle: const TextStyle(color: Color(0xFFAAAAAA), fontSize: 14),
+      ),
+      dialogTheme: DialogThemeData(
+        backgroundColor: const Color(0xFF1E1E1E),
+        surfaceTintColor: Colors.transparent,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+        titleTextStyle: _textTheme.titleLarge?.copyWith(
+          color: Colors.white,
+          fontWeight: FontWeight.bold,
+          fontSize: 20,
+        ),
+        contentTextStyle: _textTheme.bodyMedium?.copyWith(
+          color: const Color(0xFFAAAAAA),
+          fontSize: 15,
+          height: 1.5,
+        ),
+        actionsPadding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+      ),
+      textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          textStyle: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+        ),
+      ),
+      filledButtonTheme: FilledButtonThemeData(
+        style: FilledButton.styleFrom(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          textStyle: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+        ),
       ),
     );
   }

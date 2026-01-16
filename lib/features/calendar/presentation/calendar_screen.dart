@@ -264,6 +264,9 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                               child: Row(
                                 children: [
                                   _BulkActionChip(
+                                    key: const ValueKey(
+                                      'calendar_bulk_present',
+                                    ),
                                     icon: Icons.check_rounded,
                                     label: 'All Present',
                                     color: const Color(0xFF27AE60),
@@ -275,6 +278,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                                   ),
                                   const SizedBox(width: 8),
                                   _BulkActionChip(
+                                    key: const ValueKey('calendar_bulk_absent'),
                                     icon: Icons.close_rounded,
                                     label: 'All Absent',
                                     color: const Color(0xFFC0392B),
@@ -286,6 +290,9 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                                   ),
                                   const SizedBox(width: 8),
                                   _BulkActionChip(
+                                    key: const ValueKey(
+                                      'calendar_bulk_cancelled',
+                                    ),
                                     icon: Icons.block_rounded,
                                     label: 'All Cancelled',
                                     color: const Color(0xFF607D8B),
@@ -708,6 +715,7 @@ class _BulkActionChip extends StatelessWidget {
   final VoidCallback onTap;
 
   const _BulkActionChip({
+    super.key,
     required this.icon,
     required this.label,
     required this.color,

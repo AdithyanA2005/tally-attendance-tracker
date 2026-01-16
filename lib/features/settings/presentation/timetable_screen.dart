@@ -748,10 +748,36 @@ class _EditEntrySheetState extends ConsumerState<_EditEntrySheet> {
               Expanded(
                 child: TextButton(
                   onPressed: () async {
-                    await ref
-                        .read(attendanceRepositoryProvider)
-                        .deleteTimetableEntry(widget.entry.id);
-                    if (context.mounted) Navigator.pop(context);
+                    // Show confirmation dialog
+                    final confirmed = await showDialog<bool>(
+                      context: context,
+                      builder: (context) => AlertDialog(
+                        title: const Text('Delete Class?'),
+                        content: Text(
+                          'Are you sure you want to delete this ${_selectedSubject.name} class at ${widget.entry.startTime}?',
+                        ),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(context, false),
+                            child: const Text('Cancel'),
+                          ),
+                          FilledButton(
+                            onPressed: () => Navigator.pop(context, true),
+                            style: FilledButton.styleFrom(
+                              backgroundColor: theme.colorScheme.error,
+                            ),
+                            child: const Text('Delete'),
+                          ),
+                        ],
+                      ),
+                    );
+
+                    if (confirmed == true && context.mounted) {
+                      await ref
+                          .read(attendanceRepositoryProvider)
+                          .deleteTimetableEntry(widget.entry.id);
+                      if (context.mounted) Navigator.pop(context);
+                    }
                   },
                   style: TextButton.styleFrom(
                     foregroundColor: theme.colorScheme.error,
