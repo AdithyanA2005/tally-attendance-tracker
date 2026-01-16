@@ -58,63 +58,103 @@ List<TodayClassItem> _combineData({
 }) {
   final subjectMap = {for (var s in subjects) s.id: s};
   final today = DateTime.now();
+  final items = <TodayClassItem>[];
 
-  return timetable
-      .map((entry) {
-        final subject = subjectMap[entry.subjectId];
-        if (subject == null) return null;
+  // 1. Add timetable-based classes
+  for (var entry in timetable) {
+    final subject = subjectMap[entry.subjectId];
+    if (subject == null) continue;
 
-        final parts = entry.startTime.split(':');
-        final hour = int.parse(parts[0]);
-        final minute = int.parse(parts[1]);
+    final parts = entry.startTime.split(':');
+    final hour = int.parse(parts[0]);
+    final minute = int.parse(parts[1]);
 
-        final expectedTime = DateTime(
-          today.year,
-          today.month,
-          today.day,
-          hour,
-          minute,
-        );
+    final expectedTime = DateTime(
+      today.year,
+      today.month,
+      today.day,
+      hour,
+      minute,
+    );
 
-        final existingSession = sessions.firstWhere(
-          (s) {
-            return s.date.year == expectedTime.year &&
-                s.date.month == expectedTime.month &&
-                s.date.day == expectedTime.day &&
-                s.date.hour == expectedTime.hour &&
-                s.date.minute == expectedTime.minute;
-          },
-          orElse: () => ClassSession(
-            id: '',
-            subjectId: '',
-            date: DateTime(0),
-            status: AttendanceStatus.unmarked,
-          ),
-        );
+    final existingSession = sessions.firstWhere(
+      (s) {
+        return s.date.year == expectedTime.year &&
+            s.date.month == expectedTime.month &&
+            s.date.day == expectedTime.day &&
+            s.date.hour == expectedTime.hour &&
+            s.date.minute == expectedTime.minute;
+      },
+      orElse: () => ClassSession(
+        id: '',
+        subjectId: '',
+        date: DateTime(0),
+        status: AttendanceStatus.unmarked,
+      ),
+    );
 
-        final displaySubject =
-            existingSession.id.isNotEmpty &&
-                subjectMap.containsKey(existingSession.subjectId)
-            ? subjectMap[existingSession.subjectId]!
-            : subject;
+    final displaySubject =
+        existingSession.id.isNotEmpty &&
+            subjectMap.containsKey(existingSession.subjectId)
+        ? subjectMap[existingSession.subjectId]!
+        : subject;
 
-        return TodayClassItem(
-          entry: entry,
-          subject: displaySubject,
-          originalSubject: subject,
-          currentStatus: existingSession.id.isEmpty
-              ? AttendanceStatus.unmarked
-              : existingSession.status,
-          existingSessionId: existingSession.id.isEmpty
-              ? null
-              : existingSession.id,
-          existingSession: existingSession.id.isEmpty ? null : existingSession,
-          scheduledTime: expectedTime,
-        );
-      })
-      .whereType<TodayClassItem>()
-      .toList()
-    ..sort((a, b) => a.entry.startTime.compareTo(b.entry.startTime));
+    items.add(
+      TodayClassItem(
+        entry: entry,
+        subject: displaySubject,
+        originalSubject: subject,
+        currentStatus: existingSession.id.isEmpty
+            ? AttendanceStatus.unmarked
+            : existingSession.status,
+        existingSessionId: existingSession.id.isEmpty
+            ? null
+            : existingSession.id,
+        existingSession: existingSession.id.isEmpty ? null : existingSession,
+        scheduledTime: expectedTime,
+      ),
+    );
+  }
+
+  // 2. Add extra classes (not from timetable)
+  final todayExtraClasses = sessions.where((s) {
+    return s.isExtraClass &&
+        s.date.year == today.year &&
+        s.date.month == today.month &&
+        s.date.day == today.day;
+  });
+
+  for (var session in todayExtraClasses) {
+    final subject = subjectMap[session.subjectId];
+    if (subject == null) continue;
+
+    // Create a virtual timetable entry for the extra class
+    final timeStr =
+        '${session.date.hour.toString().padLeft(2, '0')}:${session.date.minute.toString().padLeft(2, '0')}';
+
+    items.add(
+      TodayClassItem(
+        entry: TimetableEntry(
+          id: session.id,
+          dayOfWeek: session.date.weekday,
+          subjectId: session.subjectId,
+          startTime: timeStr,
+          durationInHours: 1.0, // Default duration for extra classes
+        ),
+        subject: subject,
+        originalSubject: subject,
+        currentStatus: session.status,
+        existingSessionId: session.id,
+        existingSession: session,
+        scheduledTime: session.date,
+      ),
+    );
+  }
+
+  // Sort by time
+  items.sort((a, b) => a.scheduledTime.compareTo(b.scheduledTime));
+
+  return items;
 }
 
 class TodayClassItem {
