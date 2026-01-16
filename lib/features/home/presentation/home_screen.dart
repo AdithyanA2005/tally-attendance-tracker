@@ -345,7 +345,7 @@ class _TodayClassCard extends ConsumerWidget {
         decoration: BoxDecoration(
           color: theme.cardColor.withValues(alpha: 0.3),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: theme.dividerColor.withValues(alpha: 0.05)),
+          border: Border.all(color: theme.dividerColor.withValues(alpha: 0.1)),
         ),
         child: Row(
           children: [

@@ -168,10 +168,10 @@ class AnomalyDetailsSheet extends StatelessWidget {
   Widget _buildAnomalyItem(BuildContext context, AttendanceAnomaly anomaly) {
     return Container(
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceContainer,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: Theme.of(context).dividerColor.withValues(alpha: 0.05),
+          color: Theme.of(context).dividerColor.withValues(alpha: 0.1),
         ),
       ),
       padding: const EdgeInsets.all(16),

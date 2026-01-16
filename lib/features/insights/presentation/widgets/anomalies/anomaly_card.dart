@@ -15,7 +15,7 @@ class AnomalyCard extends StatelessWidget {
         color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: Theme.of(context).dividerColor.withValues(alpha: 0.05),
+          color: Theme.of(context).dividerColor.withValues(alpha: 0.1),
         ),
         boxShadow: [
           BoxShadow(
