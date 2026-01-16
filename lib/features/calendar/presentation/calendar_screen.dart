@@ -56,432 +56,480 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
           ref.invalidate(fullTimetableStreamProvider);
           await Future.delayed(const Duration(milliseconds: 500));
         },
-        child: CustomScrollView(
-          slivers: [
-            SliverAppBar(
-              pinned: true,
-              backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-              surfaceTintColor: Theme.of(context).scaffoldBackgroundColor,
-              title: Text(
-                'Calendar',
-                style: TextStyle(
-                  color: Theme.of(context).colorScheme.onSurface,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 20,
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 800),
+            child: CustomScrollView(
+              slivers: [
+                SliverAppBar(
+                  pinned: true,
+                  backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+                  surfaceTintColor: Theme.of(context).scaffoldBackgroundColor,
+                  title: Text(
+                    'Calendar',
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.onSurface,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 20,
+                    ),
+                  ),
+                  centerTitle: false,
+                  actions: [
+                    IconButton(
+                      onPressed: () {
+                        HapticFeedback.lightImpact();
+                        _showAddExtraClassDialog(context);
+                      },
+                      icon: const Icon(Icons.add_rounded),
+                      tooltip: 'Add Class',
+                    ),
+                    const SizedBox(width: 8),
+                  ],
                 ),
-              ),
-              centerTitle: false,
-              actions: [
-                IconButton(
-                  onPressed: () {
-                    HapticFeedback.lightImpact();
-                    _showAddExtraClassDialog(context);
-                  },
-                  icon: const Icon(Icons.add_rounded),
-                  tooltip: 'Add Class',
-                ),
-                const SizedBox(width: 8),
-              ],
-            ),
-            eventsAsync.when(
-              data: (events) {
-                return timetableAsync.when(
-                  data: (timetable) {
-                    final combinedEvents = _getCombinedDailySchedule(
-                      _selectedDay ?? _focusedDay,
-                      events,
-                      timetable,
-                      semesterStartDate,
-                    );
+                eventsAsync.when(
+                  data: (events) {
+                    return timetableAsync.when(
+                      data: (timetable) {
+                        final combinedEvents = _getCombinedDailySchedule(
+                          _selectedDay ?? _focusedDay,
+                          events,
+                          timetable,
+                          semesterStartDate,
+                        );
 
-                    return SliverList(
-                      delegate: SliverChildListDelegate([
-                        TableCalendar<ClassSession>(
-                          firstDay: DateTime.utc(2023, 1, 1),
-                          lastDay: DateTime.utc(2030, 12, 31),
-                          focusedDay: _focusedDay,
-                          selectedDayPredicate: (day) =>
-                              isSameDay(_selectedDay, day),
-                          onDaySelected: (selectedDay, focusedDay) {
-                            HapticFeedback.selectionClick();
-                            setState(() {
-                              _selectedDay = selectedDay;
-                              _focusedDay = focusedDay;
-                            });
-                          },
-                          eventLoader: (day) {
-                            // Use combined schedule to show markers for both saved and virtual sessions
-                            return timetableAsync.maybeWhen(
-                              data: (timetable) => _getCombinedDailySchedule(
-                                day,
-                                events,
-                                timetable,
-                                semesterStartDate,
-                              ),
-                              orElse: () => _getEventsForDay(day, events),
-                            );
-                          },
-                          calendarStyle: const CalendarStyle(
-                            outsideDaysVisible: false,
-                            defaultTextStyle: TextStyle(
-                              fontWeight: FontWeight.bold,
-                            ),
-                            weekendTextStyle: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: Colors.grey,
-                            ),
-                            tablePadding: EdgeInsets.only(bottom: 12),
-                          ),
-                          daysOfWeekHeight: 40,
-                          calendarBuilders: CalendarBuilders(
-                            selectedBuilder: (context, date, events) {
-                              final isDark =
-                                  Theme.of(context).brightness ==
-                                  Brightness.dark;
-                              return Container(
-                                margin: const EdgeInsets.all(6.0),
-                                alignment: Alignment.center,
-                                decoration: BoxDecoration(
-                                  color: isDark
-                                      ? Theme.of(context).colorScheme.primary
-                                      : const Color(0xFF2D3436),
-                                  shape: BoxShape.circle,
-                                ),
-                                child: Text(
-                                  '${date.day}',
-                                  style: TextStyle(
-                                    color: isDark
-                                        ? Theme.of(context).colorScheme.surface
-                                        : Colors.white,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 16,
-                                  ),
-                                ),
-                              );
-                            },
-                            todayBuilder: (context, date, events) {
-                              final isDark =
-                                  Theme.of(context).brightness ==
-                                  Brightness.dark;
-                              return Container(
-                                margin: const EdgeInsets.all(6.0),
-                                alignment: Alignment.center,
-                                decoration: BoxDecoration(
-                                  color: isDark
-                                      ? Theme.of(context).colorScheme.primary
-                                            .withValues(alpha: 0.12)
-                                      : const Color(
-                                          0xFF2D3436,
-                                        ).withValues(alpha: 0.1),
-                                  shape: BoxShape.circle,
-                                ),
-                                child: Text(
-                                  '${date.day}',
-                                  style: TextStyle(
-                                    color: isDark
-                                        ? Theme.of(context).colorScheme.primary
-                                        : const Color(0xFF2D3436),
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 16,
-                                  ),
-                                ),
-                              );
-                            },
-                            markerBuilder: (context, date, events) {
-                              if (events.isEmpty) return null;
-
-                              final sessions = events.cast<ClassSession>();
-                              final uniqueStatuses = sessions
-                                  .where(
-                                    (s) =>
-                                        s.status != AttendanceStatus.cancelled,
-                                  )
-                                  .map((s) => s.status)
-                                  .toSet();
-
-                              if (uniqueStatuses.isEmpty ||
-                                  uniqueStatuses.length == 1) {
-                                return const SizedBox(); // Singular state or cancelled = No Dot
-                              }
-
-                              // Mixed state only
-                              const dotColor = Color(0xFF2D3436); // Obsidian
-
-                              // Check if this date is the selected date
-                              final isSelected = isSameDay(date, _selectedDay);
-
-                              return Positioned(
-                                bottom: 10,
-                                child: Container(
-                                  width: 5,
-                                  height: 5,
-                                  decoration: BoxDecoration(
-                                    color: isSelected
-                                        ? Colors.white
-                                        : dotColor, // Use calculated color
-                                    shape: BoxShape.circle,
-                                  ),
-                                ),
-                              );
-                            },
-                          ),
-                          headerStyle: HeaderStyle(
-                            titleCentered: true,
-                            formatButtonVisible: false,
-                            titleTextStyle: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: Theme.of(context).colorScheme.onSurface,
-                            ),
-                            leftChevronIcon: Icon(
-                              Icons.chevron_left_rounded,
-                              color: Theme.of(context).colorScheme.onSurface,
-                            ),
-                            rightChevronIcon: Icon(
-                              Icons.chevron_right_rounded,
-                              color: Theme.of(context).colorScheme.onSurface,
-                            ),
-                          ),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 24,
-                            vertical: 8,
-                          ),
-                          child: Divider(
-                            color: Theme.of(
-                              context,
-                            ).dividerColor.withValues(alpha: 0.1),
-                          ),
-                        ),
-
-                        // Bulk Actions
-                        if (combinedEvents.isNotEmpty) ...[
-                          Padding(
-                            padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-                            child: SingleChildScrollView(
-                              scrollDirection: Axis.horizontal,
-                              child: Row(
-                                children: [
-                                  _BulkActionChip(
-                                    key: const ValueKey(
-                                      'calendar_bulk_present',
-                                    ),
-                                    icon: Icons.check_rounded,
-                                    label: 'All Present',
-                                    color: const Color(0xFF27AE60),
-                                    onTap: () => _markAllClassesForDay(
-                                      combinedEvents,
-                                      subjectMap.values.toList(),
-                                      AttendanceStatus.present,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  _BulkActionChip(
-                                    key: const ValueKey('calendar_bulk_absent'),
-                                    icon: Icons.close_rounded,
-                                    label: 'All Absent',
-                                    color: const Color(0xFFC0392B),
-                                    onTap: () => _markAllClassesForDay(
-                                      combinedEvents,
-                                      subjectMap.values.toList(),
-                                      AttendanceStatus.absent,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  _BulkActionChip(
-                                    key: const ValueKey(
-                                      'calendar_bulk_cancelled',
-                                    ),
-                                    icon: Icons.block_rounded,
-                                    label: 'All Cancelled',
-                                    color: const Color(0xFF607D8B),
-                                    onTap: () => _markAllClassesForDay(
-                                      combinedEvents,
-                                      subjectMap.values.toList(),
-                                      AttendanceStatus.cancelled,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ],
-
-                        if (combinedEvents.isEmpty)
-                          const Padding(
-                            padding: EdgeInsets.all(32.0),
-                            child: EmptyState(
-                              icon: Icons.event_note_rounded,
-                              title: 'No records for this day',
-                              subtitle:
-                                  'Attendance marking is disabled for future dates.',
-                            ),
-                          )
-                        else
-                          ...combinedEvents.asMap().entries.map((entry) {
-                            final index = entry.key;
-                            final session = entry.value;
-                            final subject =
-                                subjectMap[session.subjectId] ??
-                                Subject(
-                                  id: '?',
-                                  name: 'Unknown',
-                                  minimumAttendancePercentage: 0,
-                                  weeklyHours: 0,
-                                  colorTag: 0xFF95A5A6, // Concrete Grey
-                                );
-
-                            return Padding(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 16,
-                                vertical: 6,
-                              ),
-                              child: FadeInSlide(
-                                duration: const Duration(milliseconds: 500),
-                                delay: Duration(milliseconds: index * 100),
-                                child: AppCard(
-                                  padding: EdgeInsets.zero,
-                                  backgroundColor: Theme.of(context).cardColor,
-                                  child: InkWell(
-                                    onTap: () {
-                                      HapticFeedback.lightImpact();
-                                      _showEditDialog(
-                                        context,
-                                        session,
-                                        subject,
-                                        subjectMap.values.toList(),
-                                      );
-                                    },
-                                    borderRadius: BorderRadius.circular(16),
-                                    child: Padding(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 16,
-                                        vertical: 16, // Consistent padding
+                        return SliverList(
+                          delegate: SliverChildListDelegate([
+                            TableCalendar<ClassSession>(
+                              firstDay: DateTime.utc(2023, 1, 1),
+                              lastDay: DateTime.utc(2030, 12, 31),
+                              focusedDay: _focusedDay,
+                              selectedDayPredicate: (day) =>
+                                  isSameDay(_selectedDay, day),
+                              onDaySelected: (selectedDay, focusedDay) {
+                                HapticFeedback.selectionClick();
+                                setState(() {
+                                  _selectedDay = selectedDay;
+                                  _focusedDay = focusedDay;
+                                });
+                              },
+                              eventLoader: (day) {
+                                // Use combined schedule to show markers for both saved and virtual sessions
+                                return timetableAsync.maybeWhen(
+                                  data: (timetable) =>
+                                      _getCombinedDailySchedule(
+                                        day,
+                                        events,
+                                        timetable,
+                                        semesterStartDate,
                                       ),
-                                      child: Row(
-                                        children: [
-                                          Container(
-                                            width: 12,
-                                            height: 12,
-                                            decoration: BoxDecoration(
-                                              color: subject.color,
-                                              shape: BoxShape.circle,
-                                              boxShadow: [
-                                                BoxShadow(
-                                                  color: subject.color
-                                                      .withValues(alpha: 0.4),
-                                                  blurRadius: 6,
-                                                  offset: const Offset(0, 2),
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                          const SizedBox(width: 16),
-                                          Expanded(
-                                            child: Column(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
-                                              children: [
-                                                Text(
-                                                  subject.name,
-                                                  style: const TextStyle(
-                                                    fontWeight: FontWeight.bold,
-                                                    fontSize: 16,
-                                                  ),
-                                                ),
-                                                const SizedBox(height: 4),
-                                                Text(
-                                                  DateFormat.jm().format(
-                                                    session.date,
-                                                  ),
-                                                  style: TextStyle(
-                                                    color: Theme.of(context)
-                                                        .colorScheme
-                                                        .onSurfaceVariant,
-                                                    fontSize: 13,
-                                                    fontWeight: FontWeight.w500,
-                                                  ),
-                                                ),
-                                                Builder(
-                                                  builder: (context) {
-                                                    // Check for substitution
-                                                    final scheduled = timetable
-                                                        .where((t) {
-                                                          if (t.dayOfWeek !=
-                                                              session
-                                                                  .date
-                                                                  .weekday) {
-                                                            return false;
-                                                          }
-                                                          final parts = t
-                                                              .startTime
-                                                              .split(':');
-                                                          final h = int.parse(
-                                                            parts[0],
-                                                          );
-                                                          final m = int.parse(
-                                                            parts[1],
-                                                          );
-                                                          return h ==
-                                                                  session
-                                                                      .date
-                                                                      .hour &&
-                                                              m ==
-                                                                  session
-                                                                      .date
-                                                                      .minute;
-                                                        })
-                                                        .firstOrNull;
+                                  orElse: () => _getEventsForDay(day, events),
+                                );
+                              },
+                              calendarStyle: const CalendarStyle(
+                                outsideDaysVisible: false,
+                                defaultTextStyle: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                                weekendTextStyle: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.grey,
+                                ),
+                                tablePadding: EdgeInsets.only(bottom: 12),
+                              ),
+                              daysOfWeekHeight: 40,
+                              calendarBuilders: CalendarBuilders(
+                                selectedBuilder: (context, date, events) {
+                                  final isDark =
+                                      Theme.of(context).brightness ==
+                                      Brightness.dark;
+                                  return Container(
+                                    margin: const EdgeInsets.all(6.0),
+                                    alignment: Alignment.center,
+                                    decoration: BoxDecoration(
+                                      color: isDark
+                                          ? Theme.of(
+                                              context,
+                                            ).colorScheme.primary
+                                          : const Color(0xFF2D3436),
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: Text(
+                                      '${date.day}',
+                                      style: TextStyle(
+                                        color: isDark
+                                            ? Theme.of(
+                                                context,
+                                              ).colorScheme.surface
+                                            : Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 16,
+                                      ),
+                                    ),
+                                  );
+                                },
+                                todayBuilder: (context, date, events) {
+                                  final isDark =
+                                      Theme.of(context).brightness ==
+                                      Brightness.dark;
+                                  return Container(
+                                    margin: const EdgeInsets.all(6.0),
+                                    alignment: Alignment.center,
+                                    decoration: BoxDecoration(
+                                      color: isDark
+                                          ? Theme.of(context)
+                                                .colorScheme
+                                                .primary
+                                                .withValues(alpha: 0.12)
+                                          : const Color(
+                                              0xFF2D3436,
+                                            ).withValues(alpha: 0.1),
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: Text(
+                                      '${date.day}',
+                                      style: TextStyle(
+                                        color: isDark
+                                            ? Theme.of(
+                                                context,
+                                              ).colorScheme.primary
+                                            : const Color(0xFF2D3436),
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 16,
+                                      ),
+                                    ),
+                                  );
+                                },
+                                markerBuilder: (context, date, events) {
+                                  if (events.isEmpty) return null;
 
-                                                    if (scheduled != null &&
-                                                        scheduled.subjectId !=
-                                                            session.subjectId) {
-                                                      final originalSubject =
-                                                          subjectMap[scheduled
-                                                              .subjectId] ??
-                                                          Subject(
-                                                            id: '?',
-                                                            name: 'Unknown',
-                                                            minimumAttendancePercentage:
-                                                                0,
-                                                            weeklyHours: 0,
-                                                            colorTag:
-                                                                0xFF95A5A6,
-                                                          );
-                                                      return Padding(
-                                                        padding:
-                                                            const EdgeInsets.only(
-                                                              top: 4,
-                                                            ),
-                                                        child: Container(
-                                                          padding:
-                                                              const EdgeInsets.symmetric(
-                                                                horizontal: 6,
-                                                                vertical: 2,
-                                                              ),
-                                                          decoration: BoxDecoration(
-                                                            color: Colors.orange
-                                                                .withValues(
-                                                                  alpha: 0.1,
-                                                                ),
-                                                            borderRadius:
-                                                                BorderRadius.circular(
-                                                                  8,
-                                                                ),
-                                                            border: Border.all(
-                                                              color: Colors
-                                                                  .orange
-                                                                  .withValues(
-                                                                    alpha: 0.3,
-                                                                  ),
-                                                              width: 1,
-                                                            ),
+                                  final sessions = events.cast<ClassSession>();
+                                  final uniqueStatuses = sessions
+                                      .where(
+                                        (s) =>
+                                            s.status !=
+                                            AttendanceStatus.cancelled,
+                                      )
+                                      .map((s) => s.status)
+                                      .toSet();
+
+                                  if (uniqueStatuses.isEmpty ||
+                                      uniqueStatuses.length == 1) {
+                                    return const SizedBox(); // Singular state or cancelled = No Dot
+                                  }
+
+                                  // Mixed state only
+                                  const dotColor = Color(
+                                    0xFF2D3436,
+                                  ); // Obsidian
+
+                                  // Check if this date is the selected date
+                                  final isSelected = isSameDay(
+                                    date,
+                                    _selectedDay,
+                                  );
+
+                                  return Positioned(
+                                    bottom: 10,
+                                    child: Container(
+                                      width: 5,
+                                      height: 5,
+                                      decoration: BoxDecoration(
+                                        color: isSelected
+                                            ? Colors.white
+                                            : dotColor, // Use calculated color
+                                        shape: BoxShape.circle,
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+                              headerStyle: HeaderStyle(
+                                titleCentered: true,
+                                formatButtonVisible: false,
+                                titleTextStyle: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onSurface,
+                                ),
+                                leftChevronIcon: Icon(
+                                  Icons.chevron_left_rounded,
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onSurface,
+                                ),
+                                rightChevronIcon: Icon(
+                                  Icons.chevron_right_rounded,
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onSurface,
+                                ),
+                              ),
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 24,
+                                vertical: 8,
+                              ),
+                              child: Divider(
+                                color: Theme.of(
+                                  context,
+                                ).dividerColor.withValues(alpha: 0.1),
+                              ),
+                            ),
+
+                            // Bulk Actions
+                            if (combinedEvents.isNotEmpty) ...[
+                              Padding(
+                                padding: const EdgeInsets.fromLTRB(
+                                  16,
+                                  8,
+                                  16,
+                                  16,
+                                ),
+                                child: SingleChildScrollView(
+                                  scrollDirection: Axis.horizontal,
+                                  child: Row(
+                                    children: [
+                                      _BulkActionChip(
+                                        key: const ValueKey(
+                                          'calendar_bulk_present',
+                                        ),
+                                        icon: Icons.check_rounded,
+                                        label: 'All Present',
+                                        color: const Color(0xFF27AE60),
+                                        onTap: () => _markAllClassesForDay(
+                                          combinedEvents,
+                                          subjectMap.values.toList(),
+                                          AttendanceStatus.present,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      _BulkActionChip(
+                                        key: const ValueKey(
+                                          'calendar_bulk_absent',
+                                        ),
+                                        icon: Icons.close_rounded,
+                                        label: 'All Absent',
+                                        color: const Color(0xFFC0392B),
+                                        onTap: () => _markAllClassesForDay(
+                                          combinedEvents,
+                                          subjectMap.values.toList(),
+                                          AttendanceStatus.absent,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      _BulkActionChip(
+                                        key: const ValueKey(
+                                          'calendar_bulk_cancelled',
+                                        ),
+                                        icon: Icons.block_rounded,
+                                        label: 'All Cancelled',
+                                        color: const Color(0xFF607D8B),
+                                        onTap: () => _markAllClassesForDay(
+                                          combinedEvents,
+                                          subjectMap.values.toList(),
+                                          AttendanceStatus.cancelled,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ],
+
+                            if (combinedEvents.isEmpty)
+                              const Padding(
+                                padding: EdgeInsets.all(32.0),
+                                child: EmptyState(
+                                  icon: Icons.event_note_rounded,
+                                  title: 'No records for this day',
+                                  subtitle:
+                                      'Attendance marking is disabled for future dates.',
+                                ),
+                              )
+                            else
+                              ...combinedEvents.asMap().entries.map((entry) {
+                                final index = entry.key;
+                                final session = entry.value;
+                                final subject =
+                                    subjectMap[session.subjectId] ??
+                                    Subject(
+                                      id: '?',
+                                      name: 'Unknown',
+                                      minimumAttendancePercentage: 0,
+                                      weeklyHours: 0,
+                                      colorTag: 0xFF95A5A6, // Concrete Grey
+                                    );
+
+                                return Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                    vertical: 6,
+                                  ),
+                                  child: FadeInSlide(
+                                    duration: const Duration(milliseconds: 500),
+                                    delay: Duration(milliseconds: index * 100),
+                                    child: AppCard(
+                                      padding: EdgeInsets.zero,
+                                      backgroundColor: Theme.of(
+                                        context,
+                                      ).cardColor,
+                                      child: InkWell(
+                                        onTap: () {
+                                          HapticFeedback.lightImpact();
+                                          _showEditDialog(
+                                            context,
+                                            session,
+                                            subject,
+                                            subjectMap.values.toList(),
+                                          );
+                                        },
+                                        borderRadius: BorderRadius.circular(16),
+                                        child: Padding(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 16,
+                                            vertical: 16, // Consistent padding
+                                          ),
+                                          child: Row(
+                                            children: [
+                                              Container(
+                                                width: 12,
+                                                height: 12,
+                                                decoration: BoxDecoration(
+                                                  color: subject.color,
+                                                  shape: BoxShape.circle,
+                                                  boxShadow: [
+                                                    BoxShadow(
+                                                      color: subject.color
+                                                          .withValues(
+                                                            alpha: 0.4,
                                                           ),
-                                                          child: Text(
-                                                            'Substituted: ${originalSubject.name}',
-                                                            style:
-                                                                const TextStyle(
+                                                      blurRadius: 6,
+                                                      offset: const Offset(
+                                                        0,
+                                                        2,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                              const SizedBox(width: 16),
+                                              Expanded(
+                                                child: Column(
+                                                  crossAxisAlignment:
+                                                      CrossAxisAlignment.start,
+                                                  children: [
+                                                    Text(
+                                                      subject.name,
+                                                      style: const TextStyle(
+                                                        fontWeight:
+                                                            FontWeight.bold,
+                                                        fontSize: 16,
+                                                      ),
+                                                    ),
+                                                    const SizedBox(height: 4),
+                                                    Text(
+                                                      DateFormat.jm().format(
+                                                        session.date,
+                                                      ),
+                                                      style: TextStyle(
+                                                        color: Theme.of(context)
+                                                            .colorScheme
+                                                            .onSurfaceVariant,
+                                                        fontSize: 13,
+                                                        fontWeight:
+                                                            FontWeight.w500,
+                                                      ),
+                                                    ),
+                                                    Builder(
+                                                      builder: (context) {
+                                                        // Check for substitution
+                                                        final scheduled =
+                                                            timetable.where((
+                                                              t,
+                                                            ) {
+                                                              if (t.dayOfWeek !=
+                                                                  session
+                                                                      .date
+                                                                      .weekday) {
+                                                                return false;
+                                                              }
+                                                              final parts = t
+                                                                  .startTime
+                                                                  .split(':');
+                                                              final h =
+                                                                  int.parse(
+                                                                    parts[0],
+                                                                  );
+                                                              final m =
+                                                                  int.parse(
+                                                                    parts[1],
+                                                                  );
+                                                              return h ==
+                                                                      session
+                                                                          .date
+                                                                          .hour &&
+                                                                  m ==
+                                                                      session
+                                                                          .date
+                                                                          .minute;
+                                                            }).firstOrNull;
+
+                                                        if (scheduled != null &&
+                                                            scheduled
+                                                                    .subjectId !=
+                                                                session
+                                                                    .subjectId) {
+                                                          final originalSubject =
+                                                              subjectMap[scheduled
+                                                                  .subjectId] ??
+                                                              Subject(
+                                                                id: '?',
+                                                                name: 'Unknown',
+                                                                minimumAttendancePercentage:
+                                                                    0,
+                                                                weeklyHours: 0,
+                                                                colorTag:
+                                                                    0xFF95A5A6,
+                                                              );
+                                                          return Padding(
+                                                            padding:
+                                                                const EdgeInsets.only(
+                                                                  top: 4,
+                                                                ),
+                                                            child: Container(
+                                                              padding:
+                                                                  const EdgeInsets.symmetric(
+                                                                    horizontal:
+                                                                        6,
+                                                                    vertical: 2,
+                                                                  ),
+                                                              decoration: BoxDecoration(
+                                                                color: Colors
+                                                                    .orange
+                                                                    .withValues(
+                                                                      alpha:
+                                                                          0.1,
+                                                                    ),
+                                                                borderRadius:
+                                                                    BorderRadius.circular(
+                                                                      8,
+                                                                    ),
+                                                                border: Border.all(
+                                                                  color: Colors
+                                                                      .orange
+                                                                      .withValues(
+                                                                        alpha:
+                                                                            0.3,
+                                                                      ),
+                                                                  width: 1,
+                                                                ),
+                                                              ),
+                                                              child: Text(
+                                                                'Substituted: ${originalSubject.name}',
+                                                                style: const TextStyle(
                                                                   fontSize: 10,
                                                                   color: Colors
                                                                       .orange,
@@ -489,57 +537,62 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                                                                       FontWeight
                                                                           .bold,
                                                                 ),
-                                                          ),
-                                                        ),
-                                                      );
-                                                    }
-                                                    return const SizedBox.shrink();
-                                                  },
+                                                              ),
+                                                            ),
+                                                          );
+                                                        }
+                                                        return const SizedBox.shrink();
+                                                      },
+                                                    ),
+                                                  ],
                                                 ),
-                                              ],
-                                            ),
+                                              ),
+                                              StatusBadge(
+                                                text:
+                                                    session.status ==
+                                                        AttendanceStatus
+                                                            .unmarked
+                                                    ? 'SCHEDULED'
+                                                    : session.status.name
+                                                          .toUpperCase(),
+                                                color: _getStatusColor(
+                                                  session.status,
+                                                ),
+                                                isOutlined: true,
+                                              ),
+                                            ],
                                           ),
-                                          StatusBadge(
-                                            text:
-                                                session.status ==
-                                                    AttendanceStatus.unmarked
-                                                ? 'SCHEDULED'
-                                                : session.status.name
-                                                      .toUpperCase(),
-                                            color: _getStatusColor(
-                                              session.status,
-                                            ),
-                                            isOutlined: true,
-                                          ),
-                                        ],
+                                        ),
                                       ),
                                     ),
                                   ),
-                                ),
-                              ),
-                            );
-                          }),
-                        const SizedBox(height: 40),
-                      ]),
+                                );
+                              }),
+                            const SizedBox(height: 40),
+                          ]),
+                        );
+                      },
+                      loading: () => const SliverFillRemaining(
+                        child: Center(child: CircularProgressIndicator()),
+                      ),
+                      error: (e, _) => SliverFillRemaining(
+                        child: Center(
+                          child: Text('Error loading timetable: $e'),
+                        ),
+                      ),
                     );
                   },
                   loading: () => const SliverFillRemaining(
                     child: Center(child: CircularProgressIndicator()),
                   ),
-                  error: (e, _) => SliverFillRemaining(
-                    child: Center(child: Text('Error loading timetable: $e')),
+                  error: (err, stack) => SliverFillRemaining(
+                    child: Center(child: Text('Error: $err')),
                   ),
-                );
-              },
-              loading: () => const SliverFillRemaining(
-                child: Center(child: CircularProgressIndicator()),
-              ),
-              error: (err, stack) => SliverFillRemaining(
-                child: Center(child: Text('Error: $err')),
-              ),
+                ),
+                const SliverPadding(padding: EdgeInsets.only(bottom: 100)),
+              ],
             ),
-            const SliverPadding(padding: EdgeInsets.only(bottom: 100)),
-          ],
+          ),
         ),
       ),
     );
@@ -639,6 +692,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
+      constraints: const BoxConstraints(maxWidth: 600),
       builder: (context) => EditSessionSheet(
         session: session,
         initialSubject: currentSubject,
@@ -664,6 +718,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
+      constraints: const BoxConstraints(maxWidth: 600),
       builder: (context) => EditSessionSheet(
         session: ClassSession(
           id: const Uuid().v4(),

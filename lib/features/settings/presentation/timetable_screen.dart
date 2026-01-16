@@ -34,253 +34,281 @@ class _TimetableScreenState extends ConsumerState<TimetableScreen> {
           ref.invalidate(subjectsStreamProvider);
           await Future.delayed(const Duration(milliseconds: 500));
         },
-        child: CustomScrollView(
-          slivers: [
-            SliverAppBar(
-              pinned: true,
-              backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-              surfaceTintColor: Theme.of(context).scaffoldBackgroundColor,
-              title: Text(
-                'Timetable',
-                style: TextStyle(
-                  color: Theme.of(context).colorScheme.onSurface,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 20,
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 800),
+            child: CustomScrollView(
+              slivers: [
+                SliverAppBar(
+                  pinned: true,
+                  backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+                  surfaceTintColor: Theme.of(context).scaffoldBackgroundColor,
+                  title: Text(
+                    'Timetable',
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.onSurface,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 20,
+                    ),
+                  ),
+                  centerTitle: false,
                 ),
-              ),
-              centerTitle: false,
-            ),
-            // Day Selector as a pinned header or inside a SliverToBoxAdapter
-            SliverToBoxAdapter(
-              child: SizedBox(
-                height: 70, // Increased height for better tap area
-                child: ListView.builder(
-                  scrollDirection: Axis.horizontal,
-                  itemCount: _days.length,
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  itemBuilder: (context, index) {
-                    final dayNum = index + 1;
-                    final isSelected = _selectedDay == dayNum;
-                    return Padding(
-                      padding: const EdgeInsets.only(right: 8),
-                      child: Center(
-                        child: FilterChip(
-                          label: Text(
-                            _days[index],
-                            style: TextStyle(
-                              color: isSelected
-                                  ? Theme.of(context).colorScheme.onPrimary
-                                  : Theme.of(context).colorScheme.onSurface,
-                              fontWeight: isSelected
-                                  ? FontWeight.bold
-                                  : FontWeight.w500,
-                            ),
-                          ),
-                          selected: isSelected,
-                          onSelected: (selected) {
-                            if (selected) setState(() => _selectedDay = dayNum);
-                          },
-                          showCheckmark: false,
-                          selectedColor: Theme.of(context).colorScheme.primary,
-                          backgroundColor: Theme.of(
-                            context,
-                          ).colorScheme.surface,
-                          side: isSelected
-                              ? BorderSide.none
-                              : BorderSide(
-                                  color: Theme.of(
-                                    context,
-                                  ).dividerColor.withValues(alpha: 0.2),
-                                ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                        ),
-                      ),
-                    );
-                  },
-                ),
-              ),
-            ),
-            SliverPadding(
-              padding: const EdgeInsets.fromLTRB(20, 0, 20, 80),
-              sliver: subjectsAsync.when(
-                data: (subjects) {
-                  final subjectMap = {for (var s in subjects) s.id: s};
-
-                  return timetableAsync.when(
-                    data: (entries) {
-                      if (entries.isEmpty) {
-                        return SliverFillRemaining(
-                          hasScrollBody: false,
+                // Day Selector as a pinned header or inside a SliverToBoxAdapter
+                SliverToBoxAdapter(
+                  child: SizedBox(
+                    height: 70, // Increased height for better tap area
+                    child: ListView.builder(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: _days.length,
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      itemBuilder: (context, index) {
+                        final dayNum = index + 1;
+                        final isSelected = _selectedDay == dayNum;
+                        return Padding(
+                          padding: const EdgeInsets.only(right: 8),
                           child: Center(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  Icons.weekend,
-                                  size: 64,
-                                  color: Theme.of(
-                                    context,
-                                  ).colorScheme.primary.withValues(alpha: 0.3),
+                            child: FilterChip(
+                              label: Text(
+                                _days[index],
+                                style: TextStyle(
+                                  color: isSelected
+                                      ? Theme.of(context).colorScheme.onPrimary
+                                      : Theme.of(context).colorScheme.onSurface,
+                                  fontWeight: isSelected
+                                      ? FontWeight.bold
+                                      : FontWeight.w500,
                                 ),
-                                const SizedBox(height: 16),
-                                Text(
-                                  'No classes today. Enjoy your freedom!',
-                                  style: Theme.of(context).textTheme.bodyLarge
-                                      ?.copyWith(
-                                        color: Theme.of(
-                                          context,
-                                        ).colorScheme.onSurfaceVariant,
-                                      ),
-                                ),
-                              ],
+                              ),
+                              selected: isSelected,
+                              onSelected: (selected) {
+                                if (selected)
+                                  setState(() => _selectedDay = dayNum);
+                              },
+                              showCheckmark: false,
+                              selectedColor: Theme.of(
+                                context,
+                              ).colorScheme.primary,
+                              backgroundColor: Theme.of(
+                                context,
+                              ).colorScheme.surface,
+                              side: isSelected
+                                  ? BorderSide.none
+                                  : BorderSide(
+                                      color: Theme.of(
+                                        context,
+                                      ).dividerColor.withValues(alpha: 0.2),
+                                    ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(20),
+                              ),
                             ),
                           ),
                         );
-                      }
-                      // Sort by start time
-                      entries.sort(
-                        (a, b) => a.startTime.compareTo(b.startTime),
-                      );
+                      },
+                    ),
+                  ),
+                ),
+                SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 80),
+                  sliver: subjectsAsync.when(
+                    data: (subjects) {
+                      final subjectMap = {for (var s in subjects) s.id: s};
 
-                      return SliverList(
-                        delegate: SliverChildBuilderDelegate((context, index) {
-                          final entry = entries[index];
-                          final subject = subjectMap[entry.subjectId];
-                          if (subject == null) return const SizedBox.shrink();
-
-                          return Padding(
-                            padding: const EdgeInsets.only(bottom: 16),
-                            child: FadeInSlide(
-                              duration: const Duration(milliseconds: 500),
-                              delay: Duration(milliseconds: index * 100),
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  color: Theme.of(context).cardColor,
-                                  borderRadius: BorderRadius.circular(20),
-                                  border: Border.all(
-                                    color: Theme.of(
-                                      context,
-                                    ).dividerColor.withValues(alpha: 0.1),
-                                  ),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.black.withValues(
-                                        alpha: 0.02,
-                                      ),
-                                      blurRadius: 10,
-                                      offset: const Offset(0, 4),
+                      return timetableAsync.when(
+                        data: (entries) {
+                          if (entries.isEmpty) {
+                            return SliverFillRemaining(
+                              hasScrollBody: false,
+                              child: Center(
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      Icons.weekend,
+                                      size: 64,
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .primary
+                                          .withValues(alpha: 0.3),
+                                    ),
+                                    const SizedBox(height: 16),
+                                    Text(
+                                      'No classes today. Enjoy your freedom!',
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodyLarge
+                                          ?.copyWith(
+                                            color: Theme.of(
+                                              context,
+                                            ).colorScheme.onSurfaceVariant,
+                                          ),
                                     ),
                                   ],
                                 ),
-                                child: Material(
-                                  color: Colors.transparent,
-                                  child: InkWell(
-                                    onTap: () {
-                                      HapticFeedback.lightImpact();
-                                      showModalBottomSheet(
-                                        context: context,
-                                        isScrollControlled: true,
-                                        builder: (context) => _EditEntrySheet(
-                                          entry: entry,
-                                          subjects: subjects,
-                                        ),
-                                      );
-                                    },
-                                    borderRadius: BorderRadius.circular(20),
-                                    child: Padding(
-                                      padding: const EdgeInsets.all(20),
-                                      child: Row(
-                                        children: [
-                                          Container(
-                                            width: 50,
-                                            height: 50,
-                                            decoration: BoxDecoration(
-                                              color: subject.color.withValues(
-                                                alpha: 0.1,
-                                              ),
-                                              borderRadius:
-                                                  BorderRadius.circular(16),
-                                            ),
-                                            alignment: Alignment.center,
-                                            child: Text(
-                                              subject.name.substring(0, 1),
-                                              style: TextStyle(
-                                                color: subject.color,
-                                                fontSize: 20,
-                                                fontWeight: FontWeight.bold,
-                                              ),
-                                            ),
+                              ),
+                            );
+                          }
+                          // Sort by start time
+                          entries.sort(
+                            (a, b) => a.startTime.compareTo(b.startTime),
+                          );
+
+                          return SliverList(
+                            delegate: SliverChildBuilderDelegate((
+                              context,
+                              index,
+                            ) {
+                              final entry = entries[index];
+                              final subject = subjectMap[entry.subjectId];
+                              if (subject == null)
+                                return const SizedBox.shrink();
+
+                              return Padding(
+                                padding: const EdgeInsets.only(bottom: 16),
+                                child: FadeInSlide(
+                                  duration: const Duration(milliseconds: 500),
+                                  delay: Duration(milliseconds: index * 100),
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      color: Theme.of(context).cardColor,
+                                      borderRadius: BorderRadius.circular(20),
+                                      border: Border.all(
+                                        color: Theme.of(
+                                          context,
+                                        ).dividerColor.withValues(alpha: 0.1),
+                                      ),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.black.withValues(
+                                            alpha: 0.02,
                                           ),
-                                          const SizedBox(width: 16),
-                                          Expanded(
-                                            child: Column(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
-                                              children: [
-                                                Text(
-                                                  subject.name,
-                                                  style: const TextStyle(
+                                          blurRadius: 10,
+                                          offset: const Offset(0, 4),
+                                        ),
+                                      ],
+                                    ),
+                                    child: Material(
+                                      color: Colors.transparent,
+                                      child: InkWell(
+                                        onTap: () {
+                                          HapticFeedback.lightImpact();
+                                          showModalBottomSheet(
+                                            context: context,
+                                            isScrollControlled: true,
+                                            constraints: const BoxConstraints(
+                                              maxWidth: 600,
+                                            ),
+                                            builder: (context) =>
+                                                _EditEntrySheet(
+                                                  entry: entry,
+                                                  subjects: subjects,
+                                                ),
+                                          );
+                                        },
+                                        borderRadius: BorderRadius.circular(20),
+                                        child: Padding(
+                                          padding: const EdgeInsets.all(20),
+                                          child: Row(
+                                            children: [
+                                              Container(
+                                                width: 50,
+                                                height: 50,
+                                                decoration: BoxDecoration(
+                                                  color: subject.color
+                                                      .withValues(alpha: 0.1),
+                                                  borderRadius:
+                                                      BorderRadius.circular(16),
+                                                ),
+                                                alignment: Alignment.center,
+                                                child: Text(
+                                                  subject.name.substring(0, 1),
+                                                  style: TextStyle(
+                                                    color: subject.color,
+                                                    fontSize: 20,
                                                     fontWeight: FontWeight.bold,
-                                                    fontSize: 16,
                                                   ),
                                                 ),
-                                                const SizedBox(height: 4),
-                                                Row(
+                                              ),
+                                              const SizedBox(width: 16),
+                                              Expanded(
+                                                child: Column(
+                                                  crossAxisAlignment:
+                                                      CrossAxisAlignment.start,
                                                   children: [
-                                                    Icon(
-                                                      Icons.access_time_rounded,
-                                                      size: 14,
-                                                      color: Theme.of(
-                                                        context,
-                                                      ).colorScheme.tertiary,
-                                                    ),
-                                                    const SizedBox(width: 4),
                                                     Text(
-                                                      '${entry.startTime} • ${formatDuration(entry.durationInHours)}',
-                                                      style: TextStyle(
-                                                        color: Theme.of(
-                                                          context,
-                                                        ).colorScheme.tertiary,
+                                                      subject.name,
+                                                      style: const TextStyle(
                                                         fontWeight:
-                                                            FontWeight.w500,
-                                                        fontSize: 13,
+                                                            FontWeight.bold,
+                                                        fontSize: 16,
                                                       ),
+                                                    ),
+                                                    const SizedBox(height: 4),
+                                                    Row(
+                                                      children: [
+                                                        Icon(
+                                                          Icons
+                                                              .access_time_rounded,
+                                                          size: 14,
+                                                          color:
+                                                              Theme.of(context)
+                                                                  .colorScheme
+                                                                  .tertiary,
+                                                        ),
+                                                        const SizedBox(
+                                                          width: 4,
+                                                        ),
+                                                        Text(
+                                                          '${entry.startTime} • ${formatDuration(entry.durationInHours)}',
+                                                          style: TextStyle(
+                                                            color:
+                                                                Theme.of(
+                                                                      context,
+                                                                    )
+                                                                    .colorScheme
+                                                                    .tertiary,
+                                                            fontWeight:
+                                                                FontWeight.w500,
+                                                            fontSize: 13,
+                                                          ),
+                                                        ),
+                                                      ],
                                                     ),
                                                   ],
                                                 ),
-                                              ],
-                                            ),
+                                              ),
+                                            ],
                                           ),
-                                        ],
+                                        ),
                                       ),
                                     ),
                                   ),
                                 ),
-                              ),
-                            ),
+                              );
+                            }, childCount: entries.length),
                           );
-                        }, childCount: entries.length),
+                        },
+                        loading: () => const SliverFillRemaining(
+                          child: Center(child: CircularProgressIndicator()),
+                        ),
+                        error: (err, stack) => SliverFillRemaining(
+                          child: Center(child: Text('Error: $err')),
+                        ),
                       );
                     },
                     loading: () => const SliverFillRemaining(
                       child: Center(child: CircularProgressIndicator()),
                     ),
                     error: (err, stack) => SliverFillRemaining(
-                      child: Center(child: Text('Error: $err')),
+                      child: Center(
+                        child: Text('Error loading subjects: $err'),
+                      ),
                     ),
-                  );
-                },
-                loading: () => const SliverFillRemaining(
-                  child: Center(child: CircularProgressIndicator()),
+                  ),
                 ),
-                error: (err, stack) => SliverFillRemaining(
-                  child: Center(child: Text('Error loading subjects: $err')),
-                ),
-              ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
       floatingActionButton: FloatingActionButton(
@@ -300,6 +328,7 @@ class _TimetableScreenState extends ConsumerState<TimetableScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      constraints: const BoxConstraints(maxWidth: 600),
       builder: (context) => _AddEntrySheet(selectedDay: _selectedDay),
     );
   }

@@ -39,128 +39,133 @@ class HomeScreen extends ConsumerWidget {
           // Wait a bit for the refresh to complete
           await Future.delayed(const Duration(milliseconds: 500));
         },
-        child: CustomScrollView(
-          slivers: [
-            SliverAppBar(
-              pinned: true,
-              backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-              surfaceTintColor: Theme.of(context).scaffoldBackgroundColor,
-              title: Text(
-                DateFormat('EEEE, d MMMM').format(now),
-                style: TextStyle(
-                  color: Theme.of(context).colorScheme.onSurface,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 24,
-                  letterSpacing: -0.5,
-                ),
-              ),
-              centerTitle: false,
-            ),
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-                child: todayClassesAsyncValue.maybeWhen(
-                  data: (items) => Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        items.isEmpty
-                            ? 'No classes today'
-                            : '${items.length} classes scheduled',
-                        style: TextStyle(
-                          color: Theme.of(context).colorScheme.tertiary,
-                          fontWeight: FontWeight.w500,
-                          fontSize: 14,
-                        ),
-                      ),
-                      if (items.isNotEmpty) ...[
-                        const SizedBox(height: 12),
-                        SingleChildScrollView(
-                          scrollDirection: Axis.horizontal,
-                          child: Row(
-                            children: [
-                              _BulkActionChip(
-                                icon: Icons.check_rounded,
-                                label: 'All Present',
-                                color: const Color(0xFF27AE60),
-                                onTap: () => _markAllClasses(
-                                  ref,
-                                  items,
-                                  AttendanceStatus.present,
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              _BulkActionChip(
-                                icon: Icons.close_rounded,
-                                label: 'All Absent',
-                                color: const Color(0xFFC0392B),
-                                onTap: () => _markAllClasses(
-                                  ref,
-                                  items,
-                                  AttendanceStatus.absent,
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              _BulkActionChip(
-                                icon: Icons.block_rounded,
-                                label: 'All Cancelled',
-                                color: const Color(0xFF607D8B),
-                                onTap: () => _markAllClasses(
-                                  ref,
-                                  items,
-                                  AttendanceStatus.cancelled,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
-                  orElse: () => const SizedBox.shrink(),
-                ),
-              ),
-            ),
-            SliverPadding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
-              sliver: SliverList(
-                delegate: SliverChildListDelegate([
-                  FadeInSlide(
-                    duration: const Duration(milliseconds: 600),
-                    child: todayClassesAsyncValue.when(
-                      data: (items) {
-                        if (items.isEmpty) {
-                          return _buildEmptyState(context);
-                        }
-                        return ListView.builder(
-                          padding: EdgeInsets.zero,
-                          shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
-                          itemCount: items.length,
-                          itemBuilder: (context, index) {
-                            final item = items[index];
-                            final isLast = index == items.length - 1;
-                            return TimelineItem(
-                              isLast: isLast,
-                              child: _TodayClassCard(item: item),
-                            );
-                          },
-                        );
-                      },
-                      loading: () =>
-                          const Center(child: CircularProgressIndicator()),
-                      error: (e, st) => Text('Error: $e'),
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 800),
+            child: CustomScrollView(
+              slivers: [
+                SliverAppBar(
+                  pinned: true,
+                  backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+                  surfaceTintColor: Theme.of(context).scaffoldBackgroundColor,
+                  title: Text(
+                    DateFormat('EEEE, d MMMM').format(now),
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.onSurface,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 24,
+                      letterSpacing: -0.5,
                     ),
                   ),
-                  const SizedBox(height: 40),
-                  const FadeInSlide(
-                    duration: Duration(milliseconds: 800),
-                    child: FutureImpactSection(),
+                  centerTitle: false,
+                ),
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                    child: todayClassesAsyncValue.maybeWhen(
+                      data: (items) => Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            items.isEmpty
+                                ? 'No classes today'
+                                : '${items.length} classes scheduled',
+                            style: TextStyle(
+                              color: Theme.of(context).colorScheme.tertiary,
+                              fontWeight: FontWeight.w500,
+                              fontSize: 14,
+                            ),
+                          ),
+                          if (items.isNotEmpty) ...[
+                            const SizedBox(height: 12),
+                            SingleChildScrollView(
+                              scrollDirection: Axis.horizontal,
+                              child: Row(
+                                children: [
+                                  _BulkActionChip(
+                                    icon: Icons.check_rounded,
+                                    label: 'All Present',
+                                    color: const Color(0xFF27AE60),
+                                    onTap: () => _markAllClasses(
+                                      ref,
+                                      items,
+                                      AttendanceStatus.present,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  _BulkActionChip(
+                                    icon: Icons.close_rounded,
+                                    label: 'All Absent',
+                                    color: const Color(0xFFC0392B),
+                                    onTap: () => _markAllClasses(
+                                      ref,
+                                      items,
+                                      AttendanceStatus.absent,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  _BulkActionChip(
+                                    icon: Icons.block_rounded,
+                                    label: 'All Cancelled',
+                                    color: const Color(0xFF607D8B),
+                                    onTap: () => _markAllClasses(
+                                      ref,
+                                      items,
+                                      AttendanceStatus.cancelled,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                      orElse: () => const SizedBox.shrink(),
+                    ),
                   ),
-                ]),
-              ),
+                ),
+                SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
+                  sliver: SliverList(
+                    delegate: SliverChildListDelegate([
+                      FadeInSlide(
+                        duration: const Duration(milliseconds: 600),
+                        child: todayClassesAsyncValue.when(
+                          data: (items) {
+                            if (items.isEmpty) {
+                              return _buildEmptyState(context);
+                            }
+                            return ListView.builder(
+                              padding: EdgeInsets.zero,
+                              shrinkWrap: true,
+                              physics: const NeverScrollableScrollPhysics(),
+                              itemCount: items.length,
+                              itemBuilder: (context, index) {
+                                final item = items[index];
+                                final isLast = index == items.length - 1;
+                                return TimelineItem(
+                                  isLast: isLast,
+                                  child: _TodayClassCard(item: item),
+                                );
+                              },
+                            );
+                          },
+                          loading: () =>
+                              const Center(child: CircularProgressIndicator()),
+                          error: (e, st) => Text('Error: $e'),
+                        ),
+                      ),
+                      const SizedBox(height: 40),
+                      const FadeInSlide(
+                        duration: Duration(milliseconds: 800),
+                        child: FutureImpactSection(),
+                      ),
+                    ]),
+                  ),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );
@@ -652,6 +657,7 @@ class _TodayClassCard extends ConsumerWidget {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
+      constraints: const BoxConstraints(maxWidth: 600),
       builder: (context) => EditSessionSheet(
         session:
             item.existingSession ??

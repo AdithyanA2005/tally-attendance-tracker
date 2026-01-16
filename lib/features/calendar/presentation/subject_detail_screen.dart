@@ -31,190 +31,208 @@ class SubjectDetailScreen extends ConsumerWidget {
               ref.invalidate(subjectStatsFamily(subjectId));
               await Future.delayed(const Duration(milliseconds: 500));
             },
-            child: CustomScrollView(
-              slivers: [
-                SliverAppBar(
-                  pinned: true,
-                  backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-                  surfaceTintColor: Theme.of(context).scaffoldBackgroundColor,
-                  title: Text(
-                    'Subject Details',
-                    style: TextStyle(
-                      color: Theme.of(context).colorScheme.onSurface,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 20,
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 800),
+                child: CustomScrollView(
+                  slivers: [
+                    SliverAppBar(
+                      pinned: true,
+                      backgroundColor: Theme.of(
+                        context,
+                      ).scaffoldBackgroundColor,
+                      surfaceTintColor: Theme.of(
+                        context,
+                      ).scaffoldBackgroundColor,
+                      title: Text(
+                        'Subject Details',
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.onSurface,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 20,
+                        ),
+                      ),
+                      centerTitle: false,
                     ),
-                  ),
-                  centerTitle: false,
-                ),
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Column(
-                      children: [
-                        // Hero Section (Minimal Typography)
-                        Column(
+                    SliverToBoxAdapter(
+                      child: Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Column(
                           children: [
-                            const SizedBox(height: 16),
-                            Text(
-                              subject.name,
-                              style: Theme.of(context).textTheme.headlineSmall
-                                  ?.copyWith(
-                                    fontWeight: FontWeight.bold,
-                                    color: Theme.of(
-                                      context,
-                                    ).colorScheme.onSurface,
-                                  ),
-                              textAlign: TextAlign.center,
-                            ),
-                            const SizedBox(height: 24),
-                            // Huge Percentage Display
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              crossAxisAlignment: CrossAxisAlignment.baseline,
-                              textBaseline: TextBaseline.alphabetic,
+                            // Hero Section (Minimal Typography)
+                            Column(
                               children: [
+                                const SizedBox(height: 16),
                                 Text(
-                                  stats.percentage.toStringAsFixed(1),
-                                  style: TextStyle(
-                                    fontSize: 80,
-                                    fontWeight: FontWeight.w800,
-                                    color: Theme.of(
-                                      context,
-                                    ).colorScheme.onSurface,
-                                    letterSpacing: -4,
-                                    height: 1,
-                                  ),
+                                  subject.name,
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .headlineSmall
+                                      ?.copyWith(
+                                        fontWeight: FontWeight.bold,
+                                        color: Theme.of(
+                                          context,
+                                        ).colorScheme.onSurface,
+                                      ),
+                                  textAlign: TextAlign.center,
                                 ),
-                                Text(
-                                  '%',
-                                  style: TextStyle(
-                                    fontSize: 40,
-                                    fontWeight: FontWeight.w600,
-                                    color: Theme.of(
-                                      context,
-                                    ).colorScheme.tertiary,
-                                  ),
+                                const SizedBox(height: 24),
+                                // Huge Percentage Display
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.baseline,
+                                  textBaseline: TextBaseline.alphabetic,
+                                  children: [
+                                    Text(
+                                      stats.percentage.toStringAsFixed(1),
+                                      style: TextStyle(
+                                        fontSize: 80,
+                                        fontWeight: FontWeight.w800,
+                                        color: Theme.of(
+                                          context,
+                                        ).colorScheme.onSurface,
+                                        letterSpacing: -4,
+                                        height: 1,
+                                      ),
+                                    ),
+                                    Text(
+                                      '%',
+                                      style: TextStyle(
+                                        fontSize: 40,
+                                        fontWeight: FontWeight.w600,
+                                        color: Theme.of(
+                                          context,
+                                        ).colorScheme.tertiary,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 8),
+                                StatusBadge(
+                                  text: stats.isSafe
+                                      ? 'Safe Zone'
+                                      : 'Attention Required',
+                                  color: stats.isSafe
+                                      ? const Color(0xFF27AE60)
+                                      : const Color(0xFFC0392B),
                                 ),
                               ],
                             ),
-                            const SizedBox(height: 8),
-                            StatusBadge(
-                              text: stats.isSafe
-                                  ? 'Safe Zone'
-                                  : 'Attention Required',
-                              color: stats.isSafe
-                                  ? const Color(0xFF27AE60)
-                                  : const Color(0xFFC0392B),
+                            const SizedBox(height: 40),
+
+                            // Minimal Stats Row
+                            AppCard(
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                    child: StatsDisplay(
+                                      label: 'Present',
+                                      value: '${stats.present}',
+                                      icon: Icons.check_circle_outline_rounded,
+                                      color:
+                                          AppTheme.statusColors[AttendanceStatus
+                                              .present]!,
+                                    ),
+                                  ),
+                                  Container(
+                                    width: 1,
+                                    height: 40,
+                                    color: Theme.of(
+                                      context,
+                                    ).dividerColor.withValues(alpha: 0.1),
+                                  ),
+                                  Expanded(
+                                    child: StatsDisplay(
+                                      label: 'Absent',
+                                      value: '${stats.absent}',
+                                      icon: Icons.cancel_outlined,
+                                      color:
+                                          AppTheme.statusColors[AttendanceStatus
+                                              .absent]!,
+                                    ),
+                                  ),
+                                  Container(
+                                    width: 1,
+                                    height: 40,
+                                    color: Theme.of(
+                                      context,
+                                    ).dividerColor.withValues(alpha: 0.1),
+                                  ),
+                                  Expanded(
+                                    child: StatsDisplay(
+                                      label: 'Skippable',
+                                      value: '${stats.classesSkippable}',
+                                      icon: Icons.pause_circle_outline_rounded,
+                                      color: const Color(0xFF2980B9),
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
-                          ],
-                        ),
-                        const SizedBox(height: 40),
+                            const SizedBox(height: 24),
 
-                        // Minimal Stats Row
-                        AppCard(
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: StatsDisplay(
-                                  label: 'Present',
-                                  value: '${stats.present}',
-                                  icon: Icons.check_circle_outline_rounded,
-                                  color: AppTheme
-                                      .statusColors[AttendanceStatus.present]!,
-                                ),
-                              ),
-                              Container(
-                                width: 1,
-                                height: 40,
-                                color: Theme.of(
-                                  context,
-                                ).dividerColor.withValues(alpha: 0.1),
-                              ),
-                              Expanded(
-                                child: StatsDisplay(
-                                  label: 'Absent',
-                                  value: '${stats.absent}',
-                                  icon: Icons.cancel_outlined,
-                                  color: AppTheme
-                                      .statusColors[AttendanceStatus.absent]!,
-                                ),
-                              ),
-                              Container(
-                                width: 1,
-                                height: 40,
-                                color: Theme.of(
-                                  context,
-                                ).dividerColor.withValues(alpha: 0.1),
-                              ),
-                              Expanded(
-                                child: StatsDisplay(
-                                  label: 'Skippable',
-                                  value: '${stats.classesSkippable}',
-                                  icon: Icons.pause_circle_outline_rounded,
-                                  color: const Color(0xFF2980B9),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 24),
+                            // Analysis Section
+                            FadeInSlide(
+                              duration: const Duration(milliseconds: 600),
+                              child: _buildAnalysisSection(context, stats),
+                            ),
 
-                        // Analysis Section
-                        FadeInSlide(
-                          duration: const Duration(milliseconds: 600),
-                          child: _buildAnalysisSection(context, stats),
-                        ),
+                            const SizedBox(height: 48),
 
-                        const SizedBox(height: 48),
-
-                        // Subtle Divider
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 4),
-                          child: Divider(
-                            color: Theme.of(
-                              context,
-                            ).dividerColor.withValues(alpha: 0.1),
-                            thickness: 1,
-                          ),
-                        ),
-                        const SizedBox(height: 32),
-
-                        // History Header
-                        FadeInSlide(
-                          duration: const Duration(milliseconds: 700),
-                          child: Align(
-                            alignment: Alignment.centerLeft,
-                            child: Padding(
+                            // Subtle Divider
+                            Padding(
                               padding: const EdgeInsets.symmetric(
                                 horizontal: 4,
                               ),
-                              child: Text(
-                                'HISTORY',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.bold,
-                                  letterSpacing: 1.2,
-                                  color: Theme.of(context).colorScheme.tertiary,
+                              child: Divider(
+                                color: Theme.of(
+                                  context,
+                                ).dividerColor.withValues(alpha: 0.1),
+                                thickness: 1,
+                              ),
+                            ),
+                            const SizedBox(height: 32),
+
+                            // History Header
+                            FadeInSlide(
+                              duration: const Duration(milliseconds: 700),
+                              child: Align(
+                                alignment: Alignment.centerLeft,
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 4,
+                                  ),
+                                  child: Text(
+                                    'HISTORY',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.bold,
+                                      letterSpacing: 1.2,
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.tertiary,
+                                    ),
+                                  ),
                                 ),
                               ),
                             ),
-                          ),
-                        ),
-                        const SizedBox(height: 20),
+                            const SizedBox(height: 20),
 
-                        // History List
-                        FadeInSlide(
-                          duration: const Duration(milliseconds: 800),
-                          child: SubjectHistoryList(history: stats.history),
+                            // History List
+                            FadeInSlide(
+                              duration: const Duration(milliseconds: 800),
+                              child: SubjectHistoryList(history: stats.history),
+                            ),
+                          ],
                         ),
-                      ],
+                      ),
                     ),
-                  ),
+                    const SliverPadding(padding: EdgeInsets.only(bottom: 100)),
+                  ],
                 ),
-                const SliverPadding(padding: EdgeInsets.only(bottom: 100)),
-              ],
+              ),
             ),
           );
         },

@@ -34,6 +34,7 @@ class AnomalyCard extends StatelessWidget {
               context: context,
               isScrollControlled: true,
               backgroundColor: Colors.transparent,
+              constraints: const BoxConstraints(maxWidth: 600),
               builder: (context) => DraggableScrollableSheet(
                 initialChildSize: 0.7,
                 minChildSize: 0.5,

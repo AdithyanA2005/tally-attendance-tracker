@@ -29,89 +29,103 @@ class InsightsScreen extends ConsumerWidget {
               ref.invalidate(insightsProvider);
               await Future.delayed(const Duration(milliseconds: 500));
             },
-            child: CustomScrollView(
-              slivers: [
-                SliverAppBar(
-                  pinned: true,
-                  floating: true,
-                  snap: true,
-                  backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-                  surfaceTintColor: Theme.of(context).scaffoldBackgroundColor,
-                  title: Text(
-                    'Insights',
-                    style: TextStyle(
-                      color: Theme.of(context).colorScheme.onSurface,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 20,
-                    ),
-                  ),
-                  centerTitle: false,
-                ),
-                SliverPadding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  sliver: SliverList(
-                    delegate: SliverChildListDelegate([
-                      const SizedBox(height: 10),
-                      // 1. Hero Stat (Big Typography)
-                      FadeInSlide(
-                        duration: const Duration(milliseconds: 600),
-                        child: _buildHeroStat(context, stats),
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 800),
+                child: CustomScrollView(
+                  slivers: [
+                    SliverAppBar(
+                      pinned: true,
+                      floating: true,
+                      snap: true,
+                      backgroundColor: Theme.of(
+                        context,
+                      ).scaffoldBackgroundColor,
+                      surfaceTintColor: Theme.of(
+                        context,
+                      ).scaffoldBackgroundColor,
+                      title: Text(
+                        'Insights',
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.onSurface,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 20,
+                        ),
                       ),
-
-                      // Only show stats and performance when there's data
-                      if (stats.subjectStats.isNotEmpty) ...[
-                        const SizedBox(height: 32),
-
-                        // 2. Quick Stats (Flat & Clean)
-                        FadeInSlide(
-                          duration: const Duration(milliseconds: 700),
-                          child: _buildQuickStatsRow(context, stats),
-                        ),
-                        const SizedBox(height: 32),
-
-                        // 3. Anomalies Section
-                        const FadeInSlide(
-                          duration: Duration(milliseconds: 750),
-                          child: AnomalySection(),
-                        ),
-
-                        const SizedBox(height: 16),
-
-                        // 3. Subject List Header
-                        FadeInSlide(
-                          duration: const Duration(milliseconds: 800),
-                          child: Text(
-                            'PERFORMANCE',
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                              letterSpacing: 1.5,
-                              color: Theme.of(context).colorScheme.tertiary,
-                            ),
+                      centerTitle: false,
+                    ),
+                    SliverPadding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      sliver: SliverList(
+                        delegate: SliverChildListDelegate([
+                          const SizedBox(height: 10),
+                          // 1. Hero Stat (Big Typography)
+                          FadeInSlide(
+                            duration: const Duration(milliseconds: 600),
+                            child: _buildHeroStat(context, stats),
                           ),
-                        ),
-                        const SizedBox(height: 16),
 
-                        // 4. Unified Subject List
-                        ...sortedSubjects.asMap().entries.map((entry) {
-                          final index = entry.key;
-                          final subject = entry.value;
-                          return FadeInSlide(
-                            duration: const Duration(milliseconds: 800),
-                            delay: Duration(milliseconds: 100 * index),
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 6),
-                              child: _buildMinimalSubjectCard(context, subject),
+                          // Only show stats and performance when there's data
+                          if (stats.subjectStats.isNotEmpty) ...[
+                            const SizedBox(height: 32),
+
+                            // 2. Quick Stats (Flat & Clean)
+                            FadeInSlide(
+                              duration: const Duration(milliseconds: 700),
+                              child: _buildQuickStatsRow(context, stats),
                             ),
-                          );
-                        }),
-                      ],
+                            const SizedBox(height: 32),
 
-                      const SizedBox(height: 100),
-                    ]),
-                  ),
+                            // 3. Anomalies Section
+                            const FadeInSlide(
+                              duration: Duration(milliseconds: 750),
+                              child: AnomalySection(),
+                            ),
+
+                            const SizedBox(height: 16),
+
+                            // 3. Subject List Header
+                            FadeInSlide(
+                              duration: const Duration(milliseconds: 800),
+                              child: Text(
+                                'PERFORMANCE',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                  letterSpacing: 1.5,
+                                  color: Theme.of(context).colorScheme.tertiary,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+
+                            // 4. Unified Subject List
+                            ...sortedSubjects.asMap().entries.map((entry) {
+                              final index = entry.key;
+                              final subject = entry.value;
+                              return FadeInSlide(
+                                duration: const Duration(milliseconds: 800),
+                                delay: Duration(milliseconds: 100 * index),
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 6,
+                                  ),
+                                  child: _buildMinimalSubjectCard(
+                                    context,
+                                    subject,
+                                  ),
+                                ),
+                              );
+                            }),
+                          ],
+
+                          const SizedBox(height: 100),
+                        ]),
+                      ),
+                    ),
+                  ],
                 ),
-              ],
+              ),
             ),
           );
         },
