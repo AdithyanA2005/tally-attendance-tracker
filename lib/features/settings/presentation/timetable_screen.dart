@@ -7,6 +7,7 @@ import '../../calendar/data/models/subject_model.dart';
 import '../data/models/timetable_entry_model.dart';
 import '../../../../core/presentation/animations/fade_in_slide.dart';
 import 'package:flutter/services.dart'; // For HapticFeedback
+import 'package:go_router/go_router.dart';
 import '../../../../core/utils/string_utils.dart';
 
 class TimetableScreen extends ConsumerStatefulWidget {
@@ -364,31 +365,80 @@ class _AddEntrySheetState extends ConsumerState<_AddEntrySheet> {
 
           // Subject Dropdown
           subjectsAsync.when(
-            data: (subjects) => DropdownButtonFormField<Subject>(
-              icon: const Icon(Icons.keyboard_arrow_down_rounded),
-              borderRadius: BorderRadius.circular(16),
-              decoration: InputDecoration(
-                labelText: 'Subject',
-                hintText: 'Select Subject',
-                filled: true,
-                fillColor: theme.colorScheme.surfaceContainerHighest.withValues(
-                  alpha: 0.3,
+            data: (subjects) {
+              if (subjects.isEmpty) {
+                return Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.surfaceContainerHighest.withValues(
+                      alpha: 0.3,
+                    ),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Column(
+                    children: [
+                      Icon(
+                        Icons.subject_outlined,
+                        size: 40,
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        'No Subjects Available',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: theme.colorScheme.onSurface,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Add subjects first to create timetable',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      OutlinedButton.icon(
+                        onPressed: () {
+                          Navigator.pop(context);
+                          context.push('/manage_subjects');
+                        },
+                        icon: const Icon(Icons.add_rounded, size: 18),
+                        label: const Text('Add Subjects'),
+                      ),
+                    ],
+                  ),
+                );
+              }
+
+              return DropdownButtonFormField<Subject>(
+                icon: const Icon(Icons.keyboard_arrow_down_rounded),
+                borderRadius: BorderRadius.circular(16),
+                decoration: InputDecoration(
+                  labelText: 'Subject',
+                  hintText: 'Select Subject',
+                  filled: true,
+                  fillColor: theme.colorScheme.surfaceContainerHighest
+                      .withValues(alpha: 0.3),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide.none,
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 16,
+                  ),
                 ),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  borderSide: BorderSide.none,
-                ),
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 20,
-                  vertical: 16,
-                ),
-              ),
-              initialValue: _selectedSubject,
-              items: subjects
-                  .map((s) => DropdownMenuItem(value: s, child: Text(s.name)))
-                  .toList(),
-              onChanged: (val) => setState(() => _selectedSubject = val),
-            ),
+                initialValue: _selectedSubject,
+                items: subjects
+                    .map((s) => DropdownMenuItem(value: s, child: Text(s.name)))
+                    .toList(),
+                onChanged: (val) => setState(() => _selectedSubject = val),
+              );
+            },
             loading: () => const LinearProgressIndicator(),
             error: (_, _) => const Text('Error loading subjects'),
           ),

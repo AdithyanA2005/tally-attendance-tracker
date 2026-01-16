@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../data/models/session_model.dart';
 import '../../data/models/subject_model.dart';
@@ -7,14 +8,14 @@ import '../../data/repositories/attendance_repository.dart';
 
 class EditSessionSheet extends ConsumerStatefulWidget {
   final ClassSession session;
-  final Subject initialSubject;
+  final Subject? initialSubject;
   final List<Subject> allSubjects;
   final bool isNew;
 
   const EditSessionSheet({
     super.key,
     required this.session,
-    required this.initialSubject,
+    this.initialSubject,
     required this.allSubjects,
     this.isNew = false,
   });
@@ -24,7 +25,7 @@ class EditSessionSheet extends ConsumerStatefulWidget {
 }
 
 class _EditSessionSheetState extends ConsumerState<EditSessionSheet> {
-  late Subject _selectedSubject;
+  Subject? _selectedSubject;
   late AttendanceStatus _selectedStatus;
 
   @override
@@ -82,36 +83,83 @@ class _EditSessionSheetState extends ConsumerState<EditSessionSheet> {
           ),
           const SizedBox(height: 24),
 
-          // Subject Dropdown
-          DropdownButtonFormField<Subject>(
-            icon: const Icon(Icons.keyboard_arrow_down_rounded),
-            borderRadius: BorderRadius.circular(16),
-            decoration: InputDecoration(
-              labelText: 'Subject',
-              filled: true,
-              fillColor: theme.colorScheme.surfaceContainerHighest.withValues(
-                alpha: 0.3,
-              ),
-              border: OutlineInputBorder(
+          // Subject Dropdown or Empty State
+          if (widget.allSubjects.isEmpty)
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.surfaceContainerHighest.withValues(
+                  alpha: 0.3,
+                ),
                 borderRadius: BorderRadius.circular(16),
-                borderSide: BorderSide.none,
               ),
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 20,
-                vertical: 16,
+              child: Column(
+                children: [
+                  Icon(
+                    Icons.subject_outlined,
+                    size: 40,
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    'No Subjects Available',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: theme.colorScheme.onSurface,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Add subjects first to track attendance',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  OutlinedButton.icon(
+                    onPressed: () {
+                      Navigator.pop(context);
+                      // Assuming context.push is available via a navigation package like go_router
+                      // If not, this line might cause an error or need a different navigation method.
+                      // For example, using Navigator.push(context, MaterialPageRoute(builder: (context) => ManageSubjectsScreen()));
+                      context.push('/manage_subjects');
+                    },
+                    icon: const Icon(Icons.add_rounded, size: 18),
+                    label: const Text('Add Subjects'),
+                  ),
+                ],
               ),
+            )
+          else
+            DropdownButtonFormField<Subject>(
+              icon: const Icon(Icons.keyboard_arrow_down_rounded),
+              borderRadius: BorderRadius.circular(16),
+              decoration: InputDecoration(
+                labelText: 'Subject',
+                filled: true,
+                fillColor: theme.colorScheme.surfaceContainerHighest.withValues(
+                  alpha: 0.3,
+                ),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: BorderSide.none,
+                ),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 16,
+                ),
+              ),
+              value: _selectedSubject,
+              items: widget.allSubjects
+                  .map((s) => DropdownMenuItem(value: s, child: Text(s.name)))
+                  .toList(),
+              onChanged: (val) {
+                if (val != null) setState(() => _selectedSubject = val);
+              },
             ),
-            initialValue: widget.allSubjects.firstWhere(
-              (s) => s.id == _selectedSubject.id,
-              orElse: () => _selectedSubject,
-            ),
-            items: widget.allSubjects
-                .map((s) => DropdownMenuItem(value: s, child: Text(s.name)))
-                .toList(),
-            onChanged: (val) {
-              if (val != null) setState(() => _selectedSubject = val);
-            },
-          ),
           const SizedBox(height: 16),
 
           // Status Dropdown
@@ -180,26 +228,28 @@ class _EditSessionSheetState extends ConsumerState<EditSessionSheet> {
               ],
               Expanded(
                 child: FilledButton(
-                  onPressed: () async {
-                    final updatedSession = ClassSession(
-                      id: widget.session.id,
-                      subjectId: _selectedSubject.id,
-                      date: widget.session.date,
-                      status: _selectedStatus,
-                      isExtraClass: widget.session.isExtraClass,
-                      notes: widget.session.notes,
-                    );
-                    if (widget.isNew) {
-                      await ref
-                          .read(attendanceRepositoryProvider)
-                          .logSession(updatedSession);
-                    } else {
-                      await ref
-                          .read(attendanceRepositoryProvider)
-                          .updateSession(updatedSession);
-                    }
-                    if (context.mounted) Navigator.pop(context);
-                  },
+                  onPressed: _selectedSubject != null
+                      ? () async {
+                          final updatedSession = ClassSession(
+                            id: widget.session.id,
+                            subjectId: _selectedSubject!.id,
+                            date: widget.session.date,
+                            status: _selectedStatus,
+                            isExtraClass: widget.session.isExtraClass,
+                            notes: widget.session.notes,
+                          );
+                          if (widget.isNew) {
+                            await ref
+                                .read(attendanceRepositoryProvider)
+                                .logSession(updatedSession);
+                          } else {
+                            await ref
+                                .read(attendanceRepositoryProvider)
+                                .updateSession(updatedSession);
+                          }
+                          if (context.mounted) Navigator.pop(context);
+                        }
+                      : null,
                   style: FilledButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(

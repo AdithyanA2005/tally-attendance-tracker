@@ -20,6 +20,7 @@ class _SubjectFormSheetState extends ConsumerState<SubjectFormSheet> {
   late TextEditingController _minAttendanceController;
   late TextEditingController _weeklyHoursController;
   late Color _selectedColor;
+  bool _isFormValid = false;
 
   @override
   void initState() {
@@ -33,6 +34,27 @@ class _SubjectFormSheetState extends ConsumerState<SubjectFormSheet> {
       text: s?.weeklyHours.toString() ?? '5',
     );
     _selectedColor = s?.color ?? const Color(0xFF2C3E50);
+
+    // Add listeners to validate form on every change
+    _nameController.addListener(_validateForm);
+    _minAttendanceController.addListener(_validateForm);
+    _weeklyHoursController.addListener(_validateForm);
+
+    // Initial validation
+    _validateForm();
+  }
+
+  void _validateForm() {
+    final isValid =
+        _nameController.text.trim().isNotEmpty &&
+        _minAttendanceController.text.trim().isNotEmpty &&
+        _weeklyHoursController.text.trim().isNotEmpty;
+
+    if (isValid != _isFormValid) {
+      setState(() {
+        _isFormValid = isValid;
+      });
+    }
   }
 
   @override
@@ -270,16 +292,16 @@ class _SubjectFormSheetState extends ConsumerState<SubjectFormSheet> {
                   Expanded(
                     flex: 2,
                     child: FilledButton(
-                      onPressed: _save,
+                      onPressed: _isFormValid ? _save : null,
                       style: FilledButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(16),
                         ),
                       ),
-                      child: const Text(
-                        'Save Subject',
-                        style: TextStyle(fontWeight: FontWeight.bold),
+                      child: Text(
+                        isEditing ? 'Save Subject' : 'Add Subject',
+                        style: const TextStyle(fontWeight: FontWeight.bold),
                       ),
                     ),
                   ),
@@ -287,7 +309,7 @@ class _SubjectFormSheetState extends ConsumerState<SubjectFormSheet> {
               )
             else
               FilledButton(
-                onPressed: _save,
+                onPressed: _isFormValid ? _save : null,
                 style: FilledButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
@@ -295,7 +317,7 @@ class _SubjectFormSheetState extends ConsumerState<SubjectFormSheet> {
                   ),
                 ),
                 child: const Text(
-                  'Save Subject',
+                  'Add Subject',
                   style: TextStyle(fontWeight: FontWeight.bold),
                 ),
               ),

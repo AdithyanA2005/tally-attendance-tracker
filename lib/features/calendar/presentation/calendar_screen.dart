@@ -600,12 +600,6 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
 
     // Default subject (first one or placeholder)
     final allSubjects = ref.read(allSubjectsMapProvider).values.toList();
-    if (allSubjects.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('No subjects found. Add subjects first.')),
-      );
-      return;
-    }
 
     showModalBottomSheet(
       context: context,
@@ -614,12 +608,12 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
       builder: (context) => EditSessionSheet(
         session: ClassSession(
           id: const Uuid().v4(),
-          subjectId: allSubjects.first.id,
+          subjectId: allSubjects.isNotEmpty ? allSubjects.first.id : '',
           date: baseTime,
           status: AttendanceStatus.present,
           isExtraClass: true,
         ),
-        initialSubject: allSubjects.first,
+        initialSubject: allSubjects.isNotEmpty ? allSubjects.first : null,
         allSubjects: allSubjects,
         isNew: true,
       ),

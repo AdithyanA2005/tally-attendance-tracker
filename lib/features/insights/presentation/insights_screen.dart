@@ -54,45 +54,49 @@ class InsightsScreen extends ConsumerWidget {
                       // 1. Hero Stat (Big Typography)
                       FadeInSlide(
                         duration: const Duration(milliseconds: 600),
-                        child: _buildHeroStat(context, stats.overallPercentage),
+                        child: _buildHeroStat(context, stats),
                       ),
-                      const SizedBox(height: 32),
 
-                      // 2. Quick Stats (Flat & Clean)
-                      FadeInSlide(
-                        duration: const Duration(milliseconds: 700),
-                        child: _buildQuickStatsRow(context, stats),
-                      ),
-                      const SizedBox(height: 40),
+                      // Only show stats and performance when there's data
+                      if (stats.subjectStats.isNotEmpty) ...[
+                        const SizedBox(height: 32),
 
-                      // 3. Subject List Header
-                      FadeInSlide(
-                        duration: const Duration(milliseconds: 800),
-                        child: Text(
-                          'PERFORMANCE',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 1.5,
-                            color: Theme.of(context).colorScheme.tertiary,
+                        // 2. Quick Stats (Flat & Clean)
+                        FadeInSlide(
+                          duration: const Duration(milliseconds: 700),
+                          child: _buildQuickStatsRow(context, stats),
+                        ),
+                        const SizedBox(height: 40),
+
+                        // 3. Subject List Header
+                        FadeInSlide(
+                          duration: const Duration(milliseconds: 800),
+                          child: Text(
+                            'PERFORMANCE',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 1.5,
+                              color: Theme.of(context).colorScheme.tertiary,
+                            ),
                           ),
                         ),
-                      ),
-                      const SizedBox(height: 16),
+                        const SizedBox(height: 16),
 
-                      // 4. Unified Subject List
-                      ...sortedSubjects.asMap().entries.map((entry) {
-                        final index = entry.key;
-                        final subject = entry.value;
-                        return FadeInSlide(
-                          duration: const Duration(milliseconds: 800),
-                          delay: Duration(milliseconds: 100 * index),
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 6),
-                            child: _buildMinimalSubjectCard(context, subject),
-                          ),
-                        );
-                      }),
+                        // 4. Unified Subject List
+                        ...sortedSubjects.asMap().entries.map((entry) {
+                          final index = entry.key;
+                          final subject = entry.value;
+                          return FadeInSlide(
+                            duration: const Duration(milliseconds: 800),
+                            delay: Duration(milliseconds: 100 * index),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 6),
+                              child: _buildMinimalSubjectCard(context, subject),
+                            ),
+                          );
+                        }),
+                      ],
 
                       const SizedBox(height: 100),
                     ]),
@@ -108,7 +112,48 @@ class InsightsScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildHeroStat(BuildContext context, double percentage) {
+  Widget _buildHeroStat(BuildContext context, InsightStats stats) {
+    // Check if there's actually any data
+    final hasNoData = stats.subjectStats.isEmpty;
+
+    if (hasNoData) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'N/A',
+            style: TextStyle(
+              fontSize: 64,
+              fontWeight: FontWeight.w800,
+              color: Theme.of(
+                context,
+              ).colorScheme.onSurface.withValues(alpha: 0.3),
+              letterSpacing: -2,
+              height: 1,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'No Attendance Data',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: Theme.of(context).colorScheme.tertiary,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Start marking attendance to see your insights.',
+            style: TextStyle(
+              fontSize: 14,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ],
+      );
+    }
+
+    final percentage = stats.overallPercentage;
     final isGood = percentage >= 75;
     final color = isGood
         ? AppTheme.statusColors[AttendanceStatus.present]!
