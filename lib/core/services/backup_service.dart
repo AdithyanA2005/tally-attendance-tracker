@@ -35,7 +35,7 @@ class BackupService {
       'meta': {
         'version': 1,
         'timestamp': DateTime.now().toIso8601String(),
-        'platform': 'attendance_intelligence',
+        'platform': 'tally',
       },
       'settings': {'semesterStartDate': semesterStartDate.toIso8601String()},
       'subjects': subjects

@@ -1,4 +1,4 @@
-package com.example.attendance_intelligence
+package com.example.tally
 
 import io.flutter.embedding.android.FlutterActivity
 
