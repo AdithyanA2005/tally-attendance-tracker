@@ -109,20 +109,6 @@ class HomeScreen extends ConsumerWidget {
                                   AttendanceStatus.cancelled,
                                 ),
                               ),
-                              // Only show Reset if at least one class is marked
-                              if (items.any(
-                                (item) => item.existingSession != null,
-                              )) ...[
-                                const SizedBox(width: 8),
-                                _BulkActionChip(
-                                  icon: Icons.refresh_rounded,
-                                  label: 'Reset All',
-                                  color: Theme.of(
-                                    context,
-                                  ).colorScheme.onSurfaceVariant,
-                                  onTap: () => _resetAllClasses(ref, items),
-                                ),
-                              ],
                             ],
                           ),
                         ),
@@ -205,29 +191,6 @@ class HomeScreen extends ConsumerWidget {
                 ? 'Absent'
                 : 'Cancelled'}',
           ),
-          duration: const Duration(seconds: 2),
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-    }
-  }
-
-  void _resetAllClasses(WidgetRef ref, List<TodayClassItem> items) async {
-    HapticFeedback.mediumImpact();
-    final repo = ref.read(attendanceRepositoryProvider);
-
-    // Delete all sessions for the displayed classes
-    for (final item in items) {
-      if (item.existingSession != null) {
-        await repo.deleteDuplicateSessions(date: item.scheduledTime);
-      }
-    }
-
-    // Show confirmation snackbar
-    if (ref.context.mounted) {
-      ScaffoldMessenger.of(ref.context).showSnackBar(
-        SnackBar(
-          content: Text('Reset all ${items.length} classes to unmarked'),
           duration: const Duration(seconds: 2),
           behavior: SnackBarBehavior.floating,
         ),
