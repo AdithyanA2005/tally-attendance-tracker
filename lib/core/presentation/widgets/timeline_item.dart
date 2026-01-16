@@ -50,7 +50,7 @@ class TimelineItem extends StatelessWidget {
           // Content
           Expanded(
             child: Padding(
-              padding: const EdgeInsets.only(bottom: 24.0),
+              padding: EdgeInsets.only(bottom: isLast ? 0 : 24.0),
               child: child,
             ),
           ),

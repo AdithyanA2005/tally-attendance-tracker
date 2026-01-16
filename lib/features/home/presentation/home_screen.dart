@@ -12,6 +12,8 @@ import '../../../../core/theme/app_theme.dart';
 import '../../../../core/utils/string_utils.dart';
 import '../../calendar/data/models/session_model.dart';
 
+import 'widgets/future_impact_section.dart';
+
 import '../../calendar/data/repositories/attendance_repository.dart';
 
 import '../../calendar/presentation/widgets/edit_session_sheet.dart';
@@ -131,6 +133,7 @@ class HomeScreen extends ConsumerWidget {
                           return _buildEmptyState(context);
                         }
                         return ListView.builder(
+                          padding: EdgeInsets.zero,
                           shrinkWrap: true,
                           physics: const NeverScrollableScrollPhysics(),
                           itemCount: items.length,
@@ -148,6 +151,11 @@ class HomeScreen extends ConsumerWidget {
                           const Center(child: CircularProgressIndicator()),
                       error: (e, st) => Text('Error: $e'),
                     ),
+                  ),
+                  const SizedBox(height: 40),
+                  const FadeInSlide(
+                    duration: Duration(milliseconds: 800),
+                    child: FutureImpactSection(),
                   ),
                 ]),
               ),
