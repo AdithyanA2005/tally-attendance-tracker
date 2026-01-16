@@ -9,6 +9,7 @@ import 'providers/pending_attendance_provider.dart';
 import '../../settings/data/models/timetable_entry_model.dart';
 import '../../settings/data/repositories/settings_repository.dart';
 import '../data/models/session_model.dart';
+import '../data/repositories/attendance_repository.dart';
 
 import 'widgets/edit_session_sheet.dart';
 import '../data/models/subject_model.dart';
@@ -253,6 +254,53 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                             ).dividerColor.withValues(alpha: 0.1),
                           ),
                         ),
+
+                        // Bulk Actions
+                        if (combinedEvents.isNotEmpty) ...[
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                            child: SingleChildScrollView(
+                              scrollDirection: Axis.horizontal,
+                              child: Row(
+                                children: [
+                                  _BulkActionChip(
+                                    icon: Icons.check_rounded,
+                                    label: 'All Present',
+                                    color: const Color(0xFF27AE60),
+                                    onTap: () => _markAllClassesForDay(
+                                      combinedEvents,
+                                      subjectMap.values.toList(),
+                                      AttendanceStatus.present,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  _BulkActionChip(
+                                    icon: Icons.close_rounded,
+                                    label: 'All Absent',
+                                    color: const Color(0xFFC0392B),
+                                    onTap: () => _markAllClassesForDay(
+                                      combinedEvents,
+                                      subjectMap.values.toList(),
+                                      AttendanceStatus.absent,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  _BulkActionChip(
+                                    icon: Icons.block_rounded,
+                                    label: 'All Cancelled',
+                                    color: const Color(0xFF607D8B),
+                                    onTap: () => _markAllClassesForDay(
+                                      combinedEvents,
+                                      subjectMap.values.toList(),
+                                      AttendanceStatus.cancelled,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+
                         if (combinedEvents.isEmpty)
                           const Padding(
                             padding: EdgeInsets.all(32.0),
@@ -616,6 +664,82 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
         initialSubject: allSubjects.isNotEmpty ? allSubjects.first : null,
         allSubjects: allSubjects,
         isNew: true,
+      ),
+    );
+  }
+
+  void _markAllClassesForDay(
+    List<ClassSession> sessions,
+    List<Subject> allSubjects,
+    AttendanceStatus status,
+  ) async {
+    HapticFeedback.mediumImpact();
+    final repo = ref.read(attendanceRepositoryProvider);
+
+    // Mark all classes with the given status
+    for (final session in sessions) {
+      final updatedSession = session.copyWith(status: status);
+      await repo.logSession(updatedSession);
+    }
+
+    // Show confirmation snackbar
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Marked all ${sessions.length} classes as ${status == AttendanceStatus.present
+                ? 'Present'
+                : status == AttendanceStatus.absent
+                ? 'Absent'
+                : 'Cancelled'}',
+          ),
+          duration: const Duration(seconds: 2),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+  }
+}
+
+class _BulkActionChip extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color color;
+  final VoidCallback onTap;
+
+  const _BulkActionChip({
+    required this.icon,
+    required this.label,
+    required this.color,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: color.withValues(alpha: 0.1),
+      borderRadius: BorderRadius.circular(20),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(20),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 18, color: color),
+              const SizedBox(width: 6),
+              Text(
+                label,
+                style: TextStyle(
+                  color: color,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 13,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
