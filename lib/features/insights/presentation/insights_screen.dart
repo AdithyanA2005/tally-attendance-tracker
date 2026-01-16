@@ -9,6 +9,7 @@ import '../../../core/presentation/animations/fade_in_slide.dart';
 import '../../../core/presentation/widgets/app_card.dart';
 import '../../../core/presentation/widgets/stats_display.dart';
 import '../../../core/theme/app_theme.dart';
+import 'widgets/anomalies/anomaly_section.dart';
 
 class InsightsScreen extends ConsumerWidget {
   const InsightsScreen({super.key});
@@ -66,7 +67,15 @@ class InsightsScreen extends ConsumerWidget {
                           duration: const Duration(milliseconds: 700),
                           child: _buildQuickStatsRow(context, stats),
                         ),
-                        const SizedBox(height: 40),
+                        const SizedBox(height: 32),
+
+                        // 3. Anomalies Section
+                        FadeInSlide(
+                          duration: const Duration(milliseconds: 750),
+                          child: const AnomalySection(),
+                        ),
+
+                        const SizedBox(height: 16),
 
                         // 3. Subject List Header
                         FadeInSlide(
