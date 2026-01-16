@@ -152,7 +152,7 @@ class _EditSessionSheetState extends ConsumerState<EditSessionSheet> {
                   vertical: 16,
                 ),
               ),
-              value: _selectedSubject,
+              initialValue: _selectedSubject,
               items: widget.allSubjects
                   .map((s) => DropdownMenuItem(value: s, child: Text(s.name)))
                   .toList(),
