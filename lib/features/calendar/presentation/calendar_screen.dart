@@ -500,8 +500,12 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                                             ),
                                           ),
                                           StatusBadge(
-                                            text: session.status.name
-                                                .toUpperCase(),
+                                            text:
+                                                session.status ==
+                                                    AttendanceStatus.unmarked
+                                                ? 'SCHEDULED'
+                                                : session.status.name
+                                                      .toUpperCase(),
                                             color: _getStatusColor(
                                               session.status,
                                             ),
@@ -665,7 +669,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
           id: const Uuid().v4(),
           subjectId: allSubjects.isNotEmpty ? allSubjects.first.id : '',
           date: baseTime,
-          status: AttendanceStatus.present,
+          status: AttendanceStatus.unmarked,
           isExtraClass: true,
         ),
         initialSubject: allSubjects.isNotEmpty ? allSubjects.first : null,

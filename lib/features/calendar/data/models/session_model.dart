@@ -34,6 +34,9 @@ class ClassSession extends HiveObject {
   @HiveField(5)
   String? notes;
 
+  @HiveField(6)
+  final int durationMinutes;
+
   ClassSession({
     required this.id,
     required this.subjectId,
@@ -41,6 +44,7 @@ class ClassSession extends HiveObject {
     this.status = AttendanceStatus.unmarked,
     this.isExtraClass = false,
     this.notes,
+    this.durationMinutes = 60,
   });
 
   ClassSession copyWith({
@@ -50,6 +54,7 @@ class ClassSession extends HiveObject {
     AttendanceStatus? status,
     bool? isExtraClass,
     String? notes,
+    int? durationMinutes,
   }) {
     return ClassSession(
       id: id ?? this.id,
@@ -58,6 +63,7 @@ class ClassSession extends HiveObject {
       status: status ?? this.status,
       isExtraClass: isExtraClass ?? this.isExtraClass,
       notes: notes ?? this.notes,
+      durationMinutes: durationMinutes ?? this.durationMinutes,
     );
   }
 }

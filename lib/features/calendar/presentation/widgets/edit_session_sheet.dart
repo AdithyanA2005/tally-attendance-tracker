@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 
 import '../../data/models/session_model.dart';
 import '../../data/models/subject_model.dart';
@@ -27,19 +28,58 @@ class EditSessionSheet extends ConsumerStatefulWidget {
 class _EditSessionSheetState extends ConsumerState<EditSessionSheet> {
   Subject? _selectedSubject;
   late AttendanceStatus _selectedStatus;
+  late DateTime _selectedDate;
+  late int _durationMinutes;
 
   @override
   void initState() {
     super.initState();
     _selectedSubject = widget.initialSubject;
-    _selectedStatus = widget.session.status == AttendanceStatus.unmarked
-        ? AttendanceStatus.present
-        : widget.session.status;
+    // Allow unmarked status (e.g. for scheduled/pending classes)
+    _selectedStatus = widget.session.status;
+    _selectedDate = widget.session.date;
+    _durationMinutes = widget.session.durationMinutes;
+  }
+
+  Future<void> _pickTime() async {
+    final TimeOfDay? picked = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.fromDateTime(_selectedDate),
+    );
+    if (picked != null) {
+      setState(() {
+        _selectedDate = DateTime(
+          _selectedDate.year,
+          _selectedDate.month,
+          _selectedDate.day,
+          picked.hour,
+          picked.minute,
+        );
+      });
+    }
+  }
+
+  String _formatMinutes(int minutes) {
+    if (minutes < 60) return '${minutes}m';
+    final h = minutes ~/ 60;
+    final m = minutes % 60;
+    if (m == 0) return '${h}h';
+    return '${h}h ${m}m';
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+
+    // Filter statuses if needed, but allow all for now so users can set to Unmarked (Scheduled)
+    final validStatuses = AttendanceStatus.values.toList();
+
+    // Duration options matching Timetable form
+    final durationOptions = [30, 45, 50, 60, 90, 120, 180];
+    if (!durationOptions.contains(_durationMinutes)) {
+      durationOptions.add(_durationMinutes);
+      durationOptions.sort();
+    }
 
     return Container(
       decoration: BoxDecoration(
@@ -83,7 +123,7 @@ class _EditSessionSheetState extends ConsumerState<EditSessionSheet> {
           ),
           const SizedBox(height: 24),
 
-          // Subject Dropdown or Empty State
+          // Subject Dropdown
           if (widget.allSubjects.isEmpty)
             Container(
               padding: const EdgeInsets.all(20),
@@ -122,9 +162,6 @@ class _EditSessionSheetState extends ConsumerState<EditSessionSheet> {
                   OutlinedButton.icon(
                     onPressed: () {
                       Navigator.pop(context);
-                      // Assuming context.push is available via a navigation package like go_router
-                      // If not, this line might cause an error or need a different navigation method.
-                      // For example, using Navigator.push(context, MaterialPageRoute(builder: (context) => ManageSubjectsScreen()));
                       context.push('/manage_subjects');
                     },
                     icon: const Icon(Icons.add_rounded, size: 18),
@@ -182,12 +219,15 @@ class _EditSessionSheetState extends ConsumerState<EditSessionSheet> {
               ),
             ),
             initialValue: _selectedStatus,
-            items: AttendanceStatus.values
-                .where((s) => s != AttendanceStatus.unmarked)
+            items: validStatuses
                 .map(
                   (s) => DropdownMenuItem(
                     value: s,
-                    child: Text(s.name.toUpperCase()),
+                    child: Text(
+                      s == AttendanceStatus.unmarked
+                          ? 'SCHEDULED'
+                          : s.name.toUpperCase(),
+                    ),
                   ),
                 )
                 .toList(),
@@ -195,17 +235,89 @@ class _EditSessionSheetState extends ConsumerState<EditSessionSheet> {
               if (val != null) setState(() => _selectedStatus = val);
             },
           ),
+          const SizedBox(height: 16),
+
+          // Time and Duration Row
+          Row(
+            children: [
+              // Start Time Picker
+              Expanded(
+                child: InkWell(
+                  onTap: _pickTime,
+                  borderRadius: BorderRadius.circular(16),
+                  child: InputDecorator(
+                    decoration: InputDecoration(
+                      labelText: 'Start Time',
+                      filled: true,
+                      fillColor: theme.colorScheme.surfaceContainerHighest
+                          .withValues(alpha: 0.3),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: BorderSide.none,
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 16,
+                      ),
+                      suffixIcon: const Icon(
+                        Icons.access_time_rounded,
+                        size: 20,
+                      ),
+                    ),
+                    child: Text(
+                      DateFormat.jm().format(_selectedDate),
+                      style: const TextStyle(fontSize: 16),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 16),
+
+              // Duration Dropdown
+              Expanded(
+                child: DropdownButtonFormField<int>(
+                  icon: const Icon(Icons.keyboard_arrow_down_rounded),
+                  borderRadius: BorderRadius.circular(16),
+                  decoration: InputDecoration(
+                    labelText: 'Duration',
+                    filled: true,
+                    fillColor: theme.colorScheme.surfaceContainerHighest
+                        .withValues(alpha: 0.3),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: BorderSide.none,
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 16,
+                    ),
+                  ),
+                  value: _durationMinutes,
+                  items: durationOptions
+                      .map(
+                        (d) => DropdownMenuItem(
+                          value: d,
+                          child: Text(_formatMinutes(d)),
+                        ),
+                      )
+                      .toList(),
+                  onChanged: (val) {
+                    if (val != null) setState(() => _durationMinutes = val);
+                  },
+                ),
+              ),
+            ],
+          ),
+
           const SizedBox(height: 32),
 
           // Action Buttons
           Row(
             children: [
-              // Only show Reset button for existing sessions
               if (!widget.isNew) ...[
                 Expanded(
                   child: TextButton(
                     onPressed: () async {
-                      // Reset logic: Delete specific override for this date
                       await ref
                           .read(attendanceRepositoryProvider)
                           .deleteDuplicateSessions(date: widget.session.date);
@@ -235,10 +347,11 @@ class _EditSessionSheetState extends ConsumerState<EditSessionSheet> {
                           final updatedSession = ClassSession(
                             id: widget.session.id,
                             subjectId: _selectedSubject!.id,
-                            date: widget.session.date,
+                            date: _selectedDate,
                             status: _selectedStatus,
                             isExtraClass: widget.session.isExtraClass,
                             notes: widget.session.notes,
+                            durationMinutes: _durationMinutes,
                           );
                           if (widget.isNew) {
                             await ref
@@ -266,7 +379,6 @@ class _EditSessionSheetState extends ConsumerState<EditSessionSheet> {
               ),
             ],
           ),
-          // Extra bottom padding for safety
           const SizedBox(height: 8),
         ],
       ),
