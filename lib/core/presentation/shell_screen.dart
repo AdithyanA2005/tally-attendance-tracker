@@ -44,7 +44,16 @@ class _ShellScreenState extends State<ShellScreen> {
                   ),
                   const VerticalDivider(thickness: 1, width: 1),
                   // Main Content
-                  Expanded(child: widget.child),
+                  Expanded(
+                    child: SafeArea(
+                      left: false,
+                      right: false,
+                      child: Padding(
+                        padding: const EdgeInsets.only(top: 32.0),
+                        child: widget.child,
+                      ),
+                    ),
+                  ),
                 ],
               )
             : widget.child, // Mobile Layout (Content Only)
@@ -103,114 +112,117 @@ class _Sidebar extends StatelessWidget {
     final theme = Theme.of(context);
     final width = isExtended ? 240.0 : 80.0;
 
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 200),
-      width: width,
-      color: theme.colorScheme.surface,
-      child: Column(
-        children: [
-          // 1. Logo Section
-          Container(
-            height: 90, // Fixed height for logo area
-            alignment: isExtended ? Alignment.centerLeft : Alignment.center,
-            padding: const EdgeInsets.symmetric(horizontal: 24),
-            child: Row(
-              mainAxisAlignment: isExtended
-                  ? MainAxisAlignment.start
-                  : MainAxisAlignment.center,
-              children: [
-                Image.asset(
-                  'assets/icon/icon.png',
-                  height: 32,
-                  width: 32,
-                  filterQuality: FilterQuality.high,
-                  errorBuilder: (context, error, stackTrace) => Icon(
-                    Icons.auto_awesome_rounded,
-                    size: 32,
-                    color: theme.colorScheme.primary,
-                  ),
-                ),
-                if (isExtended) ...[
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      'Tally',
-                      style: theme.textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: -0.5,
-                      ),
-                      overflow: TextOverflow.ellipsis,
+    return SafeArea(
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        width: width,
+        color: theme.colorScheme.surface,
+        child: Column(
+          children: [
+            const SizedBox(height: 48),
+            // 1. Logo Section
+            Container(
+              height: 90, // Fixed height for logo area
+              alignment: isExtended ? Alignment.centerLeft : Alignment.center,
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Row(
+                mainAxisAlignment: isExtended
+                    ? MainAxisAlignment.start
+                    : MainAxisAlignment.center,
+                children: [
+                  Image.asset(
+                    'assets/icon/icon.png',
+                    height: 32,
+                    width: 32,
+                    filterQuality: FilterQuality.high,
+                    errorBuilder: (context, error, stackTrace) => Icon(
+                      Icons.auto_awesome_rounded,
+                      size: 32,
+                      color: theme.colorScheme.primary,
                     ),
                   ),
-                ],
-              ],
-            ),
-          ),
-
-          // 2. Navigation Items
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              child: Column(
-                children: [
-                  _SidebarItem(
-                    icon: Icons.grid_view_rounded,
-                    label: 'Home',
-                    isSelected: selectedIndex == 0,
-                    isExtended: isExtended,
-                    onTap: () => onDestinationSelected(0),
-                  ),
-                  const SizedBox(height: 8),
-                  _SidebarItem(
-                    icon: Icons.calendar_today_rounded,
-                    selectedIcon: Icons.calendar_month_rounded,
-                    label: 'Calendar',
-                    isSelected: selectedIndex == 1,
-                    isExtended: isExtended,
-                    onTap: () => onDestinationSelected(1),
-                  ),
-                  const SizedBox(height: 8),
-                  _SidebarItem(
-                    icon: Icons.donut_large_rounded,
-                    selectedIcon: Icons.pie_chart_rounded,
-                    label: 'Insights',
-                    isSelected: selectedIndex == 2,
-                    isExtended: isExtended,
-                    onTap: () => onDestinationSelected(2),
-                  ),
-                  const SizedBox(height: 8),
-                  _SidebarItem(
-                    icon: Icons.settings_outlined,
-                    selectedIcon: Icons.settings_rounded,
-                    label: 'Settings',
-                    isSelected: selectedIndex == 3,
-                    isExtended: isExtended,
-                    onTap: () => onDestinationSelected(3),
-                  ),
+                  if (isExtended) ...[
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        'Tally',
+                        style: theme.textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: -0.5,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),
-          ),
 
-          // 3. Collapse Button
-          Padding(
-            padding: EdgeInsets.only(
-              bottom: 24,
-              left: isExtended ? 12 : 12,
-              right: 12, // Symmetric padding for the button container
+            // 2. Navigation Items
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                child: Column(
+                  children: [
+                    _SidebarItem(
+                      icon: Icons.grid_view_rounded,
+                      label: 'Home',
+                      isSelected: selectedIndex == 0,
+                      isExtended: isExtended,
+                      onTap: () => onDestinationSelected(0),
+                    ),
+                    const SizedBox(height: 8),
+                    _SidebarItem(
+                      icon: Icons.calendar_today_rounded,
+                      selectedIcon: Icons.calendar_month_rounded,
+                      label: 'Calendar',
+                      isSelected: selectedIndex == 1,
+                      isExtended: isExtended,
+                      onTap: () => onDestinationSelected(1),
+                    ),
+                    const SizedBox(height: 8),
+                    _SidebarItem(
+                      icon: Icons.donut_large_rounded,
+                      selectedIcon: Icons.pie_chart_rounded,
+                      label: 'Insights',
+                      isSelected: selectedIndex == 2,
+                      isExtended: isExtended,
+                      onTap: () => onDestinationSelected(2),
+                    ),
+                    const SizedBox(height: 8),
+                    _SidebarItem(
+                      icon: Icons.settings_outlined,
+                      selectedIcon: Icons.settings_rounded,
+                      label: 'Settings',
+                      isSelected: selectedIndex == 3,
+                      isExtended: isExtended,
+                      onTap: () => onDestinationSelected(3),
+                    ),
+                  ],
+                ),
+              ),
             ),
-            child: _SidebarItem(
-              icon: isExtended
-                  ? Icons.chevron_left_rounded
-                  : Icons.chevron_right_rounded,
-              label: 'Collapse',
-              isSelected: false, // Never selected
-              isExtended: isExtended,
-              onTap: onToggleExtend,
-              isAction: true, // Special styling for action button
+
+            // 3. Collapse Button
+            Padding(
+              padding: EdgeInsets.only(
+                bottom: 24,
+                left: isExtended ? 12 : 12,
+                right: 12, // Symmetric padding for the button container
+              ),
+              child: _SidebarItem(
+                icon: isExtended
+                    ? Icons.chevron_left_rounded
+                    : Icons.chevron_right_rounded,
+                label: 'Collapse',
+                isSelected: false, // Never selected
+                isExtended: isExtended,
+                onTap: onToggleExtend,
+                isAction: true, // Special styling for action button
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
