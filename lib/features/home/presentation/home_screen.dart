@@ -199,9 +199,11 @@ class HomeScreen extends ConsumerWidget {
       ScaffoldMessenger.of(ref.context).showSnackBar(
         SnackBar(
           content: Text(
-            status == AttendanceStatus.present
-                ? 'Marked all ${items.length} classes as Present'
-                : 'Marked all ${items.length} classes as Absent',
+            'Marked all ${items.length} classes as ${status == AttendanceStatus.present
+                ? 'Present'
+                : status == AttendanceStatus.absent
+                ? 'Absent'
+                : 'Cancelled'}',
           ),
           duration: const Duration(seconds: 2),
           behavior: SnackBarBehavior.floating,
