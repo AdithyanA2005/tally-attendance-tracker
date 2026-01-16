@@ -221,7 +221,9 @@ class _EditSessionSheetState extends ConsumerState<EditSessionSheet> {
                         ),
                       ),
                     ),
-                    child: const Text('Reset'),
+                    child: Text(
+                      widget.session.isExtraClass ? 'Delete' : 'Reset',
+                    ),
                   ),
                 ),
                 const SizedBox(width: 16),
