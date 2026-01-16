@@ -16,7 +16,6 @@ class _ShellScreenState extends State<ShellScreen> {
   @override
   Widget build(BuildContext context) {
     final currentIndex = _calculateSelectedIndex(context);
-    final theme = Theme.of(context);
     final isDesktop = MediaQuery.of(context).size.width >= 800;
 
     // Premium minimalistic design
@@ -119,30 +118,40 @@ class _Sidebar extends StatelessWidget {
         color: theme.colorScheme.surface,
         child: Column(
           children: [
-            const SizedBox(height: 48),
+            const SizedBox(height: 16),
             // 1. Logo Section
-            Container(
-              height: 90, // Fixed height for logo area
-              alignment: isExtended ? Alignment.centerLeft : Alignment.center,
-              padding: const EdgeInsets.symmetric(horizontal: 24),
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              height: 90,
+              // Fixed alignment to avoid jumping
+              alignment: Alignment.centerLeft,
+              // Animate padding to center the logo when collapsed (80-40)/2 = 20
+              padding: EdgeInsets.symmetric(horizontal: isExtended ? 24 : 20),
               child: Row(
-                mainAxisAlignment: isExtended
-                    ? MainAxisAlignment.start
-                    : MainAxisAlignment.center,
                 children: [
-                  Image.asset(
-                    'assets/icon/icon.png',
-                    height: 32,
-                    width: 32,
-                    filterQuality: FilterQuality.high,
-                    errorBuilder: (context, error, stackTrace) => Icon(
-                      Icons.auto_awesome_rounded,
-                      size: 32,
-                      color: theme.colorScheme.primary,
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: Image.asset(
+                      'web/icons/Icon-192.png',
+                      height: 40,
+                      width: 40,
+                      filterQuality: FilterQuality.high,
+                      errorBuilder: (context, error, stackTrace) {
+                        debugPrint('Error loading logo: $error');
+                        return Icon(
+                          Icons.broken_image_rounded,
+                          size: 40,
+                          color: theme.colorScheme.error,
+                        );
+                      },
                     ),
                   ),
-                  if (isExtended) ...[
-                    const SizedBox(width: 12),
+                  // Animate the gap width
+                  AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    width: isExtended ? 12 : 0,
+                  ),
+                  if (isExtended)
                     Expanded(
                       child: Text(
                         'Tally',
@@ -153,7 +162,6 @@ class _Sidebar extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
-                  ],
                 ],
               ),
             ),
@@ -283,32 +291,38 @@ class _SidebarItem extends StatelessWidget {
           ),
           padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
           child: Row(
-            mainAxisAlignment: isExtended
-                ? MainAxisAlignment.start
-                : MainAxisAlignment.center,
+            // Always start aligned to avoid jumping
+            mainAxisAlignment: MainAxisAlignment.start,
             children: [
               Icon(
                 isSelected ? (selectedIcon ?? icon) : icon,
                 color: foregroundColor,
                 size: 24,
               ),
-              if (isExtended) ...[
-                const SizedBox(width: 14),
+              // Animate the gap width
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                width: isExtended ? 14 : 0,
+              ),
+              if (isExtended)
                 Expanded(
-                  child: Text(
-                    label,
-                    style: TextStyle(
-                      color: foregroundColor,
-                      fontWeight: isSelected
-                          ? FontWeight.bold
-                          : FontWeight.w500,
-                      fontSize: 14,
+                  child: AnimatedOpacity(
+                    duration: const Duration(milliseconds: 200),
+                    opacity: isExtended ? 1.0 : 0.0,
+                    child: Text(
+                      label,
+                      style: TextStyle(
+                        color: foregroundColor,
+                        fontWeight: isSelected
+                            ? FontWeight.bold
+                            : FontWeight.w500,
+                        fontSize: 14,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 1,
                     ),
-                    overflow: TextOverflow.ellipsis,
-                    maxLines: 1,
                   ),
                 ),
-              ],
             ],
           ),
         ),
