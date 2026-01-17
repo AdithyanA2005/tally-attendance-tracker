@@ -81,8 +81,9 @@ class _TimetableScreenState extends ConsumerState<TimetableScreen> {
                               ),
                               selected: isSelected,
                               onSelected: (selected) {
-                                if (selected)
+                                if (selected) {
                                   setState(() => _selectedDay = dayNum);
+                                }
                               },
                               showCheckmark: false,
                               selectedColor: Theme.of(
@@ -160,8 +161,9 @@ class _TimetableScreenState extends ConsumerState<TimetableScreen> {
                             ) {
                               final entry = entries[index];
                               final subject = subjectMap[entry.subjectId];
-                              if (subject == null)
+                              if (subject == null) {
                                 return const SizedBox.shrink();
+                              }
 
                               return Padding(
                                 padding: const EdgeInsets.only(bottom: 16),
