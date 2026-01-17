@@ -23,7 +23,7 @@ class Subject extends HiveObject {
   Subject({
     required this.id,
     required this.name,
-    this.minimumAttendancePercentage = 75.0,
+    required this.minimumAttendancePercentage,
     required this.weeklyHours,
     required this.colorTag,
   });
