@@ -90,6 +90,10 @@ List<TodayClassItem> _combineData({
         subjectId: '',
         date: DateTime(0),
         status: AttendanceStatus.unmarked,
+        durationMinutes: (subjectMap[entry.subjectId]!.weeklyHours / 5 * 60)
+            .round(),
+        // This is a placeholder default; ideally we'd use timetable duration
+        // but converting hours to int minutes safely is needed.
       ),
     );
 

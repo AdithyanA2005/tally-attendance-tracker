@@ -665,7 +665,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
             id: 'virtual_${entry.id}_${day.toIso8601String()}',
             subjectId: entry.subjectId,
             date: d,
-            status: AttendanceStatus.unmarked,
+            status: AttendanceStatus.unmarked, durationMinutes: 60,
           ),
         );
       }
@@ -724,7 +724,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
           id: const Uuid().v4(),
           subjectId: allSubjects.isNotEmpty ? allSubjects.first.id : '',
           date: baseTime,
-          status: AttendanceStatus.unmarked,
+          status: AttendanceStatus.unmarked, durationMinutes: 60,
           isExtraClass: true,
         ),
         initialSubject: allSubjects.isNotEmpty ? allSubjects.first : null,

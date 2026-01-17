@@ -44,7 +44,7 @@ class ClassSession extends HiveObject {
     this.status = AttendanceStatus.unmarked,
     this.isExtraClass = false,
     this.notes,
-    this.durationMinutes = 60,
+    required this.durationMinutes,
   });
 
   ClassSession copyWith({

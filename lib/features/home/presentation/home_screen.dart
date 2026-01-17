@@ -189,6 +189,7 @@ class HomeScreen extends ConsumerWidget {
         date: item.scheduledTime,
         status: status,
         isExtraClass: item.existingSession?.isExtraClass ?? false,
+        durationMinutes: (item.entry.durationInHours * 60).toInt(),
       );
       await repo.logSession(session);
     }
@@ -615,6 +616,7 @@ class _TodayClassCard extends ConsumerWidget {
       date: item.scheduledTime,
       status: status,
       isExtraClass: item.existingSession?.isExtraClass ?? false,
+      durationMinutes: (item.entry.durationInHours * 60).toInt(),
     );
 
     final repo = ref.read(attendanceRepositoryProvider);
@@ -666,6 +668,7 @@ class _TodayClassCard extends ConsumerWidget {
               subjectId: item.subject.id,
               date: item.scheduledTime,
               status: AttendanceStatus.unmarked,
+              durationMinutes: 60,
             ),
         initialSubject: item.subject,
         allSubjects: allSubjects,

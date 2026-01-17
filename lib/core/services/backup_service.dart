@@ -58,6 +58,7 @@ class BackupService {
               'status': s.status.index,
               'isExtraClass': s.isExtraClass,
               'notes': s.notes,
+              'durationMinutes': s.durationMinutes,
             },
           )
           .toList(),
@@ -159,6 +160,7 @@ class BackupService {
           status: AttendanceStatus.values[s['status']],
           isExtraClass: s['isExtraClass'] ?? false,
           notes: s['notes'],
+          durationMinutes: s['durationMinutes'] ?? 60,
         );
         await _localStorage.sessionBox.put(session.id, session);
       }
