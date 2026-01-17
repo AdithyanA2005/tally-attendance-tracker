@@ -1,10 +1,11 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../core/data/local_storage_service.dart';
+import 'package:uuid/uuid.dart';
+
+import 'package:tally/core/data/local_storage_service.dart';
 import 'package:tally/core/data/models/subject_model.dart';
 import 'package:tally/core/data/models/session_model.dart';
 import 'package:tally/core/data/models/timetable_entry_model.dart';
-import 'package:flutter/material.dart';
-import 'package:uuid/uuid.dart';
 
 final attendanceRepositoryProvider = Provider<AttendanceRepository>((ref) {
   final localStorage = ref.watch(localStorageServiceProvider);
