@@ -8,12 +8,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 
-import '../../features/calendar/data/repositories/attendance_repository.dart';
-import 'package:tally/core/data/models/subject_model.dart';
+import 'package:tally/core/data/local_storage_service.dart';
 import 'package:tally/core/data/models/session_model.dart';
+import 'package:tally/core/data/models/subject_model.dart';
 import 'package:tally/core/data/models/timetable_entry_model.dart';
-import '../../features/settings/data/repositories/settings_repository.dart';
-import '../data/local_storage_service.dart';
+import 'package:tally/features/calendar/data/repositories/attendance_repository.dart';
+import 'package:tally/features/settings/data/repositories/settings_repository.dart';
 
 /// Service handling data import/export functionality.
 ///
