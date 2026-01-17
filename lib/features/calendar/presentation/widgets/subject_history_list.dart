@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:grouped_list/grouped_list.dart';
-import '../../data/models/session_model.dart';
+import 'package:tally/core/data/models/session_model.dart';
 import '../../../../core/presentation/widgets/empty_state.dart';
 
 class SubjectHistoryList extends StatelessWidget {

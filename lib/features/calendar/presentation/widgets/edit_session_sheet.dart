@@ -3,8 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
-import '../../data/models/session_model.dart';
-import '../../data/models/subject_model.dart';
+import 'package:tally/core/data/models/session_model.dart';
+import 'package:tally/core/data/models/subject_model.dart';
 import '../../data/repositories/attendance_repository.dart';
 
 class EditSessionSheet extends ConsumerStatefulWidget {

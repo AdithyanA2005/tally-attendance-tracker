@@ -1,10 +1,10 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../features/calendar/data/repositories/attendance_repository.dart';
-import '../../../../features/calendar/data/models/subject_model.dart';
-import '../../../../features/calendar/data/models/session_model.dart';
+import 'package:tally/core/data/models/subject_model.dart';
+import 'package:tally/core/data/models/session_model.dart';
 import '../../../../features/calendar/domain/entities/subject_stats.dart';
 import '../../../calendar/presentation/providers/attendance_provider.dart';
-import '../../../settings/data/models/timetable_entry_model.dart';
+import 'package:tally/core/data/models/timetable_entry_model.dart';
 
 class SubjectImpact {
   final Subject subject;

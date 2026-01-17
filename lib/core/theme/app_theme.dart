@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../../features/calendar/data/models/session_model.dart';
+import 'package:tally/core/data/models/session_model.dart';
 
 class AppTheme {
   static final TextTheme _textTheme = GoogleFonts.outfitTextTheme();

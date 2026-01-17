@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/theme/app_theme.dart';
-import '../../../../features/calendar/data/models/session_model.dart';
+import 'package:tally/core/data/models/session_model.dart';
 import '../providers/future_impact_provider.dart';
 import '../../../../core/presentation/animations/fade_in_slide.dart';
 import '../../../../core/presentation/widgets/app_card.dart';

@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../calendar/data/models/session_model.dart';
-import '../../../calendar/data/models/subject_model.dart';
+import 'package:tally/core/data/models/session_model.dart';
+import 'package:tally/core/data/models/subject_model.dart';
 import '../../../calendar/presentation/providers/attendance_provider.dart';
 import '../../../calendar/domain/entities/subject_stats.dart';
 import '../../data/models/attendance_anomaly.dart';

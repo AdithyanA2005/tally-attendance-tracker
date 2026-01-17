@@ -23,13 +23,14 @@ class ClassSessionAdapter extends TypeAdapter<ClassSession> {
       status: fields[3] as AttendanceStatus,
       isExtraClass: fields[4] as bool,
       notes: fields[5] as String?,
+      durationMinutes: fields[6] as int,
     );
   }
 
   @override
   void write(BinaryWriter writer, ClassSession obj) {
     writer
-      ..writeByte(6)
+      ..writeByte(7)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -41,7 +42,9 @@ class ClassSessionAdapter extends TypeAdapter<ClassSession> {
       ..writeByte(4)
       ..write(obj.isExtraClass)
       ..writeByte(5)
-      ..write(obj.notes);
+      ..write(obj.notes)
+      ..writeByte(6)
+      ..write(obj.durationMinutes);
   }
 
   @override

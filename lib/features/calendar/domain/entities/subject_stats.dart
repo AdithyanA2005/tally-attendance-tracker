@@ -1,5 +1,5 @@
-import '../../data/models/subject_model.dart';
-import '../../data/models/session_model.dart';
+import 'package:tally/core/data/models/subject_model.dart';
+import 'package:tally/core/data/models/session_model.dart';
 
 class SubjectStats {
   final Subject subject;

@@ -10,7 +10,7 @@ import '../../../../core/presentation/animations/fade_in_slide.dart';
 import '../../../../core/presentation/widgets/timeline_item.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/utils/string_utils.dart';
-import '../../calendar/data/models/session_model.dart';
+import 'package:tally/core/data/models/session_model.dart';
 
 import 'widgets/future_impact_section.dart';
 

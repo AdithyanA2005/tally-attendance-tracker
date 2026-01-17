@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../data/models/session_model.dart';
-import '../../data/models/subject_model.dart';
+import 'package:tally/core/data/models/session_model.dart';
+import 'package:tally/core/data/models/subject_model.dart';
 
 import 'attendance_provider.dart';
 

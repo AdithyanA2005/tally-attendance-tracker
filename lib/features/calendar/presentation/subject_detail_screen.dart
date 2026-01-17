@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../data/models/session_model.dart';
+import 'package:tally/core/data/models/session_model.dart';
 import '../domain/entities/subject_stats.dart';
 import 'providers/attendance_provider.dart';
 import '../../../../core/presentation/animations/fade_in_slide.dart';

@@ -1,7 +1,7 @@
 import 'package:hive_flutter/hive_flutter.dart';
-import '../../features/calendar/data/models/subject_model.dart';
-import '../../features/calendar/data/models/session_model.dart';
-import '../../features/settings/data/models/timetable_entry_model.dart';
+import 'package:tally/core/data/models/subject_model.dart';
+import 'package:tally/core/data/models/session_model.dart';
+import 'package:tally/core/data/models/timetable_entry_model.dart';
 
 /// Service responsible for initializing and accessing Hive local storage boxes.
 ///

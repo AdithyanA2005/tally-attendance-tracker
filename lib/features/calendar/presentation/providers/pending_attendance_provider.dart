@@ -2,8 +2,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'attendance_provider.dart';
 import '../../data/repositories/attendance_repository.dart';
-import '../../data/models/subject_model.dart';
-import '../../data/models/session_model.dart';
+import 'package:tally/core/data/models/subject_model.dart';
+import 'package:tally/core/data/models/session_model.dart';
 import '../../../settings/data/repositories/settings_repository.dart';
 
 class PendingClassItem {

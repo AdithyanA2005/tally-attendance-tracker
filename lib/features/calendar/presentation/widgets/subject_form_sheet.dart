@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/presentation/widgets/color_picker.dart';
 import '../../../../core/theme/app_theme.dart';
-import '../../data/models/subject_model.dart';
+import 'package:tally/core/data/models/subject_model.dart';
 import '../../data/repositories/attendance_repository.dart';
 
 class SubjectFormSheet extends ConsumerStatefulWidget {

@@ -1,8 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/data/local_storage_service.dart';
-import '../models/subject_model.dart';
-import '../models/session_model.dart';
-import '../../../../features/settings/data/models/timetable_entry_model.dart';
+import 'package:tally/core/data/models/subject_model.dart';
+import 'package:tally/core/data/models/session_model.dart';
+import 'package:tally/core/data/models/timetable_entry_model.dart';
 import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
 

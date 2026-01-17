@@ -1,9 +1,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../calendar/data/repositories/attendance_repository.dart';
 import '../../../calendar/presentation/providers/attendance_provider.dart';
-import '../../data/models/timetable_entry_model.dart';
-import '../../../calendar/data/models/session_model.dart';
-import '../../../calendar/data/models/subject_model.dart';
+import 'package:tally/core/data/models/timetable_entry_model.dart';
+import 'package:tally/core/data/models/session_model.dart';
+import 'package:tally/core/data/models/subject_model.dart';
 
 // 1. Define the stream provider separately to ensure stability
 final dailyTimetableProvider = StreamProvider.family<List<TimetableEntry>, int>(

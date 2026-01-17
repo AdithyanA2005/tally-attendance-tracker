@@ -6,13 +6,13 @@ import 'package:uuid/uuid.dart';
 import 'package:intl/intl.dart';
 import 'providers/calendar_provider.dart';
 import 'providers/pending_attendance_provider.dart';
-import '../../settings/data/models/timetable_entry_model.dart';
+import 'package:tally/core/data/models/timetable_entry_model.dart';
 import '../../settings/data/repositories/settings_repository.dart';
-import '../data/models/session_model.dart';
+import 'package:tally/core/data/models/session_model.dart';
 import '../data/repositories/attendance_repository.dart';
 
 import 'widgets/edit_session_sheet.dart';
-import '../data/models/subject_model.dart';
+import 'package:tally/core/data/models/subject_model.dart';
 import '../../../../core/presentation/animations/fade_in_slide.dart';
 import '../../../../core/presentation/widgets/app_card.dart';
 import '../../../../core/presentation/widgets/empty_state.dart';

@@ -3,8 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'providers/timetable_provider.dart';
 import '../../calendar/presentation/providers/attendance_provider.dart';
 import '../../calendar/data/repositories/attendance_repository.dart';
-import '../../calendar/data/models/subject_model.dart';
-import '../data/models/timetable_entry_model.dart';
+import 'package:tally/core/data/models/subject_model.dart';
+import 'package:tally/core/data/models/timetable_entry_model.dart';
 import '../../../../core/presentation/animations/fade_in_slide.dart';
 import 'package:flutter/services.dart'; // For HapticFeedback
 import 'package:go_router/go_router.dart';

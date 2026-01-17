@@ -7,7 +7,7 @@ import 'package:tally/core/presentation/animations/fade_in_slide.dart';
 import '../../../../core/presentation/widgets/app_card.dart';
 import '../../../../core/presentation/widgets/empty_state.dart';
 import '../../../../core/presentation/widgets/info_tag.dart';
-import '../data/models/subject_model.dart';
+import 'package:tally/core/data/models/subject_model.dart';
 import 'widgets/subject_form_sheet.dart';
 
 class ManageSubjectsScreen extends ConsumerWidget {

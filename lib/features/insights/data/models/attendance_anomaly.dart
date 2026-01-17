@@ -1,5 +1,5 @@
-import '../../../calendar/data/models/session_model.dart';
-import '../../../calendar/data/models/subject_model.dart';
+import 'package:tally/core/data/models/session_model.dart';
+import 'package:tally/core/data/models/subject_model.dart';
 
 class AttendanceAnomaly {
   final Subject subject;
