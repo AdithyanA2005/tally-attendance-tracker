@@ -682,7 +682,7 @@ class _TodayClassCard extends ConsumerWidget {
               subjectId: item.subject.id,
               date: item.scheduledTime,
               status: AttendanceStatus.scheduled,
-              durationMinutes: 60,
+              durationMinutes: (item.entry.durationInHours * 60).toInt(),
             ),
         initialSubject: item.subject,
         allSubjects: allSubjects,

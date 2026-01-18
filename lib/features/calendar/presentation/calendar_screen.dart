@@ -681,7 +681,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
             subjectId: entry.subjectId,
             date: d,
             status: AttendanceStatus.scheduled,
-            durationMinutes: 60,
+            durationMinutes: (entry.durationInHours * 60).toInt(),
           ),
         );
       }
