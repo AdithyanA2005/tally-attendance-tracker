@@ -2,32 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'core/theme/app_theme.dart';
 import 'core/presentation/app_router.dart';
-import 'core/data/local_storage_service.dart';
-import 'features/calendar/data/repositories/attendance_repository.dart';
-import 'features/settings/data/repositories/settings_repository.dart';
+import 'core/presentation/app_initializer.dart';
 
-void main() async {
+void main() {
   WidgetsFlutterBinding.ensureInitialized();
-
-  // Initialize Local Storage separate from Provider if needed,
-  // or use a ProviderContainer to init before running app.
-  // For simplicity here, we'll let the provider init lazily or init synchronously if possible.
-  // Converting init to standard main init for Hive.
-  final localStorage = LocalStorageService();
-  await localStorage.init();
-
-  // Initialize Settings Repository
-  final settingsRepo = await SettingsRepository.init();
-
-  runApp(
-    ProviderScope(
-      overrides: [
-        localStorageServiceProvider.overrideWithValue(localStorage),
-        settingsRepositoryProvider.overrideWithValue(settingsRepo),
-      ],
-      child: const AttendanceApp(),
-    ),
-  );
+  runApp(const AppInitializer());
 }
 
 class AttendanceApp extends ConsumerWidget {
