@@ -89,7 +89,7 @@ List<TodayClassItem> _combineData({
         id: '',
         subjectId: '',
         date: DateTime(0),
-        status: AttendanceStatus.unmarked,
+        status: AttendanceStatus.scheduled,
         durationMinutes: (subjectMap[entry.subjectId]!.weeklyHours / 5 * 60)
             .round(),
         // This is a placeholder default; ideally we'd use timetable duration
@@ -109,7 +109,7 @@ List<TodayClassItem> _combineData({
         subject: displaySubject,
         originalSubject: subject,
         currentStatus: existingSession.id.isEmpty
-            ? AttendanceStatus.unmarked
+            ? AttendanceStatus.scheduled
             : existingSession.status,
         existingSessionId: existingSession.id.isEmpty
             ? null

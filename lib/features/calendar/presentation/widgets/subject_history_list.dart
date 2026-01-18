@@ -61,7 +61,7 @@ class SubjectHistoryList extends StatelessWidget {
             icon = Icons.block_rounded;
             label = 'Cancelled';
             break;
-          case AttendanceStatus.unmarked:
+          case AttendanceStatus.scheduled:
             color = const Color(0xFF2D3436);
             icon = Icons.help_outline_rounded;
             label = 'Unmarked';

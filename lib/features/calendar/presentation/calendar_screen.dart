@@ -333,6 +333,20 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                                           AttendanceStatus.cancelled,
                                         ),
                                       ),
+                                      const SizedBox(width: 8),
+                                      _BulkActionChip(
+                                        key: const ValueKey(
+                                          'calendar_bulk_scheduled',
+                                        ),
+                                        icon: Icons.restore_rounded,
+                                        label: 'Reset to Scheduled',
+                                        color: const Color(0xFF95A5A6),
+                                        onTap: () => _markAllClassesForDay(
+                                          combinedEvents,
+                                          subjectMap.values.toList(),
+                                          AttendanceStatus.scheduled,
+                                        ),
+                                      ),
                                     ],
                                   ),
                                 ),
@@ -551,7 +565,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                                                 text:
                                                     session.status ==
                                                         AttendanceStatus
-                                                            .unmarked
+                                                            .scheduled
                                                     ? 'SCHEDULED'
                                                     : session.status.name
                                                           .toUpperCase(),
@@ -665,7 +679,8 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
             id: 'virtual_${entry.id}_${day.toIso8601String()}',
             subjectId: entry.subjectId,
             date: d,
-            status: AttendanceStatus.unmarked, durationMinutes: 60,
+            status: AttendanceStatus.scheduled,
+            durationMinutes: 60,
           ),
         );
       }
@@ -724,7 +739,8 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
           id: const Uuid().v4(),
           subjectId: allSubjects.isNotEmpty ? allSubjects.first.id : '',
           date: baseTime,
-          status: AttendanceStatus.unmarked, durationMinutes: 60,
+          status: AttendanceStatus.scheduled,
+          durationMinutes: 60,
           isExtraClass: true,
         ),
         initialSubject: allSubjects.isNotEmpty ? allSubjects.first : null,
@@ -757,6 +773,8 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                 ? 'Present'
                 : status == AttendanceStatus.absent
                 ? 'Absent'
+                : status == AttendanceStatus.scheduled
+                ? 'Scheduled'
                 : 'Cancelled'}',
           ),
           duration: const Duration(seconds: 2),

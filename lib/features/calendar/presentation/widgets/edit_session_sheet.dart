@@ -224,7 +224,7 @@ class _EditSessionSheetState extends ConsumerState<EditSessionSheet> {
                   (s) => DropdownMenuItem(
                     value: s,
                     child: Text(
-                      s == AttendanceStatus.unmarked
+                      s == AttendanceStatus.scheduled
                           ? 'SCHEDULED'
                           : s.name.toUpperCase(),
                     ),

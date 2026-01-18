@@ -72,7 +72,7 @@ class AttendanceStatusAdapter extends TypeAdapter<AttendanceStatus> {
       case 2:
         return AttendanceStatus.cancelled;
       case 3:
-        return AttendanceStatus.unmarked;
+        return AttendanceStatus.scheduled;
       default:
         return AttendanceStatus.present;
     }
@@ -90,7 +90,7 @@ class AttendanceStatusAdapter extends TypeAdapter<AttendanceStatus> {
       case AttendanceStatus.cancelled:
         writer.writeByte(2);
         break;
-      case AttendanceStatus.unmarked:
+      case AttendanceStatus.scheduled:
         writer.writeByte(3);
         break;
     }

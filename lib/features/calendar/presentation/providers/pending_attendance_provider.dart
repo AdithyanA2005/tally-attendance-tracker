@@ -106,7 +106,7 @@ final pendingAttendanceProvider = Provider<AsyncValue<List<PendingClassItem>>>((
 
       // If no session exists, OR it exists but is marked as "unmarked", add to pending
       if (matchingSession == null ||
-          matchingSession.status == AttendanceStatus.unmarked) {
+          matchingSession.status == AttendanceStatus.scheduled) {
         pendingItems.add(
           PendingClassItem(
             subject: subjectMap[entry.subjectId]!,

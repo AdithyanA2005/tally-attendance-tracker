@@ -11,7 +11,7 @@ enum AttendanceStatus {
   @HiveField(2)
   cancelled,
   @HiveField(3)
-  unmarked,
+  scheduled,
 }
 
 @HiveType(typeId: 2)
@@ -41,7 +41,7 @@ class ClassSession extends HiveObject {
     required this.id,
     required this.subjectId,
     required this.date,
-    this.status = AttendanceStatus.unmarked,
+    this.status = AttendanceStatus.scheduled,
     this.isExtraClass = false,
     this.notes,
     required this.durationMinutes,

@@ -114,6 +114,17 @@ class HomeScreen extends ConsumerWidget {
                                       AttendanceStatus.cancelled,
                                     ),
                                   ),
+                                  const SizedBox(width: 8),
+                                  _BulkActionChip(
+                                    icon: Icons.restore_rounded,
+                                    label: 'Reset to Scheduled',
+                                    color: const Color(0xFF95A5A6),
+                                    onTap: () => _markAllClasses(
+                                      ref,
+                                      items,
+                                      AttendanceStatus.scheduled,
+                                    ),
+                                  ),
                                 ],
                               ),
                             ),
@@ -203,6 +214,8 @@ class HomeScreen extends ConsumerWidget {
                 ? 'Present'
                 : status == AttendanceStatus.absent
                 ? 'Absent'
+                : status == AttendanceStatus.scheduled
+                ? 'Scheduled'
                 : 'Cancelled'}',
           ),
           duration: const Duration(seconds: 2),
@@ -329,7 +342,7 @@ class _TodayClassCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final isMarked = item.currentStatus != AttendanceStatus.unmarked;
+    final isMarked = item.currentStatus != AttendanceStatus.scheduled;
     final theme = Theme.of(context);
 
     final nowTime = DateTime.now();
@@ -667,7 +680,7 @@ class _TodayClassCard extends ConsumerWidget {
               id: const Uuid().v4(),
               subjectId: item.subject.id,
               date: item.scheduledTime,
-              status: AttendanceStatus.unmarked,
+              status: AttendanceStatus.scheduled,
               durationMinutes: 60,
             ),
         initialSubject: item.subject,

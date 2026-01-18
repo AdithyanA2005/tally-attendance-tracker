@@ -197,7 +197,8 @@ bool _isSessionCancelled(
       id: '',
       subjectId: '',
       date: DateTime(0),
-      status: AttendanceStatus.unmarked, durationMinutes: 60,
+      status: AttendanceStatus.scheduled,
+      durationMinutes: 60,
     ),
   );
 
