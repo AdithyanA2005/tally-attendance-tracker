@@ -11,6 +11,7 @@ import '../../../../core/presentation/widgets/timeline_item.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/utils/string_utils.dart';
 import 'package:tally/core/data/models/session_model.dart';
+import '../../../../core/presentation/widgets/bulk_action_chip.dart';
 
 import 'widgets/future_impact_section.dart';
 
@@ -82,7 +83,7 @@ class HomeScreen extends ConsumerWidget {
                               scrollDirection: Axis.horizontal,
                               child: Row(
                                 children: [
-                                  _BulkActionChip(
+                                  BulkActionChip(
                                     icon: Icons.check_rounded,
                                     label: 'All Present',
                                     color: const Color(0xFF27AE60),
@@ -93,7 +94,7 @@ class HomeScreen extends ConsumerWidget {
                                     ),
                                   ),
                                   const SizedBox(width: 8),
-                                  _BulkActionChip(
+                                  BulkActionChip(
                                     icon: Icons.close_rounded,
                                     label: 'All Absent',
                                     color: const Color(0xFFC0392B),
@@ -104,7 +105,7 @@ class HomeScreen extends ConsumerWidget {
                                     ),
                                   ),
                                   const SizedBox(width: 8),
-                                  _BulkActionChip(
+                                  BulkActionChip(
                                     icon: Icons.block_rounded,
                                     label: 'All Cancelled',
                                     color: const Color(0xFF607D8B),
@@ -115,7 +116,7 @@ class HomeScreen extends ConsumerWidget {
                                     ),
                                   ),
                                   const SizedBox(width: 8),
-                                  _BulkActionChip(
+                                  BulkActionChip(
                                     icon: Icons.restore_rounded,
                                     label: 'Reset to Scheduled',
                                     color: const Color(0xFF95A5A6),
@@ -735,54 +736,6 @@ class _MiniActionButton extends StatelessWidget {
               ),
             ],
           ),
-        ),
-      ),
-    );
-  }
-}
-
-class _BulkActionChip extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final Color color;
-  final VoidCallback onTap;
-
-  const _BulkActionChip({
-    required this.icon,
-    required this.label,
-    required this.color,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: () {
-        HapticFeedback.lightImpact();
-        onTap();
-      },
-      borderRadius: BorderRadius.circular(20),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.08),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: color.withValues(alpha: 0.2), width: 1),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, color: color, size: 16),
-            const SizedBox(width: 6),
-            Text(
-              label,
-              style: TextStyle(
-                color: color,
-                fontWeight: FontWeight.w600,
-                fontSize: 13,
-              ),
-            ),
-          ],
         ),
       ),
     );

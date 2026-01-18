@@ -9,6 +9,7 @@ import 'providers/pending_attendance_provider.dart';
 import 'package:tally/core/data/models/timetable_entry_model.dart';
 import '../../settings/data/repositories/settings_repository.dart';
 import 'package:tally/core/data/models/session_model.dart';
+import '../../../../core/presentation/widgets/bulk_action_chip.dart';
 import '../data/repositories/attendance_repository.dart';
 
 import 'widgets/edit_session_sheet.dart';
@@ -292,7 +293,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                                   scrollDirection: Axis.horizontal,
                                   child: Row(
                                     children: [
-                                      _BulkActionChip(
+                                      BulkActionChip(
                                         key: const ValueKey(
                                           'calendar_bulk_present',
                                         ),
@@ -306,7 +307,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                                         ),
                                       ),
                                       const SizedBox(width: 8),
-                                      _BulkActionChip(
+                                      BulkActionChip(
                                         key: const ValueKey(
                                           'calendar_bulk_absent',
                                         ),
@@ -320,7 +321,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                                         ),
                                       ),
                                       const SizedBox(width: 8),
-                                      _BulkActionChip(
+                                      BulkActionChip(
                                         key: const ValueKey(
                                           'calendar_bulk_cancelled',
                                         ),
@@ -334,7 +335,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                                         ),
                                       ),
                                       const SizedBox(width: 8),
-                                      _BulkActionChip(
+                                      BulkActionChip(
                                         key: const ValueKey(
                                           'calendar_bulk_scheduled',
                                         ),
@@ -782,50 +783,5 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
         ),
       );
     }
-  }
-}
-
-class _BulkActionChip extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final Color color;
-  final VoidCallback onTap;
-
-  const _BulkActionChip({
-    super.key,
-    required this.icon,
-    required this.label,
-    required this.color,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: color.withValues(alpha: 0.1),
-      borderRadius: BorderRadius.circular(20),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(20),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(icon, size: 18, color: color),
-              const SizedBox(width: 6),
-              Text(
-                label,
-                style: TextStyle(
-                  color: color,
-                  fontWeight: FontWeight.w600,
-                  fontSize: 13,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
   }
 }
