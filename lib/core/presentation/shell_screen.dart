@@ -44,12 +44,16 @@ class _ShellScreenState extends State<ShellScreen> {
                   const VerticalDivider(thickness: 1, width: 1),
                   // Main Content
                   Expanded(
-                    child: SafeArea(
-                      left: false,
-                      right: false,
-                      child: Padding(
-                        padding: const EdgeInsets.only(top: 32.0),
-                        child: widget.child,
+                    child: MediaQuery.removePadding(
+                      context: context,
+                      removeLeft: true, // Sidebar handles the left safe area
+                      child: SafeArea(
+                        left: false,
+                        right: false,
+                        child: Padding(
+                          padding: const EdgeInsets.only(top: 32.0),
+                          child: widget.child,
+                        ),
                       ),
                     ),
                   ),
@@ -112,6 +116,7 @@ class _Sidebar extends StatelessWidget {
     final width = isExtended ? 240.0 : 80.0;
 
     return SafeArea(
+      right: false, // Sidebar is left-aligned, ignore right insets (notch etc)
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         width: width,
