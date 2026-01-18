@@ -137,7 +137,7 @@ class HomeScreen extends ConsumerWidget {
                   ),
                 ),
                 SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
+                  padding: const EdgeInsets.fromLTRB(16, 24, 16, 100),
                   sliver: SliverList(
                     delegate: SliverChildListDelegate([
                       FadeInSlide(

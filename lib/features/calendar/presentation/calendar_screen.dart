@@ -287,7 +287,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                                   16,
                                   8,
                                   16,
-                                  16,
+                                  26,
                                 ),
                                 child: SingleChildScrollView(
                                   scrollDirection: Axis.horizontal,
