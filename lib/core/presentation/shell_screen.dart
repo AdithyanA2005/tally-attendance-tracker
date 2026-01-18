@@ -170,43 +170,46 @@ class _Sidebar extends StatelessWidget {
             Expanded(
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 12),
-                child: Column(
-                  children: [
-                    _SidebarItem(
-                      icon: Icons.grid_view_rounded,
-                      label: 'Home',
-                      isSelected: selectedIndex == 0,
-                      isExtended: isExtended,
-                      onTap: () => onDestinationSelected(0),
-                    ),
-                    const SizedBox(height: 8),
-                    _SidebarItem(
-                      icon: Icons.calendar_today_rounded,
-                      selectedIcon: Icons.calendar_month_rounded,
-                      label: 'Calendar',
-                      isSelected: selectedIndex == 1,
-                      isExtended: isExtended,
-                      onTap: () => onDestinationSelected(1),
-                    ),
-                    const SizedBox(height: 8),
-                    _SidebarItem(
-                      icon: Icons.donut_large_rounded,
-                      selectedIcon: Icons.pie_chart_rounded,
-                      label: 'Insights',
-                      isSelected: selectedIndex == 2,
-                      isExtended: isExtended,
-                      onTap: () => onDestinationSelected(2),
-                    ),
-                    const SizedBox(height: 8),
-                    _SidebarItem(
-                      icon: Icons.settings_outlined,
-                      selectedIcon: Icons.settings_rounded,
-                      label: 'Settings',
-                      isSelected: selectedIndex == 3,
-                      isExtended: isExtended,
-                      onTap: () => onDestinationSelected(3),
-                    ),
-                  ],
+                child: SingleChildScrollView(
+                  physics: const BouncingScrollPhysics(),
+                  child: Column(
+                    children: [
+                      _SidebarItem(
+                        icon: Icons.grid_view_rounded,
+                        label: 'Home',
+                        isSelected: selectedIndex == 0,
+                        isExtended: isExtended,
+                        onTap: () => onDestinationSelected(0),
+                      ),
+                      const SizedBox(height: 8),
+                      _SidebarItem(
+                        icon: Icons.calendar_today_rounded,
+                        selectedIcon: Icons.calendar_month_rounded,
+                        label: 'Calendar',
+                        isSelected: selectedIndex == 1,
+                        isExtended: isExtended,
+                        onTap: () => onDestinationSelected(1),
+                      ),
+                      const SizedBox(height: 8),
+                      _SidebarItem(
+                        icon: Icons.donut_large_rounded,
+                        selectedIcon: Icons.pie_chart_rounded,
+                        label: 'Insights',
+                        isSelected: selectedIndex == 2,
+                        isExtended: isExtended,
+                        onTap: () => onDestinationSelected(2),
+                      ),
+                      const SizedBox(height: 8),
+                      _SidebarItem(
+                        icon: Icons.settings_outlined,
+                        selectedIcon: Icons.settings_rounded,
+                        label: 'Settings',
+                        isSelected: selectedIndex == 3,
+                        isExtended: isExtended,
+                        onTap: () => onDestinationSelected(3),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
