@@ -62,5 +62,15 @@ void main() {
       // Skip next: 3/5 = 60%.
       expect(AttendanceCalculator.predictAttendanceIfSkipped(3, 4), 60.0);
     });
+
+    test('predictAttendanceIfAttended returns correct prediction', () {
+      // 3/4 = 75%.
+      // Attend next: 4/5 = 80%.
+      expect(AttendanceCalculator.predictAttendanceIfAttended(3, 4), 80.0);
+
+      // 0/0 = 0%
+      // Attend next: 1/1 = 100%
+      expect(AttendanceCalculator.predictAttendanceIfAttended(0, 0), 100.0);
+    });
   });
 }

@@ -74,7 +74,7 @@ final subjectStatsListProvider = Provider<AsyncValue<List<SubjectStats>>>((
         conducted,
         subject.minimumAttendancePercentage,
       );
-      final prediction = AttendanceCalculator.predictAttendanceIfSkipped(
+      final prediction = AttendanceCalculator.predictAttendanceIfAttended(
         present,
         conducted,
       );

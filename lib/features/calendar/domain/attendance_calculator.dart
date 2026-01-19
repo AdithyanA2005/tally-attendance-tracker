@@ -46,6 +46,12 @@ class AttendanceCalculator {
 
   /// Predict attendance if next class is skipped
   static double predictAttendanceIfSkipped(int present, int conducted) {
+    if (conducted + 1 == 0) return 0.0;
     return (present / (conducted + 1)) * 100;
+  }
+
+  /// Predict attendance if next class is attended
+  static double predictAttendanceIfAttended(int present, int conducted) {
+    return ((present + 1) / (conducted + 1)) * 100;
   }
 }
