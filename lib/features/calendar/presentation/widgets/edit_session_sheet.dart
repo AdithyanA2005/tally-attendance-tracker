@@ -349,6 +349,7 @@ class _EditSessionSheetState extends ConsumerState<EditSessionSheet> {
                             final updatedSession = ClassSession(
                               id: widget.session.id,
                               subjectId: _selectedSubject!.id,
+                              semesterId: widget.session.semesterId,
                               date: _selectedDate,
                               status: _selectedStatus,
                               isExtraClass: widget.session.isExtraClass,

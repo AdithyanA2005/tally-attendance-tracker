@@ -12,8 +12,7 @@ import 'package:tally/core/data/local_storage_service.dart';
 import 'package:tally/core/data/models/session_model.dart';
 import 'package:tally/core/data/models/subject_model.dart';
 import 'package:tally/core/data/models/timetable_entry_model.dart';
-import 'package:tally/features/calendar/data/repositories/attendance_repository.dart';
-import 'package:tally/features/settings/data/repositories/settings_repository.dart';
+import 'package:tally/core/data/models/semester_model.dart';
 
 /// Service handling data import/export functionality.
 ///
@@ -21,58 +20,24 @@ import 'package:tally/features/settings/data/repositories/settings_repository.da
 /// and restoring it. Uses `file_saver` for downloads and `file_picker` for uploads.
 class BackupService {
   final LocalStorageService _localStorage;
-  final SettingsRepository _settingsRepo;
-
-  BackupService(this._localStorage, this._settingsRepo);
+  BackupService(this._localStorage);
 
   Future<String> _generateBackupJson() async {
     final subjects = _localStorage.subjectBox.values.toList();
     final sessions = _localStorage.sessionBox.values.toList();
     final timetable = _localStorage.timetableBox.values.toList();
-    final semesterStartDate = _settingsRepo.getSemesterStartDate();
+    final semesters = _localStorage.semesterBox.values.toList();
 
     final data = {
       'meta': {
-        'version': 1,
+        'version': 2, // Bumped version
         'timestamp': DateTime.now().toIso8601String(),
         'platform': 'tally',
       },
-      'settings': {'semesterStartDate': semesterStartDate.toIso8601String()},
-      'subjects': subjects
-          .map(
-            (s) => {
-              'id': s.id,
-              'name': s.name,
-              'minimumAttendancePercentage': s.minimumAttendancePercentage,
-              'weeklyHours': s.weeklyHours,
-              'colorTag': s.colorTag,
-            },
-          )
-          .toList(),
-      'sessions': sessions
-          .map(
-            (s) => {
-              'id': s.id,
-              'subjectId': s.subjectId,
-              'date': s.date.toIso8601String(),
-              'status': s.status.index,
-              'isExtraClass': s.isExtraClass,
-              'notes': s.notes,
-              'durationMinutes': s.durationMinutes,
-            },
-          )
-          .toList(),
-      'timetable': timetable
-          .map(
-            (t) => {
-              'id': t.id,
-              'subjectId': t.subjectId,
-              'dayOfWeek': t.dayOfWeek,
-              'startTime': t.startTime,
-              'durationInHours': t.durationInHours,
-            },
-          )
-          .toList(),
+      'semesters': semesters.map((s) => s.toJson()).toList(),
+      'subjects': subjects.map((s) => {...s.toJson()}).toList(),
+      'sessions': sessions.map((s) => {...s.toJson()}).toList(),
+      'timetable': timetable.map((t) => {...t.toJson()}).toList(),
     };
 
     return jsonEncode(data);
@@ -127,13 +92,33 @@ class BackupService {
       await _localStorage.subjectBox.clear();
       await _localStorage.sessionBox.clear();
       await _localStorage.timetableBox.clear();
+      await _localStorage.semesterBox.clear();
 
-      // 4. Restore Settings
-      final settings = data['settings'];
-      if (settings != null && settings['semesterStartDate'] != null) {
-        await _settingsRepo.setSemesterStartDate(
-          DateTime.parse(settings['semesterStartDate']),
+      final version = data['meta']['version'] as int? ?? 1;
+
+      // 4. Restore Semesters
+      String defaultSemesterId = '';
+      if (version >= 2 && data['semesters'] != null) {
+        final semestersList = data['semesters'] as List;
+        for (var s in semestersList) {
+          final semester = Semester.fromJson(s);
+          await _localStorage.semesterBox.put(semester.id, semester);
+          if (semester.isActive) defaultSemesterId = semester.id;
+        }
+      }
+
+      // If no active semester found or V1, create a default one
+      if (defaultSemesterId.isEmpty) {
+        final semester = Semester(
+          id: 'default_semester',
+          name: 'Imported Semester',
+          startDate: version == 1 && data['settings'] != null
+              ? DateTime.parse(data['settings']['semesterStartDate'])
+              : DateTime.now(),
+          isActive: true,
         );
+        await _localStorage.semesterBox.put(semester.id, semester);
+        defaultSemesterId = semester.id;
       }
 
       // 5. Restore Subjects
@@ -141,11 +126,14 @@ class BackupService {
       for (var s in subjectsList) {
         final subject = Subject(
           id: s['id'],
+          semesterId: s['semester_id'] ?? defaultSemesterId,
           name: s['name'],
-          minimumAttendancePercentage: (s['minimumAttendancePercentage'] as num)
-              .toDouble(),
-          weeklyHours: s['weeklyHours'],
-          colorTag: s['colorTag'],
+          minimumAttendancePercentage:
+              (s['minimum_attendance_percentage'] ??
+                      s['minimumAttendancePercentage'] as num)
+                  .toDouble(),
+          weeklyHours: s['weekly_hours'] ?? s['weeklyHours'],
+          colorTag: s['color_tag'] ?? s['colorTag'],
         );
         await _localStorage.subjectBox.put(subject.id, subject);
       }
@@ -155,12 +143,17 @@ class BackupService {
       for (var s in sessionsList) {
         final session = ClassSession(
           id: s['id'],
-          subjectId: s['subjectId'],
+          semesterId: s['semester_id'] ?? defaultSemesterId,
+          subjectId: s['subjectId'] ?? s['subject_id'],
           date: DateTime.parse(s['date']),
-          status: AttendanceStatus.values[s['status']],
-          isExtraClass: s['isExtraClass'] ?? false,
+          status: s['status'] is int
+              ? AttendanceStatus.values[s['status']]
+              : AttendanceStatus.values.firstWhere(
+                  (e) => e.name == s['status'],
+                ),
+          isExtraClass: s['isExtraClass'] ?? s['is_extra_class'] ?? false,
           notes: s['notes'],
-          durationMinutes: s['durationMinutes'] ?? 60,
+          durationMinutes: s['durationMinutes'] ?? s['duration_minutes'] ?? 60,
         );
         await _localStorage.sessionBox.put(session.id, session);
       }
@@ -170,10 +163,12 @@ class BackupService {
       for (var t in timetableList) {
         final entry = TimetableEntry(
           id: t['id'],
-          subjectId: t['subjectId'],
-          dayOfWeek: t['dayOfWeek'],
-          startTime: t['startTime'],
-          durationInHours: (t['durationInHours'] as num).toDouble(),
+          semesterId: t['semester_id'] ?? defaultSemesterId,
+          subjectId: t['subjectId'] ?? t['subject_id'],
+          dayOfWeek: t['dayOfWeek'] ?? t['day_of_week'],
+          startTime: t['startTime'] ?? t['start_time'],
+          durationInHours: (t['durationInHours'] ?? t['duration_hours'] as num)
+              .toDouble(),
         );
         await _localStorage.timetableBox.put(entry.id, entry);
       }
@@ -184,8 +179,7 @@ class BackupService {
   }
 }
 
-final backupServiceProvider = Provider<BackupService>((ref) {
-  final localStorage = ref.watch(localStorageServiceProvider);
-  final settingsRepo = ref.watch(settingsRepositoryProvider);
-  return BackupService(localStorage, settingsRepo);
-});
+// final backupServiceProvider = Provider<BackupService>((ref) {
+//   final localStorage = ref.watch(localStorageServiceProvider);
+//   return BackupService(localStorage);
+// });

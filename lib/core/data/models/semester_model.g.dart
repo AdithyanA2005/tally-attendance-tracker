@@ -1,53 +1,47 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-part of 'subject_model.dart';
+part of 'semester_model.dart';
 
 // **************************************************************************
 // TypeAdapterGenerator
 // **************************************************************************
 
-class SubjectAdapter extends TypeAdapter<Subject> {
+class SemesterAdapter extends TypeAdapter<Semester> {
   @override
-  final int typeId = 0;
+  final int typeId = 4;
 
   @override
-  Subject read(BinaryReader reader) {
+  Semester read(BinaryReader reader) {
     final numOfFields = reader.readByte();
     final fields = <int, dynamic>{
       for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
     };
-    return Subject(
+    return Semester(
       id: fields[0] as String,
       name: fields[1] as String,
-      minimumAttendancePercentage: fields[2] as double,
-      weeklyHours: fields[3] as int,
-      colorTag: fields[4] as int,
-      semesterId: fields[7] == null ? '' : fields[7] as String,
-      lastUpdated: fields[5] as DateTime?,
-      hasPendingSync: fields[6] == null ? false : fields[6] as bool,
+      startDate: fields[2] as DateTime,
+      isActive: fields[3] as bool,
+      lastUpdated: fields[4] as DateTime?,
+      hasPendingSync: fields[5] == null ? false : fields[5] as bool,
     );
   }
 
   @override
-  void write(BinaryWriter writer, Subject obj) {
+  void write(BinaryWriter writer, Semester obj) {
     writer
-      ..writeByte(8)
+      ..writeByte(6)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
       ..write(obj.name)
       ..writeByte(2)
-      ..write(obj.minimumAttendancePercentage)
+      ..write(obj.startDate)
       ..writeByte(3)
-      ..write(obj.weeklyHours)
+      ..write(obj.isActive)
       ..writeByte(4)
-      ..write(obj.colorTag)
-      ..writeByte(5)
       ..write(obj.lastUpdated)
-      ..writeByte(6)
-      ..write(obj.hasPendingSync)
-      ..writeByte(7)
-      ..write(obj.semesterId);
+      ..writeByte(5)
+      ..write(obj.hasPendingSync);
   }
 
   @override
@@ -56,7 +50,7 @@ class SubjectAdapter extends TypeAdapter<Subject> {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      other is SubjectAdapter &&
+      other is SemesterAdapter &&
           runtimeType == other.runtimeType &&
           typeId == other.typeId;
 }

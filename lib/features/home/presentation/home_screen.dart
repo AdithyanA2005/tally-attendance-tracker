@@ -16,6 +16,7 @@ import '../../../../core/presentation/widgets/bulk_action_chip.dart';
 import 'widgets/future_impact_section.dart';
 
 import '../../calendar/data/repositories/attendance_repository.dart';
+import '../../settings/data/repositories/semester_repository.dart';
 
 import '../../calendar/presentation/widgets/edit_session_sheet.dart';
 import '../../settings/presentation/providers/today_classes_provider.dart';
@@ -191,6 +192,11 @@ class HomeScreen extends ConsumerWidget {
     HapticFeedback.mediumImpact();
     final repo = ref.read(attendanceRepositoryProvider);
 
+    final semesterId = await ref
+        .read(semesterRepositoryProvider)
+        .getActiveSemesterId();
+    if (semesterId == null) return;
+
     // Mark all classes with the given status
     for (final item in items) {
       final session = ClassSession(
@@ -198,6 +204,7 @@ class HomeScreen extends ConsumerWidget {
             ? item.existingSession!.id
             : const Uuid().v4(),
         subjectId: item.subject.id,
+        semesterId: semesterId,
         date: item.scheduledTime,
         status: status,
         isExtraClass: item.existingSession?.isExtraClass ?? false,
@@ -622,11 +629,17 @@ class _TodayClassCard extends ConsumerWidget {
     final previousStatus = item.existingSession?.status;
     final isNew = item.existingSession == null;
 
+    final semesterId = await ref
+        .read(semesterRepositoryProvider)
+        .getActiveSemesterId();
+    if (semesterId == null) return;
+
     final session = ClassSession(
       id: item.existingSession?.id.isNotEmpty == true
           ? item.existingSession!.id
           : const Uuid().v4(),
       subjectId: item.subject.id,
+      semesterId: semesterId,
       date: item.scheduledTime,
       status: status,
       isExtraClass: item.existingSession?.isExtraClass ?? false,
@@ -651,8 +664,6 @@ class _TodayClassCard extends ConsumerWidget {
           onPressed: () async {
             if (isNew) {
               // If it was new, we should delete it to "unmark" it.
-              // Assuming repo has deleteSession. If not, we set to cancelled.
-              // For now, we'll try to delete if the ID exists.
               await repo.deleteSession(session.id);
             } else if (previousStatus != null) {
               // Restore previous status
@@ -667,7 +678,12 @@ class _TodayClassCard extends ConsumerWidget {
   void _showEditDialog(BuildContext context, WidgetRef ref) async {
     // Re-use existing dialog logic
     final repo = ref.read(attendanceRepositoryProvider);
-    final allSubjects = repo.getSubjects();
+    final allSubjects = await repo.getSubjects();
+    final semesterId = await ref
+        .read(semesterRepositoryProvider)
+        .getActiveSemesterId();
+
+    if (!context.mounted) return;
 
     await showModalBottomSheet<String>(
       context: context,
@@ -680,6 +696,7 @@ class _TodayClassCard extends ConsumerWidget {
             ClassSession(
               id: const Uuid().v4(),
               subjectId: item.subject.id,
+              semesterId: semesterId ?? '',
               date: item.scheduledTime,
               status: AttendanceStatus.scheduled,
               durationMinutes: (item.entry.durationInHours * 60).toInt(),

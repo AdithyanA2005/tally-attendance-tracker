@@ -18,6 +18,11 @@ class AppTheme {
 
   static const Color _calmRed = Color(0xFFE17055); // Burnt Terra
 
+  // Public accessors
+  static const Color primaryColor = _primary;
+  static const Color accentColor = _accent;
+  static const Color errorColor = _calmRed;
+
   static ThemeData get lightTheme {
     return ThemeData(
       useMaterial3: true,

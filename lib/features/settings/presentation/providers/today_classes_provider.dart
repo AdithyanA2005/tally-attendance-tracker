@@ -5,9 +5,13 @@ import 'package:tally/core/data/models/timetable_entry_model.dart';
 import 'package:tally/core/data/models/session_model.dart';
 import 'package:tally/core/data/models/subject_model.dart';
 
+import '../../data/repositories/semester_repository.dart';
+
 // 1. Define the stream provider separately to ensure stability
 final dailyTimetableProvider = StreamProvider.family<List<TimetableEntry>, int>(
   (ref, dayOfWeek) {
+    // Watch active semester to trigger rebuilds
+    ref.watch(activeSemesterProvider);
     final repository = ref.watch(attendanceRepositoryProvider);
     return repository.watchTimetable(dayOfWeek: dayOfWeek);
   },
@@ -88,12 +92,11 @@ List<TodayClassItem> _combineData({
       orElse: () => ClassSession(
         id: '',
         subjectId: '',
+        semesterId: entry.semesterId,
         date: DateTime(0),
         status: AttendanceStatus.scheduled,
         durationMinutes: (subjectMap[entry.subjectId]!.weeklyHours / 5 * 60)
             .round(),
-        // This is a placeholder default; ideally we'd use timetable duration
-        // but converting hours to int minutes safely is needed.
       ),
     );
 
@@ -142,6 +145,7 @@ List<TodayClassItem> _combineData({
           id: session.id,
           dayOfWeek: session.date.weekday,
           subjectId: session.subjectId,
+          semesterId: session.semesterId,
           startTime: timeStr,
           durationInHours: 1.0, // Default duration for extra classes
         ),

@@ -844,6 +844,7 @@ class _EditEntrySheetState extends ConsumerState<_EditEntrySheet> {
                       final updatedEntry = TimetableEntry(
                         id: widget.entry.id,
                         subjectId: _selectedSubject.id,
+                        semesterId: widget.entry.semesterId,
                         dayOfWeek: widget.entry.dayOfWeek,
                         startTime: '$hour:$minute',
                         durationInHours: _duration,

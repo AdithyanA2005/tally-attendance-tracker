@@ -1,17 +1,28 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+// import '../../core/services/sync_service.dart';
 
-class ShellScreen extends StatefulWidget {
+class ShellScreen extends ConsumerStatefulWidget {
   final Widget child;
   const ShellScreen({super.key, required this.child});
 
   @override
-  State<ShellScreen> createState() => _ShellScreenState();
+  ConsumerState<ShellScreen> createState() => _ShellScreenState();
 }
 
-class _ShellScreenState extends State<ShellScreen> {
+class _ShellScreenState extends ConsumerState<ShellScreen> {
   bool _isExtended = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // Trigger sync/migration when the app shell loads (User is logged in)
+    // WidgetsBinding.instance.addPostFrameCallback((_) {
+    //   ref.read(syncServiceProvider).sync();
+    // });
+  }
 
   @override
   Widget build(BuildContext context) {

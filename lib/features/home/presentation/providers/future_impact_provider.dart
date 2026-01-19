@@ -113,6 +113,7 @@ FutureImpactSummary? _calculateNextImpact(
         TimetableEntry(
           id: session.id,
           subjectId: session.subjectId,
+          semesterId: session.semesterId,
           dayOfWeek: weekday,
           startTime:
               '${session.date.hour.toString().padLeft(2, '0')}:${session.date.minute.toString().padLeft(2, '0')}',
@@ -196,6 +197,7 @@ bool _isSessionCancelled(
     orElse: () => ClassSession(
       id: '',
       subjectId: '',
+      semesterId: entry.semesterId,
       date: DateTime(0),
       status: AttendanceStatus.scheduled,
       durationMinutes: 60,

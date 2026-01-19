@@ -19,17 +19,20 @@ class TimetableEntryAdapter extends TypeAdapter<TimetableEntry> {
     return TimetableEntry(
       id: fields[0] as String,
       subjectId: fields[1] as String,
+      semesterId: fields[8] == null ? '' : fields[8] as String,
       dayOfWeek: fields[2] as int,
       startTime: fields[3] as String,
       durationInHours: fields[4] as double,
-      isRecurring: fields[5] as bool,
+      isRecurring: fields[5] == null ? true : fields[5] as bool,
+      lastUpdated: fields[6] as DateTime?,
+      hasPendingSync: fields[7] == null ? false : fields[7] as bool,
     );
   }
 
   @override
   void write(BinaryWriter writer, TimetableEntry obj) {
     writer
-      ..writeByte(6)
+      ..writeByte(9)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -41,7 +44,13 @@ class TimetableEntryAdapter extends TypeAdapter<TimetableEntry> {
       ..writeByte(4)
       ..write(obj.durationInHours)
       ..writeByte(5)
-      ..write(obj.isRecurring);
+      ..write(obj.isRecurring)
+      ..writeByte(6)
+      ..write(obj.lastUpdated)
+      ..writeByte(7)
+      ..write(obj.hasPendingSync)
+      ..writeByte(8)
+      ..write(obj.semesterId);
   }
 
   @override

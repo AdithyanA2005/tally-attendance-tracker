@@ -5,14 +5,20 @@ import 'package:tally/core/data/models/session_model.dart';
 import '../../domain/attendance_calculator.dart';
 import '../../domain/entities/subject_stats.dart';
 
+import '../../../settings/data/repositories/semester_repository.dart';
+
 // Stream of all subjects
 final subjectsStreamProvider = StreamProvider<List<Subject>>((ref) {
+  // Watch active semester to trigger rebuilds
+  ref.watch(activeSemesterProvider);
   final repository = ref.watch(attendanceRepositoryProvider);
   return repository.watchSubjects();
 });
 
 // Stream of all sessions (Reactive)
 final allSessionsStreamProvider = StreamProvider<List<ClassSession>>((ref) {
+  // Watch active semester to trigger rebuilds
+  ref.watch(activeSemesterProvider);
   final repository = ref.watch(attendanceRepositoryProvider);
   return repository.watchAllSessions();
 });

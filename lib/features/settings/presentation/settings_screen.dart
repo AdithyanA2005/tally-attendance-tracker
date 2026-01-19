@@ -3,10 +3,12 @@ import 'package:go_router/go_router.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
-import '../../calendar/data/repositories/attendance_repository.dart';
-import '../data/repositories/settings_repository.dart';
-import '../../../../core/services/backup_service.dart';
+import '../../auth/data/repositories/auth_repository.dart';
 import '../../../../core/presentation/widgets/section_header.dart';
+// import '../../../../core/services/backup_service.dart';
+// import '../../../../core/services/sync_service.dart';
+import 'package:tally/features/settings/data/repositories/semester_repository.dart';
+import 'widgets/semester_management_sheet.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -18,9 +20,6 @@ class SettingsScreen extends ConsumerStatefulWidget {
 class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   @override
   Widget build(BuildContext context) {
-    final settingsRepo = ref.watch(settingsRepositoryProvider);
-    final semesterStart = settingsRepo.getSemesterStartDate();
-
     return Scaffold(
       body: Center(
         child: ConstrainedBox(
@@ -43,29 +42,26 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               ),
               SliverList(
                 delegate: SliverChildListDelegate([
-                  const SectionHeader(title: 'Semester'),
-                  ListTile(
-                    leading: const Icon(Icons.date_range_rounded),
-                    title: const Text('Semester Start Date'),
-                    subtitle: Text(
-                      DateFormat('MMMM d, yyyy').format(semesterStart),
-                    ),
-                    trailing: const Icon(Icons.edit_calendar_rounded, size: 20),
-                    onTap: () async {
-                      final picked = await showDatePicker(
-                        context: context,
-                        initialDate: semesterStart,
-                        firstDate: DateTime(2020),
-                        lastDate: DateTime(2030),
-                      );
-                      if (picked != null) {
-                        await settingsRepo.setSemesterStartDate(picked);
-                        setState(() {});
-                      }
-                    },
-                  ),
                   const Divider(),
                   const SectionHeader(title: 'Academics'),
+                  ListTile(
+                    leading: const Icon(Icons.school_rounded),
+                    title: const Text('Current Semester'),
+                    subtitle: Consumer(
+                      builder: (context, ref, _) {
+                        final activeAsync = ref.watch(activeSemesterProvider);
+                        final active = activeAsync.value;
+                        if (active == null) {
+                          return const Text('No active semester');
+                        }
+                        return Text(
+                          '${active.name} (${DateFormat('MMM d, yyyy').format(active.startDate)})',
+                        );
+                      },
+                    ),
+                    trailing: const Icon(Icons.swap_horiz_rounded),
+                    onTap: () => _showSemesterSwitcher(context, ref),
+                  ),
                   ListTile(
                     leading: const Icon(Icons.calendar_month),
                     title: const Text('Timetable'),
@@ -80,55 +76,15 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     trailing: const Icon(Icons.chevron_right),
                     onTap: () => context.push('/manage_subjects'),
                   ),
+                  // Data Management removed as part of V1 Cleanup
+                  // const SectionHeader(title: 'Data Management'),
+                  // ... removed tiles ...
                   const Divider(),
-                  const SectionHeader(title: 'Backup & Restore'),
                   ListTile(
-                    title: const Text('Share Backup'),
-                    subtitle: const Text('Send backup file via other apps.'),
-                    leading: const Icon(Icons.share_rounded),
+                    title: const Text('Sign Out'),
+                    leading: const Icon(Icons.logout_rounded),
                     onTap: () async {
-                      await ref.read(backupServiceProvider).exportData();
-                    },
-                  ),
-                  ListTile(
-                    title: const Text('Save to Device'),
-                    subtitle: const Text('Download backup to your files.'),
-                    leading: const Icon(Icons.save_alt_rounded),
-                    onTap: () async {
-                      await ref
-                          .read(backupServiceProvider)
-                          .saveBackupToDevice();
-                      if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Backup saved to Downloads!'),
-                          ),
-                        );
-                      }
-                    },
-                  ),
-                  ListTile(
-                    title: const Text('Import Data'),
-                    subtitle: const Text('Restore from a backup file.'),
-                    leading: const Icon(Icons.file_download_rounded),
-                    onTap: () async {
-                      _importBackup(context, ref);
-                    },
-                  ),
-                  const Divider(),
-                  const SectionHeader(title: 'Danger Zone'),
-                  ListTile(
-                    title: const Text(
-                      'Factory Reset App',
-                      style: TextStyle(color: Colors.red),
-                    ),
-                    subtitle: const Text('Delete all data and start fresh.'),
-                    leading: const Icon(
-                      Icons.delete_forever_rounded,
-                      color: Colors.red,
-                    ),
-                    onTap: () async {
-                      await _confirmReset(context, ref);
+                      await ref.read(authRepositoryProvider).signOut();
                     },
                   ),
                   const Divider(),
@@ -154,96 +110,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     );
   }
 
-  Future<void> _importBackup(BuildContext context, WidgetRef ref) async {
-    final confirmed = await showDialog<bool>(
+  void _showSemesterSwitcher(BuildContext context, WidgetRef ref) {
+    showModalBottomSheet(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Restore Backup?'),
-        content: const Text(
-          'This will OVERWRITE all current data with the backup. This action cannot be undone.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Restore'),
-          ),
-        ],
-      ),
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      constraints: const BoxConstraints(maxWidth: 600),
+      builder: (context) => const SemesterManagementSheet(),
     );
-
-    if (confirmed == true) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('Restoring backup...')));
-      }
-
-      try {
-        await ref.read(backupServiceProvider).importData();
-        if (context.mounted) {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(const SnackBar(content: Text('Restore successful!')));
-          // Navigate to Home/Dashboard to refresh all providers
-          context.go('/');
-        }
-      } catch (e) {
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Restore failed: $e'),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
-      }
-    }
-  }
-
-  Future<void> _confirmReset(BuildContext context, WidgetRef ref) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Factory Reset App?'),
-        content: const Text(
-          'This will DELETE EVERYTHING: Subjects, Timetable, Logs, and Settings.\n\nThis action cannot be undone.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Delete Everything'),
-          ),
-        ],
-      ),
-    );
-
-    if (confirmed == true) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Performing factory reset...')),
-        );
-      }
-
-      // Clear all data
-      await ref.read(attendanceRepositoryProvider).factoryReset();
-      await ref.read(settingsRepositoryProvider).clearAllSettings();
-
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('App has been reset to fresh state.')),
-        );
-        // Navigate to Home to reflect changes and potentially refresh state
-        context.go('/');
-      }
-    }
   }
 }
