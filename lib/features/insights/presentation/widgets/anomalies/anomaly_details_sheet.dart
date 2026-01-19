@@ -9,10 +9,11 @@ class AnomalyDetailsSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Container(
       padding: const EdgeInsets.only(top: 8),
       decoration: BoxDecoration(
-        color: Theme.of(context).scaffoldBackgroundColor,
+        color: theme.scaffoldBackgroundColor,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: Column(
@@ -22,94 +23,100 @@ class AnomalyDetailsSheet extends StatelessWidget {
           Container(
             width: 40,
             height: 4,
+            margin: const EdgeInsets.symmetric(vertical: 12),
             decoration: BoxDecoration(
-              color: Theme.of(context).dividerColor.withValues(alpha: 0.2),
+              color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.4),
               borderRadius: BorderRadius.circular(2),
             ),
           ),
-          const SizedBox(height: 16),
 
-          // Header
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
-            child: Row(
-              children: [
-                Container(
-                  width: 4,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: Color(summary.subject.colorTag),
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+          // Header and Stats Section - Scrollable for small heights
+          Flexible(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Row(
                     children: [
-                      Text(
-                        summary.subject.name,
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.bold,
+                      Container(
+                        width: 4,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: Color(summary.subject.colorTag),
+                          borderRadius: BorderRadius.circular(2),
                         ),
                       ),
-                      Text(
-                        '${summary.totalAnomalies} potential errors found',
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: Theme.of(context).colorScheme.outline,
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              summary.subject.name,
+                              style: theme.textTheme.titleLarge?.copyWith(
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            Text(
+                              '${summary.totalAnomalies} potential errors found',
+                              style: theme.textTheme.bodyMedium?.copyWith(
+                                color: theme.colorScheme.outline,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ],
                   ),
-                ),
-              ],
+                  const SizedBox(height: 24),
+
+                  // Stats Row
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: [
+                        _buildStatBadge(
+                          context,
+                          'Current',
+                          '${summary.currentPercentage.toStringAsFixed(1)}%',
+                          theme.colorScheme.onSurface,
+                        ),
+                        const SizedBox(width: 16),
+                        const Icon(
+                          Icons.arrow_forward_rounded,
+                          size: 16,
+                          color: Colors.grey,
+                        ),
+                        const SizedBox(width: 16),
+                        _buildStatBadge(
+                          context,
+                          'Potential',
+                          '${summary.potentialPercentage.toStringAsFixed(1)}%',
+                          const Color(0xFF27AE60),
+                        ),
+                        const SizedBox(width: 16),
+                        _buildStatBadge(
+                          context,
+                          'Impact',
+                          '+${summary.impactPercentage.toStringAsFixed(1)}%',
+                          const Color(0xFF27AE60),
+                          isHighlight: true,
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                ],
+              ),
             ),
           ),
 
-          const SizedBox(height: 24),
-
-          // Stats Row
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 24),
-            child: Row(
-              children: [
-                _buildStatBadge(
-                  context,
-                  'Current',
-                  '${summary.currentPercentage.toStringAsFixed(1)}%',
-                  Theme.of(context).colorScheme.onSurface,
-                ),
-                const SizedBox(width: 16),
-                const Icon(
-                  Icons.arrow_forward_rounded,
-                  size: 16,
-                  color: Colors.grey,
-                ),
-                const SizedBox(width: 16),
-                _buildStatBadge(
-                  context,
-                  'Potential',
-                  '${summary.potentialPercentage.toStringAsFixed(1)}%',
-                  const Color(0xFF27AE60),
-                ),
-                const SizedBox(width: 16),
-                _buildStatBadge(
-                  context,
-                  'Impact',
-                  '+${summary.impactPercentage.toStringAsFixed(1)}%',
-                  const Color(0xFF27AE60),
-                  isHighlight: true,
-                ),
-              ],
-            ),
-          ),
-
-          const SizedBox(height: 24),
-
+          // Anomalies List
           Expanded(
             child: ListView.separated(
-              padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+              padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
               itemCount: summary.anomalies.length,
               separatorBuilder: (context, index) => const SizedBox(height: 16),
               itemBuilder: (context, index) {

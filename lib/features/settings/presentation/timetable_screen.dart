@@ -367,160 +367,90 @@ class _AddEntrySheetState extends ConsumerState<_AddEntrySheet> {
             MediaQuery.of(context).padding.bottom +
             24,
       ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          // Header
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Add Class on ${_dayName(widget.selectedDay)}',
-                style: const TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              IconButton(
-                onPressed: () => Navigator.pop(context),
-                icon: const Icon(Icons.close_rounded),
-                style: IconButton.styleFrom(
-                  backgroundColor: theme.colorScheme.surfaceContainerHighest
-                      .withValues(alpha: 0.3),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 24),
-
-          // Subject Dropdown
-          subjectsAsync.when(
-            data: (subjects) {
-              if (subjects.isEmpty) {
-                return Container(
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.surfaceContainerHighest.withValues(
-                      alpha: 0.3,
-                    ),
-                    borderRadius: BorderRadius.circular(16),
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Header
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Add Class on ${_dayName(widget.selectedDay)}',
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
                   ),
-                  child: Column(
-                    children: [
-                      Icon(
-                        Icons.subject_outlined,
-                        size: 40,
-                        color: theme.colorScheme.onSurfaceVariant,
-                      ),
-                      const SizedBox(height: 12),
-                      Text(
-                        'No Subjects Available',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: theme.colorScheme.onSurface,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'Add subjects first to create timetable',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 14,
+                ),
+                IconButton(
+                  onPressed: () => Navigator.pop(context),
+                  icon: const Icon(Icons.close_rounded),
+                  style: IconButton.styleFrom(
+                    backgroundColor: theme.colorScheme.surfaceContainerHighest
+                        .withValues(alpha: 0.3),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 24),
+
+            // Subject Dropdown
+            subjectsAsync.when(
+              data: (subjects) {
+                if (subjects.isEmpty) {
+                  return Container(
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.surfaceContainerHighest
+                          .withValues(alpha: 0.3),
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Column(
+                      children: [
+                        Icon(
+                          Icons.subject_outlined,
+                          size: 40,
                           color: theme.colorScheme.onSurfaceVariant,
                         ),
-                      ),
-                      const SizedBox(height: 16),
-                      OutlinedButton.icon(
-                        onPressed: () {
-                          Navigator.pop(context);
-                          context.push('/manage_subjects');
-                        },
-                        icon: const Icon(Icons.add_rounded, size: 18),
-                        label: const Text('Add Subjects'),
-                      ),
-                    ],
-                  ),
-                );
-              }
-
-              return DropdownButtonFormField<Subject>(
-                icon: const Icon(Icons.keyboard_arrow_down_rounded),
-                borderRadius: BorderRadius.circular(16),
-                decoration: InputDecoration(
-                  labelText: 'Subject',
-                  hintText: 'Select Subject',
-                  filled: true,
-                  fillColor: theme.colorScheme.surfaceContainerHighest
-                      .withValues(alpha: 0.3),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    borderSide: BorderSide.none,
-                  ),
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 20,
-                    vertical: 16,
-                  ),
-                ),
-                initialValue: _selectedSubject,
-                items: subjects
-                    .map((s) => DropdownMenuItem(value: s, child: Text(s.name)))
-                    .toList(),
-                onChanged: (val) => setState(() => _selectedSubject = val),
-              );
-            },
-            loading: () => const LinearProgressIndicator(),
-            error: (_, _) => const Text('Error loading subjects'),
-          ),
-          const SizedBox(height: 16),
-
-          // Time and Duration Row
-          Row(
-            children: [
-              Expanded(
-                child: InkWell(
-                  onTap: () async {
-                    final t = await showTimePicker(
-                      context: context,
-                      initialTime: _startTime,
-                    );
-                    if (t != null) setState(() => _startTime = t);
-                  },
-                  borderRadius: BorderRadius.circular(16),
-                  child: InputDecorator(
-                    decoration: InputDecoration(
-                      labelText: 'Start Time',
-                      filled: true,
-                      fillColor: theme.colorScheme.surfaceContainerHighest
-                          .withValues(alpha: 0.3),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(16),
-                        borderSide: BorderSide.none,
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 20,
-                        vertical: 16,
-                      ),
-                      suffixIcon: const Icon(
-                        Icons.access_time_rounded,
-                        size: 20,
-                      ),
+                        const SizedBox(height: 12),
+                        Text(
+                          'No Subjects Available',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: theme.colorScheme.onSurface,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Add subjects first to create timetable',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        OutlinedButton.icon(
+                          onPressed: () {
+                            Navigator.pop(context);
+                            context.push('/manage_subjects');
+                          },
+                          icon: const Icon(Icons.add_rounded, size: 18),
+                          label: const Text('Add Subjects'),
+                        ),
+                      ],
                     ),
-                    child: Text(
-                      _startTime.format(context),
-                      style: const TextStyle(fontSize: 16),
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: DropdownButtonFormField<double>(
+                  );
+                }
+
+                return DropdownButtonFormField<Subject>(
                   icon: const Icon(Icons.keyboard_arrow_down_rounded),
                   borderRadius: BorderRadius.circular(16),
                   decoration: InputDecoration(
-                    labelText: 'Duration',
+                    labelText: 'Subject',
+                    hintText: 'Select Subject',
                     filled: true,
                     fillColor: theme.colorScheme.surfaceContainerHighest
                         .withValues(alpha: 0.3),
@@ -533,54 +463,130 @@ class _AddEntrySheetState extends ConsumerState<_AddEntrySheet> {
                       vertical: 16,
                     ),
                   ),
-                  initialValue: _duration,
-                  items: [0.5, 0.75, 50 / 60, 1.0, 1.5, 2.0, 3.0]
+                  initialValue: _selectedSubject,
+                  items: subjects
                       .map(
-                        (d) => DropdownMenuItem(
-                          value: d,
-                          child: Text(formatDuration(d)),
-                        ),
+                        (s) => DropdownMenuItem(value: s, child: Text(s.name)),
                       )
                       .toList(),
-                  onChanged: (val) => setState(() => _duration = val!),
+                  onChanged: (val) => setState(() => _selectedSubject = val),
+                );
+              },
+              loading: () => const LinearProgressIndicator(),
+              error: (_, _) => const Text('Error loading subjects'),
+            ),
+            const SizedBox(height: 16),
+
+            // Time and Duration Row
+            Row(
+              children: [
+                Expanded(
+                  child: InkWell(
+                    onTap: () async {
+                      final t = await showTimePicker(
+                        context: context,
+                        initialTime: _startTime,
+                      );
+                      if (t != null) setState(() => _startTime = t);
+                    },
+                    borderRadius: BorderRadius.circular(16),
+                    child: InputDecorator(
+                      decoration: InputDecoration(
+                        labelText: 'Start Time',
+                        filled: true,
+                        fillColor: theme.colorScheme.surfaceContainerHighest
+                            .withValues(alpha: 0.3),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          borderSide: BorderSide.none,
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 16,
+                        ),
+                        suffixIcon: const Icon(
+                          Icons.access_time_rounded,
+                          size: 20,
+                        ),
+                      ),
+                      child: Text(
+                        _startTime.format(context),
+                        style: const TextStyle(fontSize: 16),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: DropdownButtonFormField<double>(
+                    icon: const Icon(Icons.keyboard_arrow_down_rounded),
+                    borderRadius: BorderRadius.circular(16),
+                    decoration: InputDecoration(
+                      labelText: 'Duration',
+                      filled: true,
+                      fillColor: theme.colorScheme.surfaceContainerHighest
+                          .withValues(alpha: 0.3),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: BorderSide.none,
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 16,
+                      ),
+                    ),
+                    initialValue: _duration,
+                    items: [0.5, 0.75, 50 / 60, 1.0, 1.5, 2.0, 3.0]
+                        .map(
+                          (d) => DropdownMenuItem(
+                            value: d,
+                            child: Text(formatDuration(d)),
+                          ),
+                        )
+                        .toList(),
+                    onChanged: (val) => setState(() => _duration = val!),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 32),
+
+            // Add Button
+            FilledButton(
+              onPressed: _selectedSubject == null
+                  ? null
+                  : () async {
+                      final hour = _startTime.hour.toString().padLeft(2, '0');
+                      final minute = _startTime.minute.toString().padLeft(
+                        2,
+                        '0',
+                      );
+
+                      await ref
+                          .read(attendanceRepositoryProvider)
+                          .addTimetableEntry(
+                            subjectId: _selectedSubject!.id,
+                            dayOfWeek: widget.selectedDay,
+                            startTime: '$hour:$minute',
+                            durationInHours: _duration,
+                          );
+                      if (!context.mounted) return;
+                      Navigator.pop(context);
+                    },
+              style: FilledButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
                 ),
               ),
-            ],
-          ),
-          const SizedBox(height: 32),
-
-          // Add Button
-          FilledButton(
-            onPressed: _selectedSubject == null
-                ? null
-                : () async {
-                    final hour = _startTime.hour.toString().padLeft(2, '0');
-                    final minute = _startTime.minute.toString().padLeft(2, '0');
-
-                    await ref
-                        .read(attendanceRepositoryProvider)
-                        .addTimetableEntry(
-                          subjectId: _selectedSubject!.id,
-                          dayOfWeek: widget.selectedDay,
-                          startTime: '$hour:$minute',
-                          durationInHours: _duration,
-                        );
-                    if (!context.mounted) return;
-                    Navigator.pop(context);
-                  },
-            style: FilledButton.styleFrom(
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
+              child: const Text(
+                'Add Class',
+                style: TextStyle(fontWeight: FontWeight.bold),
               ),
             ),
-            child: const Text(
-              'Add Class',
-              style: TextStyle(fontWeight: FontWeight.bold),
-            ),
-          ),
-          const SizedBox(height: 8),
-        ],
+            const SizedBox(height: 8),
+          ],
+        ),
       ),
     );
   }
@@ -646,75 +652,106 @@ class _EditEntrySheetState extends ConsumerState<_EditEntrySheet> {
             MediaQuery.of(context).padding.bottom +
             24,
       ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          // Header
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text(
-                'Edit Class',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-              ),
-              IconButton(
-                onPressed: () => Navigator.pop(context),
-                icon: const Icon(Icons.close_rounded),
-                style: IconButton.styleFrom(
-                  backgroundColor: theme.colorScheme.surfaceContainerHighest
-                      .withValues(alpha: 0.3),
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Header
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  'Edit Class',
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                ),
+                IconButton(
+                  onPressed: () => Navigator.pop(context),
+                  icon: const Icon(Icons.close_rounded),
+                  style: IconButton.styleFrom(
+                    backgroundColor: theme.colorScheme.surfaceContainerHighest
+                        .withValues(alpha: 0.3),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 24),
+
+            // Subject Dropdown
+            DropdownButtonFormField<Subject>(
+              icon: const Icon(Icons.keyboard_arrow_down_rounded),
+              borderRadius: BorderRadius.circular(16),
+              decoration: InputDecoration(
+                labelText: 'Subject',
+                filled: true,
+                fillColor: theme.colorScheme.surfaceContainerHighest.withValues(
+                  alpha: 0.3,
+                ),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: BorderSide.none,
+                ),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 16,
                 ),
               ),
-            ],
-          ),
-          const SizedBox(height: 24),
-
-          // Subject Dropdown
-          DropdownButtonFormField<Subject>(
-            icon: const Icon(Icons.keyboard_arrow_down_rounded),
-            borderRadius: BorderRadius.circular(16),
-            decoration: InputDecoration(
-              labelText: 'Subject',
-              filled: true,
-              fillColor: theme.colorScheme.surfaceContainerHighest.withValues(
-                alpha: 0.3,
-              ),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(16),
-                borderSide: BorderSide.none,
-              ),
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 20,
-                vertical: 16,
-              ),
+              initialValue: _selectedSubject,
+              items: widget.subjects
+                  .map((s) => DropdownMenuItem(value: s, child: Text(s.name)))
+                  .toList(),
+              onChanged: (val) {
+                if (val != null) setState(() => _selectedSubject = val);
+              },
             ),
-            initialValue: _selectedSubject,
-            items: widget.subjects
-                .map((s) => DropdownMenuItem(value: s, child: Text(s.name)))
-                .toList(),
-            onChanged: (val) {
-              if (val != null) setState(() => _selectedSubject = val);
-            },
-          ),
-          const SizedBox(height: 16),
+            const SizedBox(height: 16),
 
-          // Time and Duration Row
-          Row(
-            children: [
-              Expanded(
-                child: InkWell(
-                  onTap: () async {
-                    final t = await showTimePicker(
-                      context: context,
-                      initialTime: _startTime,
-                    );
-                    if (t != null) setState(() => _startTime = t);
-                  },
-                  borderRadius: BorderRadius.circular(16),
-                  child: InputDecorator(
+            // Time and Duration Row
+            Row(
+              children: [
+                Expanded(
+                  child: InkWell(
+                    onTap: () async {
+                      final t = await showTimePicker(
+                        context: context,
+                        initialTime: _startTime,
+                      );
+                      if (t != null) setState(() => _startTime = t);
+                    },
+                    borderRadius: BorderRadius.circular(16),
+                    child: InputDecorator(
+                      decoration: InputDecoration(
+                        labelText: 'Start Time',
+                        filled: true,
+                        fillColor: theme.colorScheme.surfaceContainerHighest
+                            .withValues(alpha: 0.3),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          borderSide: BorderSide.none,
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 16,
+                        ),
+                        suffixIcon: const Icon(
+                          Icons.access_time_rounded,
+                          size: 20,
+                        ),
+                      ),
+                      child: Text(
+                        _startTime.format(context),
+                        style: const TextStyle(fontSize: 16),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: DropdownButtonFormField<double>(
+                    icon: const Icon(Icons.keyboard_arrow_down_rounded),
+                    borderRadius: BorderRadius.circular(16),
                     decoration: InputDecoration(
-                      labelText: 'Start Time',
+                      labelText: 'Duration',
                       filled: true,
                       fillColor: theme.colorScheme.surfaceContainerHighest
                           .withValues(alpha: 0.3),
@@ -726,141 +763,115 @@ class _EditEntrySheetState extends ConsumerState<_EditEntrySheet> {
                         horizontal: 20,
                         vertical: 16,
                       ),
-                      suffixIcon: const Icon(
-                        Icons.access_time_rounded,
-                        size: 20,
-                      ),
                     ),
-                    child: Text(
-                      _startTime.format(context),
-                      style: const TextStyle(fontSize: 16),
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: DropdownButtonFormField<double>(
-                  icon: const Icon(Icons.keyboard_arrow_down_rounded),
-                  borderRadius: BorderRadius.circular(16),
-                  decoration: InputDecoration(
-                    labelText: 'Duration',
-                    filled: true,
-                    fillColor: theme.colorScheme.surfaceContainerHighest
-                        .withValues(alpha: 0.3),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      borderSide: BorderSide.none,
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 20,
-                      vertical: 16,
-                    ),
-                  ),
-                  initialValue: _duration,
-                  items: [0.5, 0.75, 50 / 60, 1.0, 1.5, 2.0, 3.0]
-                      .map(
-                        (d) => DropdownMenuItem(
-                          value: d,
-                          child: Text(formatDuration(d)),
-                        ),
-                      )
-                      .toList(),
-                  onChanged: (val) => setState(() => _duration = val!),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 32),
-
-          // Action Buttons
-          Row(
-            children: [
-              Expanded(
-                child: TextButton(
-                  onPressed: () async {
-                    // Show confirmation dialog
-                    final confirmed = await showDialog<bool>(
-                      context: context,
-                      builder: (context) => AlertDialog(
-                        title: const Text('Delete Class?'),
-                        content: Text(
-                          'Are you sure you want to delete this ${_selectedSubject.name} class at ${widget.entry.startTime}?',
-                        ),
-                        actions: [
-                          TextButton(
-                            onPressed: () => Navigator.pop(context, false),
-                            child: const Text('Cancel'),
+                    initialValue: _duration,
+                    items: [0.5, 0.75, 50 / 60, 1.0, 1.5, 2.0, 3.0]
+                        .map(
+                          (d) => DropdownMenuItem(
+                            value: d,
+                            child: Text(formatDuration(d)),
                           ),
-                          FilledButton(
-                            onPressed: () => Navigator.pop(context, true),
-                            style: FilledButton.styleFrom(
-                              backgroundColor: theme.colorScheme.error,
+                        )
+                        .toList(),
+                    onChanged: (val) => setState(() => _duration = val!),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 32),
+
+            // Action Buttons
+            Row(
+              children: [
+                Expanded(
+                  child: TextButton(
+                    onPressed: () async {
+                      // Show confirmation dialog
+                      final confirmed = await showDialog<bool>(
+                        context: context,
+                        builder: (context) => AlertDialog(
+                          title: const Text('Delete Class?'),
+                          content: Text(
+                            'Are you sure you want to delete this ${_selectedSubject.name} class at ${widget.entry.startTime}?',
+                          ),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(context, false),
+                              child: const Text('Cancel'),
                             ),
-                            child: const Text('Delete'),
-                          ),
-                        ],
-                      ),
-                    );
+                            FilledButton(
+                              onPressed: () => Navigator.pop(context, true),
+                              style: FilledButton.styleFrom(
+                                backgroundColor: theme.colorScheme.error,
+                              ),
+                              child: const Text('Delete'),
+                            ),
+                          ],
+                        ),
+                      );
 
-                    if (confirmed == true && context.mounted) {
+                      if (confirmed == true && context.mounted) {
+                        await ref
+                            .read(attendanceRepositoryProvider)
+                            .deleteTimetableEntry(widget.entry.id);
+                        if (context.mounted) Navigator.pop(context);
+                      }
+                    },
+                    style: TextButton.styleFrom(
+                      foregroundColor: theme.colorScheme.error,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        side: BorderSide(
+                          color: theme.colorScheme.error.withValues(alpha: 0.2),
+                        ),
+                      ),
+                    ),
+                    child: const Text('Delete'),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  flex: 2,
+                  child: FilledButton(
+                    onPressed: () async {
+                      final hour = _startTime.hour.toString().padLeft(2, '0');
+                      final minute = _startTime.minute.toString().padLeft(
+                        2,
+                        '0',
+                      );
+
+                      final updatedEntry = TimetableEntry(
+                        id: widget.entry.id,
+                        subjectId: _selectedSubject.id,
+                        dayOfWeek: widget.entry.dayOfWeek,
+                        startTime: '$hour:$minute',
+                        durationInHours: _duration,
+                        isRecurring: widget.entry.isRecurring,
+                      );
+
                       await ref
                           .read(attendanceRepositoryProvider)
-                          .deleteTimetableEntry(widget.entry.id);
+                          .updateTimetableEntry(updatedEntry);
                       if (context.mounted) Navigator.pop(context);
-                    }
-                  },
-                  style: TextButton.styleFrom(
-                    foregroundColor: theme.colorScheme.error,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      side: BorderSide(
-                        color: theme.colorScheme.error.withValues(alpha: 0.2),
+                    },
+                    style: FilledButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
                       ),
                     ),
-                  ),
-                  child: const Text('Delete'),
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                flex: 2,
-                child: FilledButton(
-                  onPressed: () async {
-                    final hour = _startTime.hour.toString().padLeft(2, '0');
-                    final minute = _startTime.minute.toString().padLeft(2, '0');
-
-                    final updatedEntry = TimetableEntry(
-                      id: widget.entry.id,
-                      subjectId: _selectedSubject.id,
-                      dayOfWeek: widget.entry.dayOfWeek,
-                      startTime: '$hour:$minute',
-                      durationInHours: _duration,
-                      isRecurring: widget.entry.isRecurring,
-                    );
-
-                    await ref
-                        .read(attendanceRepositoryProvider)
-                        .updateTimetableEntry(updatedEntry);
-                    if (context.mounted) Navigator.pop(context);
-                  },
-                  style: FilledButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
+                    child: const Text(
+                      'Save Changes',
+                      style: TextStyle(fontWeight: FontWeight.bold),
                     ),
                   ),
-                  child: const Text(
-                    'Save Changes',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-        ],
+              ],
+            ),
+            const SizedBox(height: 8),
+          ],
+        ),
       ),
     );
   }
