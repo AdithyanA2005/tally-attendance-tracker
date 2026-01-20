@@ -128,12 +128,15 @@ final pendingAttendanceProvider = Provider<AsyncValue<List<PendingClassItem>>>((
 
 // Helper provider for full timetable
 final fullTimetableStreamProvider = StreamProvider((ref) {
+  final activeSemester = ref.watch(activeSemesterProvider);
   final repo = ref.watch(attendanceRepositoryProvider);
-  return repo.watchTimetable(); // No day filter = all days
+  // No day filter = all days
+  return repo.watchTimetable(semesterId: activeSemester.value?.id);
 });
 
 // Helper provider for all sessions
 final sessionsStreamProvider = StreamProvider((ref) {
+  final activeSemester = ref.watch(activeSemesterProvider);
   final repo = ref.watch(attendanceRepositoryProvider);
-  return repo.watchAllSessions();
+  return repo.watchAllSessions(semesterId: activeSemester.value?.id);
 });

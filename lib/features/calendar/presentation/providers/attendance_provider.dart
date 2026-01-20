@@ -10,17 +10,17 @@ import '../../../settings/data/repositories/semester_repository.dart';
 // Stream of all subjects
 final subjectsStreamProvider = StreamProvider<List<Subject>>((ref) {
   // Watch active semester to trigger rebuilds
-  ref.watch(activeSemesterProvider);
+  final activeSemester = ref.watch(activeSemesterProvider);
   final repository = ref.watch(attendanceRepositoryProvider);
-  return repository.watchSubjects();
+  return repository.watchSubjects(semesterId: activeSemester.value?.id);
 });
 
 // Stream of all sessions (Reactive)
 final allSessionsStreamProvider = StreamProvider<List<ClassSession>>((ref) {
   // Watch active semester to trigger rebuilds
-  ref.watch(activeSemesterProvider);
+  final activeSemester = ref.watch(activeSemesterProvider);
   final repository = ref.watch(attendanceRepositoryProvider);
-  return repository.watchAllSessions();
+  return repository.watchAllSessions(semesterId: activeSemester.value?.id);
 });
 
 // Stream of stats for all subjects (Reactive)

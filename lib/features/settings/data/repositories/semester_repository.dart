@@ -57,12 +57,20 @@ class SemesterRepository extends CacheRepository<Semester> {
     final userId = supabase.auth.currentUser!.id;
 
     // 1. Optimistic Update (Local)
+    // 1. Optimistic Update (Local)
     final all = box.values.toList();
+
+    // First, deactivate others to avoid dual-active state
+    for (var s in all) {
+      if (s.id != id && s.isActive) {
+        await saveLocal(s.copyWith(isActive: false));
+      }
+    }
+
+    // Then, activate target
     for (var s in all) {
       if (s.id == id && !s.isActive) {
         await saveLocal(s.copyWith(isActive: true));
-      } else if (s.id != id && s.isActive) {
-        await saveLocal(s.copyWith(isActive: false));
       }
     }
 

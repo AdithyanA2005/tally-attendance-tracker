@@ -85,21 +85,21 @@ class AttendanceRepository {
 
   // Subjects
 
-  Stream<List<Subject>> watchSubjects() {
+  Stream<List<Subject>> watchSubjects({String? semesterId}) {
     return _subjects.stream.map((box) {
-      final semesterId = _activeSemesterId;
-      if (semesterId == null) return [];
-      return box.values.where((s) => s.semesterId == semesterId).toList();
+      final targetSemesterId = semesterId ?? _activeSemesterId;
+      if (targetSemesterId == null) return [];
+      return box.values.where((s) => s.semesterId == targetSemesterId).toList();
     });
   }
 
-  Future<List<Subject>> getSubjects() async {
-    final semesterId = _activeSemesterId;
-    if (semesterId == null) return [];
+  Future<List<Subject>> getSubjects({String? semesterId}) async {
+    final targetSemesterId = semesterId ?? _activeSemesterId;
+    if (targetSemesterId == null) return [];
 
     // Prefer Local
     return _subjects.box.values
-        .where((s) => s.semesterId == semesterId)
+        .where((s) => s.semesterId == targetSemesterId)
         .toList();
   }
 
@@ -167,21 +167,26 @@ class AttendanceRepository {
 
   // Sessions
 
-  Stream<List<ClassSession>> watchAllSessions() {
+  Stream<List<ClassSession>> watchAllSessions({String? semesterId}) {
     return _sessions.stream.map((box) {
-      final semesterId = _activeSemesterId;
-      if (semesterId == null) return [];
-      return box.values.where((s) => s.semesterId == semesterId).toList();
+      final targetSemesterId = semesterId ?? _activeSemesterId;
+      if (targetSemesterId == null) return [];
+      return box.values.where((s) => s.semesterId == targetSemesterId).toList();
     });
   }
 
-  Future<List<ClassSession>> getSessions(String subjectId) async {
-    final semesterId = _activeSemesterId;
-    if (semesterId == null) return [];
+  Future<List<ClassSession>> getSessions(
+    String subjectId, {
+    String? semesterId,
+  }) async {
+    final targetSemesterId = semesterId ?? _activeSemesterId;
+    if (targetSemesterId == null) return [];
 
     // Prefer Local
     return _sessions.box.values
-        .where((s) => s.semesterId == semesterId && s.subjectId == subjectId)
+        .where(
+          (s) => s.semesterId == targetSemesterId && s.subjectId == subjectId,
+        )
         .toList();
   }
 
@@ -213,24 +218,27 @@ class AttendanceRepository {
     // Skipping to match V1 Pivot scope
   }
 
-  Future<List<ClassSession>> getAllSessions() async {
-    final semesterId = _activeSemesterId;
-    if (semesterId == null) return [];
+  Future<List<ClassSession>> getAllSessions({String? semesterId}) async {
+    final targetSemesterId = semesterId ?? _activeSemesterId;
+    if (targetSemesterId == null) return [];
 
     // Prefer Local
     return _sessions.box.values
-        .where((s) => s.semesterId == semesterId)
+        .where((s) => s.semesterId == targetSemesterId)
         .toList();
   }
 
   // Timetable
 
-  Stream<List<TimetableEntry>> watchTimetable({int? dayOfWeek}) {
+  Stream<List<TimetableEntry>> watchTimetable({
+    int? dayOfWeek,
+    String? semesterId,
+  }) {
     return _timetable.stream.map((box) {
-      final semesterId = _activeSemesterId;
-      if (semesterId == null) return [];
+      final targetSemesterId = semesterId ?? _activeSemesterId;
+      if (targetSemesterId == null) return [];
 
-      var query = box.values.where((e) => e.semesterId == semesterId);
+      var query = box.values.where((e) => e.semesterId == targetSemesterId);
 
       if (dayOfWeek != null) {
         query = query.where((e) => e.dayOfWeek == dayOfWeek);
@@ -239,11 +247,16 @@ class AttendanceRepository {
     });
   }
 
-  Future<List<TimetableEntry>> getTimetable({int? dayOfWeek}) async {
-    final semesterId = _activeSemesterId;
-    if (semesterId == null) return [];
+  Future<List<TimetableEntry>> getTimetable({
+    int? dayOfWeek,
+    String? semesterId,
+  }) async {
+    final targetSemesterId = semesterId ?? _activeSemesterId;
+    if (targetSemesterId == null) return [];
 
-    var query = _timetable.box.values.where((e) => e.semesterId == semesterId);
+    var query = _timetable.box.values.where(
+      (e) => e.semesterId == targetSemesterId,
+    );
 
     if (dayOfWeek != null) {
       query = query.where((e) => e.dayOfWeek == dayOfWeek);
