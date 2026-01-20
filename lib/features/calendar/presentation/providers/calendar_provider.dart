@@ -22,6 +22,12 @@ final calendarEventsProvider =
           }
           events[dateKeys]!.add(session);
         }
+
+        // Sort each day's sessions by time
+        for (var dayEvents in events.values) {
+          dayEvents.sort((a, b) => a.date.compareTo(b.date));
+        }
+
         return events;
       });
     });

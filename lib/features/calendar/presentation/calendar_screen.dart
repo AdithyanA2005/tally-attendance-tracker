@@ -653,7 +653,19 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     }
 
     final weekday = day.weekday;
-    final scheduledForDay = timetable.where((e) => e.dayOfWeek == weekday);
+    final scheduledForDay =
+        timetable.where((e) => e.dayOfWeek == weekday).toList()..sort((a, b) {
+          // Sort by start time (HH:mm format)
+          final aTime = a.startTime.split(':');
+          final bTime = b.startTime.split(':');
+          final aHour = int.parse(aTime[0]);
+          final aMin = int.parse(aTime[1]);
+          final bHour = int.parse(bTime[0]);
+          final bMin = int.parse(bTime[1]);
+
+          if (aHour != bHour) return aHour.compareTo(bHour);
+          return aMin.compareTo(bMin);
+        });
     final combined = <ClassSession>[];
     final usedSessionIds = <String>{};
 
@@ -704,7 +716,14 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
       }
     }
 
-    combined.sort((a, b) => a.date.compareTo(b.date));
+    // Sort by time (hour then minute) explicitly
+    combined.sort((a, b) {
+      if (a.date.hour != b.date.hour) {
+        return a.date.hour.compareTo(b.date.hour);
+      }
+      return a.date.minute.compareTo(b.date.minute);
+    });
+
     return combined;
   }
 
