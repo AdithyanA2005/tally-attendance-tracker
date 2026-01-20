@@ -21,7 +21,13 @@ class _SemesterManagementSheetState
   // Create Form State
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
-  DateTime _startDate = DateTime.now();
+  DateTime _startDate = DateTime.now().copyWith(
+    hour: 0,
+    minute: 0,
+    second: 0,
+    millisecond: 0,
+    microsecond: 0,
+  );
   String? _editingId; // Track if we are editing
 
   @override

@@ -47,8 +47,13 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     final subjectMap = ref.watch(allSubjectsMapProvider);
     final timetableAsync = ref.watch(fullTimetableStreamProvider);
     final activeSemester = ref.watch(activeSemesterProvider);
-    final semesterStartDate =
+    final rawStartDate =
         activeSemester.value?.startDate ?? DateTime(2023, 1, 1);
+    final semesterStartDate = DateTime(
+      rawStartDate.year,
+      rawStartDate.month,
+      rawStartDate.day,
+    );
 
     return Scaffold(
       body: RefreshIndicator(
