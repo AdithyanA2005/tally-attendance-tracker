@@ -105,7 +105,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   const SectionHeader(title: 'Academics'),
                   ListTile(
                     leading: const Icon(Icons.school_rounded),
-                    title: const Text('Manage Semesters'),
+                    title: const Text('Current Semester'),
                     subtitle: Consumer(
                       builder: (context, ref, _) {
                         final activeAsync = ref.watch(activeSemesterProvider);

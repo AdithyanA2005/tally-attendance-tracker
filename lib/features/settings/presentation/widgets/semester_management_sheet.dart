@@ -111,61 +111,96 @@ class _SemesterManagementSheetState
 
             ...sorted.map((semester) {
               final isActive = semester.id == activeId;
+              final colorScheme = Theme.of(context).colorScheme;
+
               return Container(
                 margin: const EdgeInsets.only(bottom: 12),
                 decoration: BoxDecoration(
                   color: isActive
-                      ? Theme.of(
-                          context,
-                        ).colorScheme.primaryContainer.withValues(alpha: 0.3)
-                      : Theme.of(context).colorScheme.surfaceContainerHighest
-                            .withValues(alpha: 0.3),
+                      ? colorScheme.surface
+                      : colorScheme.surfaceContainerLow.withValues(alpha: 0.5),
                   borderRadius: BorderRadius.circular(16),
-                  border: isActive
-                      ? Border.all(
-                          color: Theme.of(
-                            context,
-                          ).colorScheme.primary.withValues(alpha: 0.5),
-                          width: 2,
-                        )
+                  border: Border.all(
+                    color: isActive ? colorScheme.primary : Colors.transparent,
+                    width: 1.5,
+                  ),
+                  boxShadow: isActive
+                      ? [
+                          BoxShadow(
+                            color: colorScheme.shadow.withValues(alpha: 0.05),
+                            blurRadius: 12,
+                            offset: const Offset(0, 4),
+                          ),
+                        ]
                       : null,
                 ),
-                child: ListTile(
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 20,
-                    vertical: 8,
-                  ),
-                  title: Text(
-                    semester.name,
-                    style: TextStyle(
-                      fontWeight: isActive
-                          ? FontWeight.bold
-                          : FontWeight.normal,
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    onTap: () async {
+                      if (!isActive) {
+                        await ref
+                            .read(semesterRepositoryProvider)
+                            .setActiveSemesterId(semester.id);
+
+                        // Force provider refresh
+                        ref.invalidate(activeSemesterProvider);
+
+                        if (mounted) Navigator.pop(context);
+                      }
+                    },
+                    borderRadius: BorderRadius.circular(16),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 16,
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  semester.name,
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: isActive
+                                        ? FontWeight.w600
+                                        : FontWeight.w500,
+                                    color: isActive
+                                        ? colorScheme.onSurface
+                                        : colorScheme.onSurfaceVariant,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  'Started ${DateFormat('MMM d, yyyy').format(semester.startDate)}',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    color: colorScheme.outline,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          if (isActive)
+                            Icon(
+                              Icons.check_circle_rounded,
+                              color: colorScheme.primary,
+                              size: 24,
+                            )
+                          else
+                            Icon(
+                              Icons.circle_outlined,
+                              color: colorScheme.outline.withValues(alpha: 0.5),
+                              size: 24,
+                            ),
+                        ],
+                      ),
                     ),
                   ),
-                  subtitle: Text(
-                    'Starts: ${DateFormat('MMM d, yyyy').format(semester.startDate)}',
-                  ),
-                  trailing: isActive
-                      ? Icon(
-                          Icons.check_circle_rounded,
-                          color: Theme.of(context).colorScheme.primary,
-                        )
-                      : null,
-                  onTap: () async {
-                    if (!isActive) {
-                      await ref
-                          .read(semesterRepositoryProvider)
-                          .setActiveSemesterId(semester.id);
-
-                      // Force provider refresh
-                      ref.invalidate(activeSemesterProvider);
-                      // Invalidate downstream dependent providers if necessary,
-                      // but activeSemesterProvider used in .watch should be enough.
-
-                      if (mounted) Navigator.pop(context);
-                    }
-                  },
                 ),
               );
             }),
