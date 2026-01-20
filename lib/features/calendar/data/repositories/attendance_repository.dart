@@ -147,8 +147,21 @@ class AttendanceRepository {
   }
 
   Future<void> deleteSubject(String id) async {
-    // Optimistic
+    // 1. Cleanup Local Orphans (Hive doesn't cascade)
+    final sessionsToDelete = _sessions.box.values
+        .where((s) => s.subjectId == id)
+        .map((s) => s.id);
+    await _sessions.box.deleteAll(sessionsToDelete);
+
+    final timetableToDelete = _timetable.box.values
+        .where((t) => t.subjectId == id)
+        .map((t) => t.id);
+    await _timetable.box.deleteAll(timetableToDelete);
+
+    // 2. Delete Subject Locally
     await _subjects.deleteLocal(id);
+
+    // 3. Delete Subject Remotely (Postgres ON DELETE CASCADE handles children)
     await _supabase.from('subjects').delete().eq('id', id);
   }
 
