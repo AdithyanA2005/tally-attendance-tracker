@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/data/local_storage_service.dart';
 import '../../core/services/supabase_service.dart';
+import 'widgets/skeleton_screen.dart';
 import '../../core/constants/env.dart';
 import '../../main.dart';
 
@@ -74,8 +75,12 @@ class _AppInitializerState extends State<AppInitializer> {
     }
 
     if (!_isInitialized) {
-      return const MaterialApp(
-        home: Scaffold(body: Center(child: CircularProgressIndicator())),
+      return MaterialApp(
+        debugShowCheckedModeBanner: false,
+        theme: AppTheme.lightTheme,
+        darkTheme: AppTheme.darkTheme,
+        themeMode: ThemeMode.system,
+        home: const SkeletonScreen(),
       );
     }
 

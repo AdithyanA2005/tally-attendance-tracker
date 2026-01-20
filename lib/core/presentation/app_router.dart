@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'dart:async';
 
+import 'widgets/skeleton_screen.dart';
 import '../../features/home/presentation/home_screen.dart';
 import '../../features/settings/presentation/timetable_screen.dart';
 import '../../features/calendar/presentation/subject_detail_screen.dart';
@@ -32,21 +33,33 @@ GoRouter goRouter(GoRouterRef ref) {
       ref.watch(authStateProvider.stream),
     ),
     redirect: (context, state) {
-      final isLoggedIn = authState.value != null;
+      // 1. Check Loading State
+      if (authState.isLoading) {
+        return '/loading';
+      }
+
+      final isLoggedIn = authState.valueOrNull != null;
       final isLoggingIn = state.uri.toString() == '/login';
       final isSigningUp = state.uri.toString() == '/signup';
+      final isLoadingRoute = state.uri.toString() == '/loading';
 
+      // 2. Unauthenticated -> Login
       if (!isLoggedIn && !isLoggingIn && !isSigningUp) {
         return '/login';
       }
 
-      if (isLoggedIn && (isLoggingIn || isSigningUp)) {
+      // 3. Authenticated -> Home (if currently on login/signup/loading)
+      if (isLoggedIn && (isLoggingIn || isSigningUp || isLoadingRoute)) {
         return '/';
       }
 
       return null;
     },
     routes: [
+      GoRoute(
+        path: '/loading',
+        builder: (context, state) => const SkeletonScreen(),
+      ),
       GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
       GoRoute(
         path: '/signup',
