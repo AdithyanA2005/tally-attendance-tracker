@@ -348,6 +348,7 @@ class _AddEntrySheetState extends ConsumerState<_AddEntrySheet> {
   Subject? _selectedSubject;
   TimeOfDay _startTime = const TimeOfDay(hour: 9, minute: 0);
   double _duration = 1.0;
+  bool _isSaving = false;
 
   @override
   Widget build(BuildContext context) {
@@ -553,25 +554,30 @@ class _AddEntrySheetState extends ConsumerState<_AddEntrySheet> {
 
             // Add Button
             FilledButton(
-              onPressed: _selectedSubject == null
+              onPressed: (_selectedSubject == null || _isSaving)
                   ? null
                   : () async {
-                      final hour = _startTime.hour.toString().padLeft(2, '0');
-                      final minute = _startTime.minute.toString().padLeft(
-                        2,
-                        '0',
-                      );
+                      setState(() => _isSaving = true);
+                      try {
+                        final hour = _startTime.hour.toString().padLeft(2, '0');
+                        final minute = _startTime.minute.toString().padLeft(
+                          2,
+                          '0',
+                        );
 
-                      await ref
-                          .read(attendanceRepositoryProvider)
-                          .addTimetableEntry(
-                            subjectId: _selectedSubject!.id,
-                            dayOfWeek: widget.selectedDay,
-                            startTime: '$hour:$minute',
-                            durationInHours: _duration,
-                          );
-                      if (!context.mounted) return;
-                      Navigator.pop(context);
+                        await ref
+                            .read(attendanceRepositoryProvider)
+                            .addTimetableEntry(
+                              subjectId: _selectedSubject!.id,
+                              dayOfWeek: widget.selectedDay,
+                              startTime: '$hour:$minute',
+                              durationInHours: _duration,
+                            );
+                        if (!context.mounted) return;
+                        Navigator.pop(context);
+                      } finally {
+                        if (mounted) setState(() => _isSaving = false);
+                      }
                     },
               style: FilledButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 16),
@@ -579,9 +585,26 @@ class _AddEntrySheetState extends ConsumerState<_AddEntrySheet> {
                   borderRadius: BorderRadius.circular(16),
                 ),
               ),
-              child: const Text(
-                'Add Class',
-                style: TextStyle(fontWeight: FontWeight.bold),
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  Text(
+                    'Add Class',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: _isSaving ? Colors.transparent : null,
+                    ),
+                  ),
+                  if (_isSaving)
+                    const SizedBox(
+                      width: 24,
+                      height: 24,
+                      child: CircularProgressIndicator(
+                        color: Colors.white,
+                        strokeWidth: 2.5,
+                      ),
+                    ),
+                ],
               ),
             ),
             const SizedBox(height: 8),
@@ -612,6 +635,22 @@ class _EditEntrySheetState extends ConsumerState<_EditEntrySheet> {
   late Subject _selectedSubject;
   late TimeOfDay _startTime;
   late double _duration;
+  bool _isSaving = false;
+  bool _hasChanges = false;
+
+  void _checkForChanges() {
+    final oldTime = widget.entry.startTime.split(':');
+    final oldHour = int.parse(oldTime[0]);
+    final oldMinute = int.parse(oldTime[1]);
+
+    final hasChanges =
+        _selectedSubject.id != widget.entry.subjectId ||
+        _duration != widget.entry.durationInHours ||
+        _startTime.hour != oldHour ||
+        _startTime.minute != oldMinute;
+
+    if (hasChanges != _hasChanges) setState(() => _hasChanges = hasChanges);
+  }
 
   @override
   void initState() {
@@ -701,7 +740,12 @@ class _EditEntrySheetState extends ConsumerState<_EditEntrySheet> {
                   .map((s) => DropdownMenuItem(value: s, child: Text(s.name)))
                   .toList(),
               onChanged: (val) {
-                if (val != null) setState(() => _selectedSubject = val);
+                if (val != null) {
+                  setState(() {
+                    _selectedSubject = val;
+                    _checkForChanges();
+                  });
+                }
               },
             ),
             const SizedBox(height: 16),
@@ -716,7 +760,12 @@ class _EditEntrySheetState extends ConsumerState<_EditEntrySheet> {
                         context: context,
                         initialTime: _startTime,
                       );
-                      if (t != null) setState(() => _startTime = t);
+                      if (t != null) {
+                        setState(() {
+                          _startTime = t;
+                          _checkForChanges();
+                        });
+                      }
                     },
                     borderRadius: BorderRadius.circular(16),
                     child: InputDecorator(
@@ -773,7 +822,14 @@ class _EditEntrySheetState extends ConsumerState<_EditEntrySheet> {
                           ),
                         )
                         .toList(),
-                    onChanged: (val) => setState(() => _duration = val!),
+                    onChanged: (val) {
+                      if (val != null) {
+                        setState(() {
+                          _duration = val;
+                          _checkForChanges();
+                        });
+                      }
+                    },
                   ),
                 ),
               ],
@@ -785,38 +841,47 @@ class _EditEntrySheetState extends ConsumerState<_EditEntrySheet> {
               children: [
                 Expanded(
                   child: TextButton(
-                    onPressed: () async {
-                      // Show confirmation dialog
-                      final confirmed = await showDialog<bool>(
-                        context: context,
-                        builder: (context) => AlertDialog(
-                          title: const Text('Delete Class?'),
-                          content: Text(
-                            'Are you sure you want to delete this ${_selectedSubject.name} class at ${widget.entry.startTime}?',
-                          ),
-                          actions: [
-                            TextButton(
-                              onPressed: () => Navigator.pop(context, false),
-                              child: const Text('Cancel'),
-                            ),
-                            FilledButton(
-                              onPressed: () => Navigator.pop(context, true),
-                              style: FilledButton.styleFrom(
-                                backgroundColor: theme.colorScheme.error,
+                    onPressed: _isSaving
+                        ? null
+                        : () async {
+                            // Show confirmation dialog
+                            final confirmed = await showDialog<bool>(
+                              context: context,
+                              builder: (context) => AlertDialog(
+                                title: const Text('Delete Class?'),
+                                content: Text(
+                                  'Are you sure you want to delete this ${_selectedSubject.name} class at ${widget.entry.startTime}?',
+                                ),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () =>
+                                        Navigator.pop(context, false),
+                                    child: const Text('Cancel'),
+                                  ),
+                                  FilledButton(
+                                    onPressed: () =>
+                                        Navigator.pop(context, true),
+                                    style: FilledButton.styleFrom(
+                                      backgroundColor: theme.colorScheme.error,
+                                    ),
+                                    child: const Text('Delete'),
+                                  ),
+                                ],
                               ),
-                              child: const Text('Delete'),
-                            ),
-                          ],
-                        ),
-                      );
+                            );
 
-                      if (confirmed == true && context.mounted) {
-                        await ref
-                            .read(attendanceRepositoryProvider)
-                            .deleteTimetableEntry(widget.entry.id);
-                        if (context.mounted) Navigator.pop(context);
-                      }
-                    },
+                            if (confirmed == true && context.mounted) {
+                              setState(() => _isSaving = true);
+                              try {
+                                await ref
+                                    .read(attendanceRepositoryProvider)
+                                    .deleteTimetableEntry(widget.entry.id);
+                                if (context.mounted) Navigator.pop(context);
+                              } finally {
+                                if (mounted) setState(() => _isSaving = false);
+                              }
+                            }
+                          },
                     style: TextButton.styleFrom(
                       foregroundColor: theme.colorScheme.error,
                       padding: const EdgeInsets.symmetric(vertical: 16),
@@ -834,37 +899,63 @@ class _EditEntrySheetState extends ConsumerState<_EditEntrySheet> {
                 Expanded(
                   flex: 2,
                   child: FilledButton(
-                    onPressed: () async {
-                      final hour = _startTime.hour.toString().padLeft(2, '0');
-                      final minute = _startTime.minute.toString().padLeft(
-                        2,
-                        '0',
-                      );
+                    onPressed: (_isSaving || !_hasChanges)
+                        ? null
+                        : () async {
+                            setState(() => _isSaving = true);
+                            try {
+                              final hour = _startTime.hour.toString().padLeft(
+                                2,
+                                '0',
+                              );
+                              final minute = _startTime.minute
+                                  .toString()
+                                  .padLeft(2, '0');
 
-                      final updatedEntry = TimetableEntry(
-                        id: widget.entry.id,
-                        subjectId: _selectedSubject.id,
-                        semesterId: widget.entry.semesterId,
-                        dayOfWeek: widget.entry.dayOfWeek,
-                        startTime: '$hour:$minute',
-                        durationInHours: _duration,
-                        isRecurring: widget.entry.isRecurring,
-                      );
+                              final updatedEntry = TimetableEntry(
+                                id: widget.entry.id,
+                                subjectId: _selectedSubject.id,
+                                semesterId: widget.entry.semesterId,
+                                dayOfWeek: widget.entry.dayOfWeek,
+                                startTime: '$hour:$minute',
+                                durationInHours: _duration,
+                                isRecurring: widget.entry.isRecurring,
+                              );
 
-                      await ref
-                          .read(attendanceRepositoryProvider)
-                          .updateTimetableEntry(updatedEntry);
-                      if (context.mounted) Navigator.pop(context);
-                    },
+                              await ref
+                                  .read(attendanceRepositoryProvider)
+                                  .updateTimetableEntry(updatedEntry);
+                              if (context.mounted) Navigator.pop(context);
+                            } finally {
+                              if (mounted) setState(() => _isSaving = false);
+                            }
+                          },
                     style: FilledButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(16),
                       ),
                     ),
-                    child: const Text(
-                      'Save Changes',
-                      style: TextStyle(fontWeight: FontWeight.bold),
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        Text(
+                          'Save Changes',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: _isSaving ? Colors.transparent : null,
+                          ),
+                        ),
+                        if (_isSaving)
+                          const SizedBox(
+                            width: 24,
+                            height: 24,
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 2.5,
+                            ),
+                          ),
+                      ],
                     ),
                   ),
                 ),

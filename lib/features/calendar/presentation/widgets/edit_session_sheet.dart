@@ -30,6 +30,28 @@ class _EditSessionSheetState extends ConsumerState<EditSessionSheet> {
   late AttendanceStatus _selectedStatus;
   late DateTime _selectedDate;
   late int _durationMinutes;
+  bool _isSaving = false;
+  bool _hasChanges = false;
+
+  void _checkForChanges() {
+    if (widget.isNew) {
+      // For new sessions, basic validation is enough (subject selected)
+      // or we can treat as always "has changes" if it's new, effectively enabling save once valid.
+      // But typically "Save" is enabled for New items as soon as valid.
+      // We'll manage this via the button condition.
+      return;
+    }
+
+    final hasChanges =
+        _selectedSubject?.id != widget.session.subjectId ||
+        _selectedStatus != widget.session.status ||
+        _selectedDate != widget.session.date ||
+        _durationMinutes != widget.session.durationMinutes;
+
+    if (hasChanges != _hasChanges) {
+      setState(() => _hasChanges = hasChanges);
+    }
+  }
 
   @override
   void initState() {
@@ -55,6 +77,7 @@ class _EditSessionSheetState extends ConsumerState<EditSessionSheet> {
           picked.hour,
           picked.minute,
         );
+        _checkForChanges();
       });
     }
   }
@@ -194,7 +217,12 @@ class _EditSessionSheetState extends ConsumerState<EditSessionSheet> {
                     .map((s) => DropdownMenuItem(value: s, child: Text(s.name)))
                     .toList(),
                 onChanged: (val) {
-                  if (val != null) setState(() => _selectedSubject = val);
+                  if (val != null) {
+                    setState(() {
+                      _selectedSubject = val;
+                      _checkForChanges();
+                    });
+                  }
                 },
               ),
             const SizedBox(height: 16),
@@ -232,7 +260,12 @@ class _EditSessionSheetState extends ConsumerState<EditSessionSheet> {
                   )
                   .toList(),
               onChanged: (val) {
-                if (val != null) setState(() => _selectedStatus = val);
+                if (val != null) {
+                  setState(() {
+                    _selectedStatus = val;
+                    _checkForChanges();
+                  });
+                }
               },
             ),
             const SizedBox(height: 16),
@@ -302,7 +335,12 @@ class _EditSessionSheetState extends ConsumerState<EditSessionSheet> {
                         )
                         .toList(),
                     onChanged: (val) {
-                      if (val != null) setState(() => _durationMinutes = val);
+                      if (val != null) {
+                        setState(() {
+                          _durationMinutes = val;
+                          _checkForChanges();
+                        });
+                      }
                     },
                   ),
                 ),
@@ -317,12 +355,21 @@ class _EditSessionSheetState extends ConsumerState<EditSessionSheet> {
                 if (!widget.isNew) ...[
                   Expanded(
                     child: TextButton(
-                      onPressed: () async {
-                        await ref
-                            .read(attendanceRepositoryProvider)
-                            .deleteDuplicateSessions(date: widget.session.date);
-                        if (context.mounted) Navigator.pop(context);
-                      },
+                      onPressed: _isSaving
+                          ? null
+                          : () async {
+                              setState(() => _isSaving = true);
+                              try {
+                                await ref
+                                    .read(attendanceRepositoryProvider)
+                                    .deleteDuplicateSessions(
+                                      date: widget.session.date,
+                                    );
+                                if (context.mounted) Navigator.pop(context);
+                              } finally {
+                                if (mounted) setState(() => _isSaving = false);
+                              }
+                            },
                       style: TextButton.styleFrom(
                         foregroundColor: theme.colorScheme.error,
                         padding: const EdgeInsets.symmetric(vertical: 16),
@@ -344,28 +391,36 @@ class _EditSessionSheetState extends ConsumerState<EditSessionSheet> {
                 ],
                 Expanded(
                   child: FilledButton(
-                    onPressed: _selectedSubject != null
+                    onPressed:
+                        (_selectedSubject != null &&
+                            !_isSaving &&
+                            (widget.isNew || _hasChanges))
                         ? () async {
-                            final updatedSession = ClassSession(
-                              id: widget.session.id,
-                              subjectId: _selectedSubject!.id,
-                              semesterId: widget.session.semesterId,
-                              date: _selectedDate,
-                              status: _selectedStatus,
-                              isExtraClass: widget.session.isExtraClass,
-                              notes: widget.session.notes,
-                              durationMinutes: _durationMinutes,
-                            );
-                            if (widget.isNew) {
-                              await ref
-                                  .read(attendanceRepositoryProvider)
-                                  .logSession(updatedSession);
-                            } else {
-                              await ref
-                                  .read(attendanceRepositoryProvider)
-                                  .updateSession(updatedSession);
+                            setState(() => _isSaving = true);
+                            try {
+                              final updatedSession = ClassSession(
+                                id: widget.session.id,
+                                subjectId: _selectedSubject!.id,
+                                semesterId: widget.session.semesterId,
+                                date: _selectedDate,
+                                status: _selectedStatus,
+                                isExtraClass: widget.session.isExtraClass,
+                                notes: widget.session.notes,
+                                durationMinutes: _durationMinutes,
+                              );
+                              if (widget.isNew) {
+                                await ref
+                                    .read(attendanceRepositoryProvider)
+                                    .logSession(updatedSession);
+                              } else {
+                                await ref
+                                    .read(attendanceRepositoryProvider)
+                                    .updateSession(updatedSession);
+                              }
+                              if (context.mounted) Navigator.pop(context);
+                            } finally {
+                              if (mounted) setState(() => _isSaving = false);
                             }
-                            if (context.mounted) Navigator.pop(context);
                           }
                         : null,
                     style: FilledButton.styleFrom(
@@ -374,9 +429,26 @@ class _EditSessionSheetState extends ConsumerState<EditSessionSheet> {
                         borderRadius: BorderRadius.circular(16),
                       ),
                     ),
-                    child: const Text(
-                      'Save',
-                      style: TextStyle(fontWeight: FontWeight.bold),
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        Text(
+                          'Save',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: _isSaving ? Colors.transparent : null,
+                          ),
+                        ),
+                        if (_isSaving)
+                          const SizedBox(
+                            width: 24,
+                            height: 24,
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 2.5,
+                            ),
+                          ),
+                      ],
                     ),
                   ),
                 ),

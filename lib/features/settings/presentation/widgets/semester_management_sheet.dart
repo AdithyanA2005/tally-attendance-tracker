@@ -16,6 +16,7 @@ class SemesterManagementSheet extends ConsumerStatefulWidget {
 class _SemesterManagementSheetState
     extends ConsumerState<SemesterManagementSheet> {
   bool _isCreating = false;
+  bool _isSaving = false;
 
   // Create Form State
   final _formKey = GlobalKey<FormState>();
@@ -285,29 +286,39 @@ class _SemesterManagementSheetState
           const SizedBox(height: 24),
 
           // Create Button
+          // Create Button
           FilledButton(
-            onPressed: () async {
-              if (_formKey.currentState!.validate()) {
-                final newSemester = Semester(
-                  id: const Uuid().v4(),
-                  name: _nameController.text.trim(),
-                  startDate: _startDate,
-                  isActive: true, // Auto-activate
-                  hasPendingSync: true,
-                );
+            onPressed: _isSaving
+                ? null
+                : () async {
+                    if (_formKey.currentState!.validate()) {
+                      setState(() => _isSaving = true);
+                      try {
+                        final newSemester = Semester(
+                          id: const Uuid().v4(),
+                          name: _nameController.text.trim(),
+                          startDate: _startDate,
+                          isActive: true, // Auto-activate
+                          hasPendingSync: true,
+                        );
 
-                await ref
-                    .read(semesterRepositoryProvider)
-                    .addSemester(newSemester);
+                        await ref
+                            .read(semesterRepositoryProvider)
+                            .addSemester(newSemester);
 
-                // Set as active
-                await ref
-                    .read(semesterRepositoryProvider)
-                    .setActiveSemesterId(newSemester.id);
+                        // Set as active
+                        await ref
+                            .read(semesterRepositoryProvider)
+                            .setActiveSemesterId(newSemester.id);
 
-                if (mounted) Navigator.pop(context);
-              }
-            },
+                        if (mounted) Navigator.pop(context);
+                      } finally {
+                        if (mounted) {
+                          setState(() => _isSaving = false);
+                        }
+                      }
+                    }
+                  },
             style: FilledButton.styleFrom(
               padding: const EdgeInsets.symmetric(vertical: 16),
               minimumSize: const Size(double.infinity, 50),
@@ -315,7 +326,26 @@ class _SemesterManagementSheetState
                 borderRadius: BorderRadius.circular(16),
               ),
             ),
-            child: const Text('Create & Switch'),
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                Text(
+                  'Create & Switch',
+                  style: TextStyle(
+                    color: _isSaving ? Colors.transparent : null,
+                  ),
+                ),
+                if (_isSaving)
+                  const SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: CircularProgressIndicator(
+                      color: Colors.white,
+                      strokeWidth: 2.5,
+                    ),
+                  ),
+              ],
+            ),
           ),
         ],
       ),
