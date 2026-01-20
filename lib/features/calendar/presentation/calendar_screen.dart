@@ -691,7 +691,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
             semesterId: entry.semesterId,
             date: d,
             status: AttendanceStatus.scheduled,
-            durationMinutes: (entry.durationInHours * 60).toInt(),
+            durationMinutes: entry.durationMinutes,
           ),
         );
       }

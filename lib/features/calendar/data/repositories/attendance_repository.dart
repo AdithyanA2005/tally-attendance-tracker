@@ -268,7 +268,7 @@ class AttendanceRepository {
     required String subjectId,
     required int dayOfWeek,
     required String startTime,
-    required double durationInHours,
+    required int durationMinutes,
   }) async {
     final semesterId = _activeSemesterId;
     if (semesterId == null) throw Exception('No active semester');
@@ -280,7 +280,7 @@ class AttendanceRepository {
       semesterId: semesterId,
       dayOfWeek: dayOfWeek,
       startTime: startTime,
-      durationInHours: durationInHours,
+      durationMinutes: durationMinutes,
       hasPendingSync: false,
       lastUpdated: DateTime.now(),
     );

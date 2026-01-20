@@ -9,12 +9,12 @@ import '../../../settings/data/repositories/semester_repository.dart';
 class PendingClassItem {
   final Subject subject;
   final DateTime dateTime;
-  final double durationInHours;
+  final int durationMinutes;
 
   PendingClassItem({
     required this.subject,
     required this.dateTime,
-    required this.durationInHours,
+    required this.durationMinutes,
   });
 }
 
@@ -112,7 +112,7 @@ final pendingAttendanceProvider = Provider<AsyncValue<List<PendingClassItem>>>((
           PendingClassItem(
             subject: subjectMap[entry.subjectId]!,
             dateTime: classDateTime,
-            durationInHours: entry.durationInHours,
+            durationMinutes: entry.durationMinutes,
           ),
         );
       }

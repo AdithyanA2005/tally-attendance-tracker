@@ -117,7 +117,7 @@ FutureImpactSummary? _calculateNextImpact(
           dayOfWeek: weekday,
           startTime:
               '${session.date.hour.toString().padLeft(2, '0')}:${session.date.minute.toString().padLeft(2, '0')}',
-          durationInHours: 1.0,
+          durationMinutes: 60, // Default duration for extra classes
         ),
       );
     }

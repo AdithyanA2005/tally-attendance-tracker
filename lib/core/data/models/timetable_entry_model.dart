@@ -17,7 +17,7 @@ class TimetableEntry extends HiveObject {
   final String startTime; // "HH:mm" format (24h)
 
   @HiveField(4)
-  final double durationInHours;
+  final int durationMinutes;
 
   @HiveField(5, defaultValue: true)
   final bool isRecurring;
@@ -37,7 +37,7 @@ class TimetableEntry extends HiveObject {
     required this.semesterId,
     required this.dayOfWeek,
     required this.startTime,
-    required this.durationInHours,
+    required this.durationMinutes,
     this.isRecurring = true,
     DateTime? lastUpdated,
     this.hasPendingSync = false,
@@ -50,7 +50,7 @@ class TimetableEntry extends HiveObject {
       semesterId: json['semester_id'] ?? '',
       dayOfWeek: json['day_of_week'],
       startTime: json['start_time'],
-      durationInHours: (json['duration_hours'] as num).toDouble(),
+      durationMinutes: json['duration_minutes'] as int,
       isRecurring: json['is_recurring'] ?? true,
       lastUpdated: DateTime.parse(json['updated_at']),
       hasPendingSync: false,
@@ -64,7 +64,7 @@ class TimetableEntry extends HiveObject {
       'semester_id': semesterId,
       'day_of_week': dayOfWeek,
       'start_time': startTime,
-      'duration_hours': durationInHours,
+      'duration_minutes': durationMinutes,
       'is_recurring': isRecurring,
       'updated_at': lastUpdated.toIso8601String(),
     };
@@ -76,7 +76,7 @@ class TimetableEntry extends HiveObject {
     String? semesterId,
     int? dayOfWeek,
     String? startTime,
-    double? durationInHours,
+    int? durationMinutes,
     bool? isRecurring,
     DateTime? lastUpdated,
     bool? hasPendingSync,
@@ -87,7 +87,7 @@ class TimetableEntry extends HiveObject {
       semesterId: semesterId ?? this.semesterId,
       dayOfWeek: dayOfWeek ?? this.dayOfWeek,
       startTime: startTime ?? this.startTime,
-      durationInHours: durationInHours ?? this.durationInHours,
+      durationMinutes: durationMinutes ?? this.durationMinutes,
       isRecurring: isRecurring ?? this.isRecurring,
       lastUpdated: lastUpdated ?? this.lastUpdated,
       hasPendingSync: hasPendingSync ?? this.hasPendingSync,

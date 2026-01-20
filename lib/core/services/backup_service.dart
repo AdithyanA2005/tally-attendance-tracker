@@ -167,8 +167,12 @@ class BackupService {
           subjectId: t['subjectId'] ?? t['subject_id'],
           dayOfWeek: t['dayOfWeek'] ?? t['day_of_week'],
           startTime: t['startTime'] ?? t['start_time'],
-          durationInHours: (t['durationInHours'] ?? t['duration_hours'] as num)
-              .toDouble(),
+          durationMinutes:
+              (t['durationMinutes'] ??
+                      t['duration_minutes'] ??
+                      ((t['durationInHours'] ?? t['duration_hours'] ?? 1.0) *
+                          60))
+                  .toInt(),
         );
         await _localStorage.timetableBox.put(entry.id, entry);
       }

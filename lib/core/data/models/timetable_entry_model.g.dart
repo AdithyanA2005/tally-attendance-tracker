@@ -22,7 +22,7 @@ class TimetableEntryAdapter extends TypeAdapter<TimetableEntry> {
       semesterId: fields[8] == null ? '' : fields[8] as String,
       dayOfWeek: fields[2] as int,
       startTime: fields[3] as String,
-      durationInHours: fields[4] as double,
+      durationMinutes: fields[4] as int,
       isRecurring: fields[5] == null ? true : fields[5] as bool,
       lastUpdated: fields[6] as DateTime?,
       hasPendingSync: fields[7] == null ? false : fields[7] as bool,
@@ -42,7 +42,7 @@ class TimetableEntryAdapter extends TypeAdapter<TimetableEntry> {
       ..writeByte(3)
       ..write(obj.startTime)
       ..writeByte(4)
-      ..write(obj.durationInHours)
+      ..write(obj.durationMinutes)
       ..writeByte(5)
       ..write(obj.isRecurring)
       ..writeByte(6)

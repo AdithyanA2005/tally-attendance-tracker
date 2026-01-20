@@ -6,7 +6,7 @@ part of 'app_router.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$goRouterHash() => r'852bf54e79ac274315be5fa5d9e9f450c0ad3b4a';
+String _$goRouterHash() => r'dca4fe83bd4db5570b2868c6ef5530e347e60c7c';
 
 /// See also [goRouter].
 @ProviderFor(goRouter)

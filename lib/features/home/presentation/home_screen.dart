@@ -208,7 +208,7 @@ class HomeScreen extends ConsumerWidget {
         date: item.scheduledTime,
         status: status,
         isExtraClass: item.existingSession?.isExtraClass ?? false,
-        durationMinutes: (item.entry.durationInHours * 60).toInt(),
+        durationMinutes: item.entry.durationMinutes,
       );
       await repo.logSession(session);
     }
@@ -356,7 +356,7 @@ class _TodayClassCard extends ConsumerWidget {
     final nowTime = DateTime.now();
     final startTime = item.scheduledTime;
     final endTime = startTime.add(
-      Duration(minutes: (item.entry.durationInHours * 60).toInt()),
+      Duration(minutes: item.entry.durationMinutes),
     );
 
     final isNow = nowTime.isAfter(startTime) && nowTime.isBefore(endTime);
@@ -517,7 +517,7 @@ class _TodayClassCard extends ConsumerWidget {
                                 ),
                               ),
                               Text(
-                                formatDuration(item.entry.durationInHours),
+                                formatDuration(item.entry.durationMinutes / 60),
                                 style: TextStyle(
                                   fontSize: 12,
                                   color: theme.colorScheme.tertiary,
@@ -643,7 +643,7 @@ class _TodayClassCard extends ConsumerWidget {
       date: item.scheduledTime,
       status: status,
       isExtraClass: item.existingSession?.isExtraClass ?? false,
-      durationMinutes: (item.entry.durationInHours * 60).toInt(),
+      durationMinutes: item.entry.durationMinutes,
     );
 
     final repo = ref.read(attendanceRepositoryProvider);
@@ -699,7 +699,7 @@ class _TodayClassCard extends ConsumerWidget {
               semesterId: semesterId ?? '',
               date: item.scheduledTime,
               status: AttendanceStatus.scheduled,
-              durationMinutes: (item.entry.durationInHours * 60).toInt(),
+              durationMinutes: item.entry.durationMinutes,
             ),
         initialSubject: item.subject,
         allSubjects: allSubjects,

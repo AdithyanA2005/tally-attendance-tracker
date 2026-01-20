@@ -147,7 +147,7 @@ List<TodayClassItem> _combineData({
           subjectId: session.subjectId,
           semesterId: session.semesterId,
           startTime: timeStr,
-          durationInHours: 1.0, // Default duration for extra classes
+          durationMinutes: 60, // Default duration for extra classes
         ),
         subject: subject,
         originalSubject: subject,

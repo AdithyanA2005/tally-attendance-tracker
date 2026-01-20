@@ -261,7 +261,7 @@ class _TimetableScreenState extends ConsumerState<TimetableScreen> {
                                                           width: 4,
                                                         ),
                                                         Text(
-                                                          '${entry.startTime} • ${formatDuration(entry.durationInHours)}',
+                                                          '${entry.startTime} • ${formatDuration(entry.durationMinutes / 60)}',
                                                           style: TextStyle(
                                                             color:
                                                                 Theme.of(
@@ -571,7 +571,7 @@ class _AddEntrySheetState extends ConsumerState<_AddEntrySheet> {
                               subjectId: _selectedSubject!.id,
                               dayOfWeek: widget.selectedDay,
                               startTime: '$hour:$minute',
-                              durationInHours: _duration,
+                              durationMinutes: (_duration * 60).toInt(),
                             );
                         if (!context.mounted) return;
                         Navigator.pop(context);
@@ -645,7 +645,7 @@ class _EditEntrySheetState extends ConsumerState<_EditEntrySheet> {
 
     final hasChanges =
         _selectedSubject.id != widget.entry.subjectId ||
-        _duration != widget.entry.durationInHours ||
+        _duration != (widget.entry.durationMinutes / 60) ||
         _startTime.hour != oldHour ||
         _startTime.minute != oldMinute;
 
@@ -671,7 +671,7 @@ class _EditEntrySheetState extends ConsumerState<_EditEntrySheet> {
       minute: int.parse(parts[1]),
     );
 
-    _duration = widget.entry.durationInHours;
+    _duration = widget.entry.durationMinutes / 60;
   }
 
   @override
@@ -918,7 +918,7 @@ class _EditEntrySheetState extends ConsumerState<_EditEntrySheet> {
                                 semesterId: widget.entry.semesterId,
                                 dayOfWeek: widget.entry.dayOfWeek,
                                 startTime: '$hour:$minute',
-                                durationInHours: _duration,
+                                durationMinutes: (_duration * 60).toInt(),
                                 isRecurring: widget.entry.isRecurring,
                               );
 
