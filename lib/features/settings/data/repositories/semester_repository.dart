@@ -10,8 +10,11 @@ import '../../../../core/data/repositories/cache_repository.dart';
 part 'semester_repository.g.dart';
 
 class SemesterRepository extends CacheRepository<Semester> {
+  final LocalStorageService _localStorage;
+
   SemesterRepository(LocalStorageService localStorage, SupabaseClient supabase)
-    : super(
+    : _localStorage = localStorage,
+      super(
         box: localStorage.semesterBox,
         supabase: supabase,
         tableName: 'semesters',
@@ -99,11 +102,54 @@ class SemesterRepository extends CacheRepository<Semester> {
     await supabase.from('semesters').upsert(json);
   }
 
-  Future<void> deleteSemester(String id) async {
+  Future<void> updateSemester(Semester semester) async {
     // 1. Optimistic
-    await deleteLocal(id);
+    await saveLocal(semester);
 
     // 2. Remote
+    final json = semester.toJson();
+    json['user_id'] = supabase.auth.currentUser!.id;
+    await supabase.from('semesters').upsert(json);
+  }
+
+  Future<void> deleteSemester(String id) async {
+    // 1. Manual Local Cascade (Big Nuke for this Semester)
+    // We must manually locate and delete all child records from Hive
+    // because Hive doesn't support cascades, and waiting for Supabase sync
+    // leaves "orphaned" data visible in the UI for seconds/minutes.
+
+    // Scan & Delete Subjects
+    final subjectBox = _localStorage.subjectBox;
+    final subjectKeys = subjectBox.values
+        .where((s) => s.semesterId == id)
+        .map(
+          (s) => s.id,
+        ) // CacheRepo uses ID as key usually, but check getKey implementation?
+        // CacheRepository implementation uses `put(getId(item), item)`. So key IS id.
+        .toList();
+    if (subjectKeys.isNotEmpty) await subjectBox.deleteAll(subjectKeys);
+
+    // Scan & Delete Sessions
+    final sessionBox = _localStorage.sessionBox;
+    final sessionKeys = sessionBox.values
+        .where((s) => s.semesterId == id)
+        .map((s) => s.id)
+        .toList();
+    if (sessionKeys.isNotEmpty) await sessionBox.deleteAll(sessionKeys);
+
+    // Scan & Delete Timetables
+    final timetableBox = _localStorage.timetableBox;
+    final timetableKeys = timetableBox.values
+        .where((t) => t.semesterId == id)
+        .map((t) => t.id)
+        .toList();
+    if (timetableKeys.isNotEmpty) await timetableBox.deleteAll(timetableKeys);
+
+    // 2. Optimistic Delete of Semester
+    await deleteLocal(id);
+
+    // 3. Remote Delete
+    // DB Constraints (ON DELETE CASCADE) now handle cleanup of children (subjects, logs, timetables)
     await supabase.from('semesters').delete().eq('id', id);
   }
 

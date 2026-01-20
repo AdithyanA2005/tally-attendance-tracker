@@ -22,6 +22,7 @@ class _SemesterManagementSheetState
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   DateTime _startDate = DateTime.now();
+  String? _editingId; // Track if we are editing
 
   @override
   void dispose() {
@@ -61,7 +62,11 @@ class _SemesterManagementSheetState
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    _isCreating ? 'New Semester' : 'Switch Semester',
+                    _isCreating
+                        ? (_editingId != null
+                              ? 'Edit Semester'
+                              : 'New Semester')
+                        : 'Switch Semester',
                     style: const TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
@@ -74,7 +79,14 @@ class _SemesterManagementSheetState
                     )
                   else
                     TextButton(
-                      onPressed: () => setState(() => _isCreating = false),
+                      onPressed: () {
+                        setState(() {
+                          _isCreating = false;
+                          _editingId = null;
+                          _nameController.clear();
+                          _startDate = DateTime.now();
+                        });
+                      },
                       child: const Text('Cancel'),
                     ),
                 ],
@@ -144,7 +156,7 @@ class _SemesterManagementSheetState
                             .read(semesterRepositoryProvider)
                             .setActiveSemesterId(semester.id);
 
-                        // Force provider refresh
+                        // Force active semester provider refresh
                         ref.invalidate(activeSemesterProvider);
 
                         if (mounted) Navigator.pop(context);
@@ -152,12 +164,19 @@ class _SemesterManagementSheetState
                     },
                     borderRadius: BorderRadius.circular(16),
                     child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 20,
-                        vertical: 16,
-                      ),
+                      padding: const EdgeInsets.fromLTRB(20, 16, 8, 16),
                       child: Row(
                         children: [
+                          // Status Icon (Left side now? No, keep logic, just adjust spacing)
+                          if (isActive) ...[
+                            Icon(
+                              Icons.check_circle_rounded,
+                              color: colorScheme.primary,
+                              size: 24,
+                            ),
+                            const SizedBox(width: 16),
+                          ],
+
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -176,7 +195,9 @@ class _SemesterManagementSheetState
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
-                                  'Started ${DateFormat('MMM d, yyyy').format(semester.startDate)}',
+                                  DateFormat(
+                                    'MMM d, yyyy',
+                                  ).format(semester.startDate),
                                   style: TextStyle(
                                     fontSize: 13,
                                     color: colorScheme.outline,
@@ -185,19 +206,55 @@ class _SemesterManagementSheetState
                               ],
                             ),
                           ),
-                          const SizedBox(width: 16),
-                          if (isActive)
-                            Icon(
-                              Icons.check_circle_rounded,
-                              color: colorScheme.primary,
-                              size: 24,
-                            )
-                          else
-                            Icon(
-                              Icons.circle_outlined,
-                              color: colorScheme.outline.withValues(alpha: 0.5),
-                              size: 24,
+
+                          // Menu
+                          PopupMenuButton<String>(
+                            icon: Icon(
+                              Icons.more_vert_rounded,
+                              color: colorScheme.outline,
                             ),
+                            onSelected: (value) {
+                              if (value == 'edit') {
+                                setState(() {
+                                  _isCreating = true;
+                                  _editingId = semester.id;
+                                  _nameController.text = semester.name;
+                                  _startDate = semester.startDate;
+                                });
+                              } else if (value == 'delete') {
+                                _deleteSemester(semester, isActive);
+                              }
+                            },
+                            itemBuilder: (context) => [
+                              const PopupMenuItem(
+                                value: 'edit',
+                                child: Row(
+                                  children: [
+                                    Icon(Icons.edit_rounded, size: 20),
+                                    SizedBox(width: 12),
+                                    Text('Edit'),
+                                  ],
+                                ),
+                              ),
+                              const PopupMenuItem(
+                                value: 'delete',
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      Icons.delete_rounded,
+                                      color: Colors.red,
+                                      size: 20,
+                                    ),
+                                    SizedBox(width: 12),
+                                    Text(
+                                      'Delete',
+                                      style: TextStyle(color: Colors.red),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
                         ],
                       ),
                     ),
@@ -225,6 +282,49 @@ class _SemesterManagementSheetState
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (e, s) => Text('Error: $e'),
     );
+  }
+
+  Future<void> _deleteSemester(Semester semester, bool isActive) async {
+    if (isActive) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text(
+            'Cannot delete the active semester. Please switch first.',
+          ),
+          backgroundColor: Theme.of(context).colorScheme.error,
+        ),
+      );
+      return;
+    }
+
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Semester?'),
+        content: Text(
+          'Are you sure you want to delete "${semester.name}"?\n\n'
+          'This will permanently delete ALL subjects, classes, and timetable entries associated with this semester.\n\n'
+          'This action cannot be undone.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: TextButton.styleFrom(
+              foregroundColor: Theme.of(context).colorScheme.error,
+            ),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      await ref.read(semesterRepositoryProvider).deleteSemester(semester.id);
+    }
   }
 
   Widget _buildCreateForm() {
@@ -294,24 +394,47 @@ class _SemesterManagementSheetState
                     if (_formKey.currentState!.validate()) {
                       setState(() => _isSaving = true);
                       try {
-                        final newSemester = Semester(
-                          id: const Uuid().v4(),
-                          name: _nameController.text.trim(),
-                          startDate: _startDate,
-                          isActive: true, // Auto-activate
-                          hasPendingSync: true,
-                        );
+                        if (_editingId != null) {
+                          // Update Existing
+                          final repo = ref.read(semesterRepositoryProvider);
+                          final original = repo.box.get(_editingId!);
+                          if (original != null) {
+                            await repo.updateSemester(
+                              original.copyWith(
+                                name: _nameController.text.trim(),
+                                startDate: _startDate,
+                                hasPendingSync: true,
+                              ),
+                            );
 
-                        await ref
-                            .read(semesterRepositoryProvider)
-                            .addSemester(newSemester);
+                            if (mounted) {
+                              setState(() {
+                                _isCreating = false;
+                                _editingId = null;
+                              });
+                            }
+                          }
+                        } else {
+                          // Create New
+                          final newSemester = Semester(
+                            id: const Uuid().v4(),
+                            name: _nameController.text.trim(),
+                            startDate: _startDate,
+                            isActive: true, // Auto-activate
+                            hasPendingSync: true,
+                          );
 
-                        // Set as active
-                        await ref
-                            .read(semesterRepositoryProvider)
-                            .setActiveSemesterId(newSemester.id);
+                          await ref
+                              .read(semesterRepositoryProvider)
+                              .addSemester(newSemester);
 
-                        if (mounted) Navigator.pop(context);
+                          // Set as active
+                          await ref
+                              .read(semesterRepositoryProvider)
+                              .setActiveSemesterId(newSemester.id);
+
+                          if (mounted) Navigator.pop(context);
+                        }
                       } finally {
                         if (mounted) {
                           setState(() => _isSaving = false);
@@ -330,7 +453,7 @@ class _SemesterManagementSheetState
               alignment: Alignment.center,
               children: [
                 Text(
-                  'Create & Switch',
+                  _editingId != null ? 'Update Semester' : 'Create & Switch',
                   style: TextStyle(
                     color: _isSaving ? Colors.transparent : null,
                   ),
