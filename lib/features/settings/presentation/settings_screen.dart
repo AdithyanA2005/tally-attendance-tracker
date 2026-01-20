@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
+
 import '../../auth/data/repositories/auth_repository.dart';
 import '../../../../core/presentation/widgets/section_header.dart';
 // import '../../../../core/services/backup_service.dart';
@@ -42,11 +42,70 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               ),
               SliverList(
                 delegate: SliverChildListDelegate([
-                  const Divider(),
+                  // Profile Section (Visual only for now)
+                  Consumer(
+                    builder: (context, ref, _) {
+                      final user = ref
+                          .watch(authRepositoryProvider)
+                          .currentUser;
+                      return Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+                        child: Row(
+                          children: [
+                            CircleAvatar(
+                              radius: 32,
+                              backgroundColor: Theme.of(
+                                context,
+                              ).colorScheme.primaryContainer,
+                              child: Text(
+                                (user?.email?[0] ?? 'U').toUpperCase(),
+                                style: TextStyle(
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.bold,
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onPrimaryContainer,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Account',
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .labelSmall
+                                        ?.copyWith(
+                                          color: Theme.of(
+                                            context,
+                                          ).colorScheme.outline,
+                                        ),
+                                  ),
+                                  Text(
+                                    user?.email ?? 'Guest User',
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .titleMedium
+                                        ?.copyWith(fontWeight: FontWeight.w600),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+
                   const SectionHeader(title: 'Academics'),
                   ListTile(
                     leading: const Icon(Icons.school_rounded),
-                    title: const Text('Current Semester'),
+                    title: const Text('Manage Semesters'),
                     subtitle: Consumer(
                       builder: (context, ref, _) {
                         final activeAsync = ref.watch(activeSemesterProvider);
@@ -54,51 +113,65 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         if (active == null) {
                           return const Text('No active semester');
                         }
-                        return Text(
-                          '${active.name} (${DateFormat('MMM d, yyyy').format(active.startDate)})',
-                        );
+                        return Text('Current: ${active.name}');
                       },
                     ),
                     trailing: const Icon(Icons.swap_horiz_rounded),
                     onTap: () => _showSemesterSwitcher(context, ref),
                   ),
                   ListTile(
-                    leading: const Icon(Icons.calendar_month),
-                    title: const Text('Timetable'),
-                    subtitle: const Text('Edit your weekly schedule'),
-                    trailing: const Icon(Icons.chevron_right),
-                    onTap: () => context.push('/timetable'),
-                  ),
-                  ListTile(
-                    leading: const Icon(Icons.class_),
+                    leading: const Icon(Icons.class_rounded),
                     title: const Text('Subjects'),
-                    subtitle: const Text('Add or edit subjects'),
+                    subtitle: const Text('Manage subjects & criteria'),
                     trailing: const Icon(Icons.chevron_right),
                     onTap: () => context.push('/manage_subjects'),
                   ),
-                  // Data Management removed as part of V1 Cleanup
-                  // const SectionHeader(title: 'Data Management'),
-                  // ... removed tiles ...
-                  const Divider(),
                   ListTile(
-                    title: const Text('Sign Out'),
-                    leading: const Icon(Icons.logout_rounded),
-                    onTap: () async {
-                      await ref.read(authRepositoryProvider).signOut();
-                    },
+                    leading: const Icon(Icons.calendar_month_rounded),
+                    title: const Text('Timetable'),
+                    subtitle: const Text('Edit weekly schedule'),
+                    trailing: const Icon(Icons.chevron_right),
+                    onTap: () => context.push('/timetable'),
                   ),
-                  const Divider(),
-                  const SectionHeader(title: 'App'),
+
+                  const SizedBox(height: 16),
+                  const SectionHeader(title: 'General'),
                   const ListTile(
-                    leading: Icon(Icons.notifications),
+                    leading: Icon(Icons.notifications_rounded),
                     title: Text('Notifications'),
                     subtitle: Text('Smart reminders (Coming Soon)'),
                     trailing: Switch(value: false, onChanged: null),
                   ),
-                  const ListTile(
-                    leading: Icon(Icons.info_outline),
-                    title: Text('About'),
-                    subtitle: Text('Attendance Intelligence v1.0'),
+                  ListTile(
+                    leading: const Icon(Icons.info_outline_rounded),
+                    title: const Text('About'),
+                    subtitle: const Text('Attendance Intelligence v1.0'),
+                    onTap: () {
+                      showAboutDialog(
+                        context: context,
+                        applicationName: 'Tally',
+                        applicationVersion: '1.0.0',
+                        applicationLegalese: 'Copyright © 2026',
+                      );
+                    },
+                  ),
+
+                  const SizedBox(height: 16),
+                  const SectionHeader(title: 'Account'),
+                  ListTile(
+                    leading: Icon(
+                      Icons.logout_rounded,
+                      color: Theme.of(context).colorScheme.error,
+                    ),
+                    title: Text(
+                      'Sign Out',
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.error,
+                      ),
+                    ),
+                    onTap: () async {
+                      await ref.read(authRepositoryProvider).signOut();
+                    },
                   ),
                 ]),
               ),
