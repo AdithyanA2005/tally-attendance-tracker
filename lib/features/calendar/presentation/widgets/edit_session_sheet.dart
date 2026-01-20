@@ -360,11 +360,20 @@ class _EditSessionSheetState extends ConsumerState<EditSessionSheet> {
                           : () async {
                               setState(() => _isSaving = true);
                               try {
-                                await ref
-                                    .read(attendanceRepositoryProvider)
-                                    .deleteDuplicateSessions(
-                                      date: widget.session.date,
-                                    );
+                                if (widget.session.isExtraClass) {
+                                  // Delete extra class entirely
+                                  await ref
+                                      .read(attendanceRepositoryProvider)
+                                      .deleteSession(widget.session.id);
+                                } else {
+                                  // Reset regular timetabled class to "scheduled"
+                                  final resetSession = widget.session.copyWith(
+                                    status: AttendanceStatus.scheduled,
+                                  );
+                                  await ref
+                                      .read(attendanceRepositoryProvider)
+                                      .updateSession(resetSession);
+                                }
                                 if (context.mounted) Navigator.pop(context);
                               } finally {
                                 if (mounted) setState(() => _isSaving = false);
