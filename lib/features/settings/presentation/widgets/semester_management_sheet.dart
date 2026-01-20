@@ -165,7 +165,8 @@ class _SemesterManagementSheetState
                         // Force active semester provider refresh
                         ref.invalidate(activeSemesterProvider);
 
-                        if (mounted) Navigator.pop(context);
+                        // Keep sheet open to allow further actions (like deleting the old one)
+                        // previously: if (mounted) Navigator.pop(context);
                       }
                     },
                     borderRadius: BorderRadius.circular(16),
