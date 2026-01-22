@@ -191,7 +191,26 @@ class AttendanceRepository {
   }
 
   Future<void> logSession(ClassSession session) async {
+    // Check for existing session at the same time to prevent duplicates
+    String finalId = session.id;
+    try {
+      final existing = _sessions.box.values.firstWhere((s) {
+        return s.semesterId == session.semesterId &&
+            s.date.year == session.date.year &&
+            s.date.month == session.date.month &&
+            s.date.day == session.date.day &&
+            s.date.hour == session.date.hour &&
+            s.date.minute == session.date.minute &&
+            s.id != session.id;
+      });
+      // Found a duplicate time slot! Use the existing ID to overwrite it.
+      finalId = existing.id;
+    } catch (_) {
+      // No duplicate found
+    }
+
     final updated = session.copyWith(
+      id: finalId,
       hasPendingSync: false,
       lastUpdated: DateTime.now(),
     );
