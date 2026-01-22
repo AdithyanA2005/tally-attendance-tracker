@@ -4,23 +4,53 @@ import '../../../data/models/attendance_anomaly.dart';
 
 class AnomalyDetailsSheet extends StatelessWidget {
   final SubjectAnomalySummary summary;
+  final ScrollController? scrollController;
 
-  const AnomalyDetailsSheet({super.key, required this.summary});
+  const AnomalyDetailsSheet({
+    super.key,
+    required this.summary,
+    this.scrollController,
+  });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+
     return Container(
       padding: const EdgeInsets.only(top: 8),
       decoration: BoxDecoration(
         color: theme.scaffoldBackgroundColor,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Handle bar
-          Container(
+      child: ListView.separated(
+        controller: scrollController,
+        padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+        itemCount: summary.anomalies.length + 1, // +1 for Header
+        separatorBuilder: (context, index) {
+          if (index == 0)
+            return const SizedBox.shrink(); // No separator after header (it has its own spacing)
+          return const SizedBox(height: 16);
+        },
+        itemBuilder: (context, index) {
+          if (index == 0) {
+            return _buildHeader(context, theme);
+          }
+          final anomaly =
+              summary.anomalies[index - 1]; // Offset by 1 for header
+          return _buildAnomalyItem(context, anomaly);
+        },
+      ),
+    );
+  }
+
+  Widget _buildHeader(BuildContext context, ThemeData theme) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        // Handle bar
+        Center(
+          child: Container(
             width: 40,
             height: 4,
             margin: const EdgeInsets.symmetric(vertical: 12),
@@ -29,104 +59,79 @@ class AnomalyDetailsSheet extends StatelessWidget {
               borderRadius: BorderRadius.circular(2),
             ),
           ),
+        ),
 
-          // Header and Stats Section - Scrollable for small heights
-          Flexible(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
+        Row(
+          children: [
+            Container(
+              width: 4,
+              height: 40,
+              decoration: BoxDecoration(
+                color: Color(summary.subject.colorTag),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
               child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    children: [
-                      Container(
-                        width: 4,
-                        height: 40,
-                        decoration: BoxDecoration(
-                          color: Color(summary.subject.colorTag),
-                          borderRadius: BorderRadius.circular(2),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              summary.subject.name,
-                              style: theme.textTheme.titleLarge?.copyWith(
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            Text(
-                              '${summary.totalAnomalies} potential errors found',
-                              style: theme.textTheme.bodyMedium?.copyWith(
-                                color: theme.colorScheme.outline,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 24),
-
-                  // Stats Row
-                  SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: Row(
-                      children: [
-                        _buildStatBadge(
-                          context,
-                          'Current',
-                          '${summary.currentPercentage.toStringAsFixed(1)}%',
-                          theme.colorScheme.onSurface,
-                        ),
-                        const SizedBox(width: 16),
-                        const Icon(
-                          Icons.arrow_forward_rounded,
-                          size: 16,
-                          color: Colors.grey,
-                        ),
-                        const SizedBox(width: 16),
-                        _buildStatBadge(
-                          context,
-                          'Potential',
-                          '${summary.potentialPercentage.toStringAsFixed(1)}%',
-                          const Color(0xFF27AE60),
-                        ),
-                        const SizedBox(width: 16),
-                        _buildStatBadge(
-                          context,
-                          'Impact',
-                          '+${summary.impactPercentage.toStringAsFixed(1)}%',
-                          const Color(0xFF27AE60),
-                          isHighlight: true,
-                        ),
-                      ],
+                  Text(
+                    summary.subject.name,
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  Text(
+                    '${summary.totalAnomalies} potential errors found',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: theme.colorScheme.outline,
+                    ),
+                  ),
                 ],
               ),
             ),
-          ),
+          ],
+        ),
+        const SizedBox(height: 24),
 
-          // Anomalies List
-          Expanded(
-            child: ListView.separated(
-              padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
-              itemCount: summary.anomalies.length,
-              separatorBuilder: (context, index) => const SizedBox(height: 16),
-              itemBuilder: (context, index) {
-                final anomaly = summary.anomalies[index];
-                return _buildAnomalyItem(context, anomaly);
-              },
-            ),
+        // Stats Row
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: [
+              _buildStatBadge(
+                context,
+                'Current',
+                '${summary.currentPercentage.toStringAsFixed(1)}%',
+                theme.colorScheme.onSurface,
+              ),
+              const SizedBox(width: 16),
+              const Icon(
+                Icons.arrow_forward_rounded,
+                size: 16,
+                color: Colors.grey,
+              ),
+              const SizedBox(width: 16),
+              _buildStatBadge(
+                context,
+                'Potential',
+                '${summary.potentialPercentage.toStringAsFixed(1)}%',
+                const Color(0xFF27AE60),
+              ),
+              const SizedBox(width: 16),
+              _buildStatBadge(
+                context,
+                'Impact',
+                '+${summary.impactPercentage.toStringAsFixed(1)}%',
+                const Color(0xFF27AE60),
+                isHighlight: true,
+              ),
+            ],
           ),
-        ],
-      ),
+        ),
+        const SizedBox(height: 24), // Spacing before first item
+      ],
     );
   }
 

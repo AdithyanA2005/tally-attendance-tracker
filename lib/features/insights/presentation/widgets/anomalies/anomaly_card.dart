@@ -39,8 +39,10 @@ class AnomalyCard extends StatelessWidget {
                 initialChildSize: 0.7,
                 minChildSize: 0.5,
                 maxChildSize: 0.9,
-                builder: (_, controller) =>
-                    AnomalyDetailsSheet(summary: summary),
+                builder: (_, controller) => AnomalyDetailsSheet(
+                  summary: summary,
+                  scrollController: controller,
+                ),
               ),
             );
           },
