@@ -42,7 +42,7 @@ class UserProfile extends HiveObject {
   Map<String, dynamic> toJson() {
     return {
       'id': id,
-      'email': email,
+      // 'email': email, // Email resides in auth.users, do not duplicate in profiles
       'active_semester_id': activeSemesterId,
       'updated_at': lastUpdated.toIso8601String(),
     };

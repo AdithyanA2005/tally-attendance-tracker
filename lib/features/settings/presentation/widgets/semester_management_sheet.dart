@@ -399,6 +399,9 @@ class _SemesterManagementSheetState
                 ? null
                 : () async {
                     if (_formKey.currentState!.validate()) {
+                      // Close keyboard first to ensure clean navigation
+                      FocusScope.of(context).unfocus();
+
                       setState(() => _isSaving = true);
                       try {
                         if (_editingId != null) {
@@ -427,7 +430,7 @@ class _SemesterManagementSheetState
                             id: const Uuid().v4(),
                             name: _nameController.text.trim(),
                             startDate: _startDate,
-                            isActive: true, // Auto-activate
+                            isActive: false, // Profile controls status now
                             hasPendingSync: true,
                           );
 
@@ -435,13 +438,17 @@ class _SemesterManagementSheetState
                               .read(semesterRepositoryProvider)
                               .addSemester(newSemester);
 
-                          // Set as active
+                          // Set as active (Switch)
                           await ref
                               .read(semesterRepositoryProvider)
                               .setActiveSemesterId(newSemester.id);
 
                           if (mounted) Navigator.pop(context);
                         }
+                      } catch (e) {
+                        ScaffoldMessenger.of(
+                          context,
+                        ).showSnackBar(SnackBar(content: Text('Error: $e')));
                       } finally {
                         if (mounted) {
                           setState(() => _isSaving = false);

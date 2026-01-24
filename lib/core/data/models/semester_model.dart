@@ -36,7 +36,7 @@ class Semester extends HiveObject {
       id: json['id'],
       name: json['name'],
       startDate: DateTime.parse(json['start_date']),
-      isActive: json['is_active'] ?? false,
+      isActive: false, // Moved to Profile
       lastUpdated: DateTime.parse(json['updated_at']),
       hasPendingSync: false,
     );
@@ -47,7 +47,7 @@ class Semester extends HiveObject {
       'id': id,
       'name': name,
       'start_date': startDate.toIso8601String().split('T')[0],
-      'is_active': isActive,
+      // 'is_active': isActive, // Moved to Profile, do not send to DB
       'updated_at': lastUpdated.toIso8601String(),
     };
   }
