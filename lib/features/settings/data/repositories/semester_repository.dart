@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:tally/core/data/repositories/profile_repository.dart';
 
 import '../../../../core/data/models/semester_model.dart';
 import '../../../../core/services/supabase_service.dart';
@@ -11,9 +12,14 @@ part 'semester_repository.g.dart';
 
 class SemesterRepository extends CacheRepository<Semester> {
   final LocalStorageService _localStorage;
+  final ProfileRepository _profileRepository;
 
-  SemesterRepository(LocalStorageService localStorage, SupabaseClient supabase)
-    : _localStorage = localStorage,
+  SemesterRepository(
+    LocalStorageService localStorage,
+    SupabaseClient supabase,
+    ProfileRepository profileRepository,
+  ) : _localStorage = localStorage,
+      _profileRepository = profileRepository,
       super(
         box: localStorage.semesterBox,
         supabase: supabase,
@@ -26,7 +32,7 @@ class SemesterRepository extends CacheRepository<Semester> {
   @override
   String getId(Semester item) => item.id;
 
-  // READs - Now from Hive
+  // READs
 
   Stream<List<Semester>> watchAllSemesters() {
     return stream.map((box) {
@@ -37,15 +43,21 @@ class SemesterRepository extends CacheRepository<Semester> {
   }
 
   Stream<Semester?> watchActiveSemester() {
-    return stream.map((box) {
-      final list = box.values.toList();
-      try {
-        return list.firstWhere((s) => s.isActive);
-      } catch (_) {
-        if (list.isEmpty) return null;
+    // Watch profile changes (where activeSemesterId lives)
+    return _profileRepository.watchProfile().map((profile) {
+      final id = profile?.activeSemesterId;
+
+      if (id != null && box.containsKey(id)) {
+        return box.get(id);
+      }
+
+      // Fallback: Return most recent semester if any exist
+      if (box.isNotEmpty) {
+        final list = box.values.toList();
         list.sort((a, b) => b.startDate.compareTo(a.startDate));
         return list.first;
       }
+      return null;
     });
   }
 
@@ -54,42 +66,10 @@ class SemesterRepository extends CacheRepository<Semester> {
     return active?.id;
   }
 
-  // WRITES - Optimistic + Remote
+  // WRITES
 
   Future<void> setActiveSemesterId(String id) async {
-    final userId = supabase.auth.currentUser!.id;
-
-    // 1. Optimistic Update (Local)
-    // 1. Optimistic Update (Local)
-    final all = box.values.toList();
-
-    // First, deactivate others to avoid dual-active state
-    for (var s in all) {
-      if (s.id != id && s.isActive) {
-        await saveLocal(s.copyWith(isActive: false));
-      }
-    }
-
-    // Then, activate target
-    for (var s in all) {
-      if (s.id == id && !s.isActive) {
-        await saveLocal(s.copyWith(isActive: true));
-      }
-    }
-
-    // 2. Remote Update
-    // We do this carefully to avoid race conditions but Supabase is the source of truth eventually.
-    // The Stream listener in CacheRepository will reconcile eventually.
-
-    // Mark target as active
-    await supabase.from('semesters').update({'is_active': true}).eq('id', id);
-
-    // Mark others as inactive
-    await supabase
-        .from('semesters')
-        .update({'is_active': false})
-        .eq('user_id', userId)
-        .neq('id', id);
+    await _profileRepository.updateActiveSemester(id);
   }
 
   Future<void> addSemester(Semester semester) async {
@@ -100,6 +80,11 @@ class SemesterRepository extends CacheRepository<Semester> {
     final json = semester.toJson();
     json['user_id'] = supabase.auth.currentUser!.id;
     await supabase.from('semesters').upsert(json);
+
+    // Auto-set as active if it's the first one
+    if (box.length == 1) {
+      await setActiveSemesterId(semester.id);
+    }
   }
 
   Future<void> updateSemester(Semester semester) async {
@@ -113,23 +98,17 @@ class SemesterRepository extends CacheRepository<Semester> {
   }
 
   Future<void> deleteSemester(String id) async {
-    // 1. Manual Local Cascade (Big Nuke for this Semester)
-    // We must manually locate and delete all child records from Hive
-    // because Hive doesn't support cascades, and waiting for Supabase sync
-    // leaves "orphaned" data visible in the UI for seconds/minutes.
+    // 1. Manual Local Cascade of Children
 
-    // Scan & Delete Subjects
+    // Subjects
     final subjectBox = _localStorage.subjectBox;
     final subjectKeys = subjectBox.values
         .where((s) => s.semesterId == id)
-        .map(
-          (s) => s.id,
-        ) // CacheRepo uses ID as key usually, but check getKey implementation?
-        // CacheRepository implementation uses `put(getId(item), item)`. So key IS id.
+        .map((s) => s.id)
         .toList();
     if (subjectKeys.isNotEmpty) await subjectBox.deleteAll(subjectKeys);
 
-    // Scan & Delete Sessions
+    // Sessions
     final sessionBox = _localStorage.sessionBox;
     final sessionKeys = sessionBox.values
         .where((s) => s.semesterId == id)
@@ -137,7 +116,7 @@ class SemesterRepository extends CacheRepository<Semester> {
         .toList();
     if (sessionKeys.isNotEmpty) await sessionBox.deleteAll(sessionKeys);
 
-    // Scan & Delete Timetables
+    // Timetables
     final timetableBox = _localStorage.timetableBox;
     final timetableKeys = timetableBox.values
         .where((t) => t.semesterId == id)
@@ -149,18 +128,34 @@ class SemesterRepository extends CacheRepository<Semester> {
     await deleteLocal(id);
 
     // 3. Remote Delete
-    // DB Constraints (ON DELETE CASCADE) now handle cleanup of children (subjects, logs, timetables)
     await supabase.from('semesters').delete().eq('id', id);
+
+    // Update active semester if we deleted the active one
+    final activeId = _profileRepository.getProfileSync()?.activeSemesterId;
+    if (activeId == id) {
+      // Clear it or set to next available?
+      // For now, let fallback logic handle "next available"
+      // but we should probably clear the dangling reference in profile.
+      await _profileRepository.updateActiveSemester(''); // or null if nullable
+    }
   }
 
-  // Helper for one-off reads if needed (prefer streams in UI)
+  // Helper for one-off reads
   Semester? getActiveSemesterSync() {
-    try {
-      return box.values.firstWhere((s) => s.isActive);
-    } catch (_) {
-      if (box.isNotEmpty) return box.values.last; // Fallback
-      return null;
+    final profile = _profileRepository.getProfileSync();
+    final id = profile?.activeSemesterId;
+
+    if (id != null && box.containsKey(id)) {
+      return box.get(id);
     }
+
+    // Fallback logic
+    if (box.isNotEmpty) {
+      final list = box.values.toList();
+      list.sort((a, b) => b.startDate.compareTo(a.startDate));
+      return list.first;
+    }
+    return null;
   }
 }
 
@@ -169,6 +164,7 @@ SemesterRepository semesterRepository(SemesterRepositoryRef ref) {
   return SemesterRepository(
     ref.watch(localStorageServiceProvider),
     SupabaseService().client,
+    ref.watch(profileRepositoryProvider),
   );
 }
 
