@@ -33,16 +33,17 @@ class AnomalyCard extends StatelessWidget {
             showModalBottomSheet(
               context: context,
               isScrollControlled: true,
-              backgroundColor: Colors.transparent,
+              showDragHandle: true,
+              backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+              shape: const RoundedRectangleBorder(
+                borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+              ),
               constraints: const BoxConstraints(maxWidth: 600),
-              builder: (context) => DraggableScrollableSheet(
-                initialChildSize: 0.7,
-                minChildSize: 0.5,
-                maxChildSize: 0.9,
-                builder: (_, controller) => AnomalyDetailsSheet(
-                  summary: summary,
-                  scrollController: controller,
+              builder: (context) => ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxHeight: MediaQuery.of(context).size.height * 0.7,
                 ),
+                child: AnomalyDetailsSheet(summary: summary),
               ),
             );
           },

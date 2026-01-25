@@ -17,12 +17,9 @@ class AnomalyDetailsSheet extends StatelessWidget {
     final theme = Theme.of(context);
 
     return Container(
-      padding: const EdgeInsets.only(top: 8),
-      decoration: BoxDecoration(
-        color: theme.scaffoldBackgroundColor,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-      ),
+      padding: EdgeInsets.zero,
       child: ListView.separated(
+        shrinkWrap: true,
         controller: scrollController,
         padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
         itemCount: summary.anomalies.length + 1, // +1 for Header
@@ -48,19 +45,7 @@ class AnomalyDetailsSheet extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        // Handle bar
-        Center(
-          child: Container(
-            width: 40,
-            height: 4,
-            margin: const EdgeInsets.symmetric(vertical: 12),
-            decoration: BoxDecoration(
-              color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.4),
-              borderRadius: BorderRadius.circular(2),
-            ),
-          ),
-        ),
-
+        // Handle bar removed (handled by parent sheet)
         Row(
           children: [
             Container(

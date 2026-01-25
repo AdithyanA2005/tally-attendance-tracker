@@ -45,15 +45,11 @@ class _SemesterManagementSheetState
     return Container(
       padding: EdgeInsets.fromLTRB(
         24,
-        24,
+        0,
         24,
         MediaQuery.of(context).viewInsets.bottom +
             MediaQuery.of(context).padding.bottom +
             24,
-      ),
-      decoration: BoxDecoration(
-        color: Theme.of(context).scaffoldBackgroundColor,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
       ),
       child: AnimatedSize(
         duration: const Duration(milliseconds: 300),

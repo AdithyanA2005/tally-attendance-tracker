@@ -167,13 +167,9 @@ class _SubjectFormSheetState extends ConsumerState<SubjectFormSheet> {
     final theme = Theme.of(context);
 
     return Container(
-      decoration: BoxDecoration(
-        color: theme.scaffoldBackgroundColor,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-      ),
       padding: EdgeInsets.fromLTRB(
         24,
-        24,
+        0,
         24,
         MediaQuery.of(context).viewInsets.bottom +
             MediaQuery.of(context).padding.bottom +

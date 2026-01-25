@@ -197,6 +197,16 @@ class _TimetableScreenState extends ConsumerState<TimetableScreen> {
                                           showModalBottomSheet(
                                             context: context,
                                             isScrollControlled: true,
+                                            showDragHandle: true,
+                                            backgroundColor: Theme.of(
+                                              context,
+                                            ).scaffoldBackgroundColor,
+                                            shape: const RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.vertical(
+                                                    top: Radius.circular(28),
+                                                  ),
+                                            ),
                                             constraints: const BoxConstraints(
                                               maxWidth: 600,
                                             ),
@@ -330,6 +340,11 @@ class _TimetableScreenState extends ConsumerState<TimetableScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      showDragHandle: true,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
       constraints: const BoxConstraints(maxWidth: 600),
       builder: (context) => _AddEntrySheet(selectedDay: _selectedDay),
     );
@@ -356,13 +371,9 @@ class _AddEntrySheetState extends ConsumerState<_AddEntrySheet> {
     final theme = Theme.of(context);
 
     return Container(
-      decoration: BoxDecoration(
-        color: theme.scaffoldBackgroundColor,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-      ),
       padding: EdgeInsets.fromLTRB(
         24,
-        24,
+        0,
         24,
         MediaQuery.of(context).viewInsets.bottom +
             MediaQuery.of(context).padding.bottom +
@@ -679,13 +690,9 @@ class _EditEntrySheetState extends ConsumerState<_EditEntrySheet> {
     final theme = Theme.of(context);
 
     return Container(
-      decoration: BoxDecoration(
-        color: theme.scaffoldBackgroundColor,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-      ),
       padding: EdgeInsets.fromLTRB(
         24,
-        24,
+        0,
         24,
         MediaQuery.of(context).viewInsets.bottom +
             MediaQuery.of(context).padding.bottom +

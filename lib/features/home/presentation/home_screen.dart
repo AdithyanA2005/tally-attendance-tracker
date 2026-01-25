@@ -688,7 +688,11 @@ class _TodayClassCard extends ConsumerWidget {
     await showModalBottomSheet<String>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.transparent,
+      showDragHandle: true,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
       constraints: const BoxConstraints(maxWidth: 600),
       builder: (context) => EditSessionSheet(
         session:

@@ -105,13 +105,9 @@ class _EditSessionSheetState extends ConsumerState<EditSessionSheet> {
     }
 
     return Container(
-      decoration: BoxDecoration(
-        color: theme.scaffoldBackgroundColor,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-      ),
       padding: EdgeInsets.fromLTRB(
         24,
-        24,
+        0, // Top padding handled by drag handle area usually, or add small amount
         24,
         MediaQuery.of(context).viewInsets.bottom +
             MediaQuery.of(context).padding.bottom +
