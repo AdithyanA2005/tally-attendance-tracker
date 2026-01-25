@@ -103,7 +103,20 @@ class ProfileRepository extends CacheRepository<UserProfile> {
         photoUrl: photoUrl,
       );
     } else {
-      profile = profile.copyWith(photoUrl: photoUrl);
+      if (photoUrl == null) {
+        // copyWith doesn't support setting to null, so we recreate the object
+        profile = UserProfile(
+          id: profile.id,
+          email: profile.email,
+          activeSemesterId: profile.activeSemesterId,
+          lastUpdated: DateTime.now(),
+          hasPendingSync: profile.hasPendingSync,
+          name: profile.name,
+          photoUrl: null,
+        );
+      } else {
+        profile = profile.copyWith(photoUrl: photoUrl);
+      }
     }
 
     await saveLocal(profile);
