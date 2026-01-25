@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -9,6 +10,9 @@ import '../../../../core/presentation/widgets/section_header.dart';
 // import '../../../../core/services/sync_service.dart';
 import 'package:tally/features/settings/data/repositories/semester_repository.dart';
 import '../../../../core/theme/theme_provider.dart';
+import 'package:tally/core/data/repositories/profile_repository.dart';
+import '../../../../core/data/models/user_profile_model.dart';
+import 'account_screen.dart';
 import 'widgets/semester_management_sheet.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
@@ -43,62 +47,181 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               ),
               SliverList(
                 delegate: SliverChildListDelegate([
-                  // Profile Section (Visual only for now)
+                  // Profile Section
                   Consumer(
                     builder: (context, ref, _) {
                       final user = ref
                           .watch(authRepositoryProvider)
                           .currentUser;
-                      return Padding(
-                        padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
-                        child: Row(
-                          children: [
-                            CircleAvatar(
-                              radius: 32,
-                              backgroundColor: Theme.of(
+                      // Watch profile for name/photo updates
+                      final profileStream = ref.watch(
+                        profileRepositoryProvider.select(
+                          (repo) => repo.watchProfile(),
+                        ),
+                      );
+
+                      return StreamBuilder<UserProfile?>(
+                        stream: profileStream,
+                        initialData: ref
+                            .read(profileRepositoryProvider)
+                            .getProfileSync(),
+                        builder: (context, snapshot) {
+                          final profile = snapshot.data;
+
+                          return InkWell(
+                            onTap: () {
+                              Navigator.push(
                                 context,
-                              ).colorScheme.primaryContainer,
-                              child: Text(
-                                (user?.email?[0] ?? 'U').toUpperCase(),
-                                style: TextStyle(
-                                  fontSize: 24,
-                                  fontWeight: FontWeight.bold,
-                                  color: Theme.of(
-                                    context,
-                                  ).colorScheme.onPrimaryContainer,
+                                MaterialPageRoute(
+                                  builder: (context) => const AccountScreen(),
                                 ),
-                              ),
-                            ),
-                            const SizedBox(width: 16),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
+                              );
+                            },
+                            child: Padding(
+                              padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+                              child: Row(
                                 children: [
-                                  Text(
-                                    'Account',
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .labelSmall
-                                        ?.copyWith(
-                                          color: Theme.of(
-                                            context,
-                                          ).colorScheme.outline,
-                                        ),
+                                  SizedBox(
+                                    width: 64,
+                                    height: 64,
+                                    child: ClipOval(
+                                      child: Container(
+                                        color: Theme.of(
+                                          context,
+                                        ).colorScheme.primaryContainer,
+                                        child: profile?.photoUrl != null
+                                            ? CachedNetworkImage(
+                                                imageUrl: profile!.photoUrl!,
+                                                fit: BoxFit.cover,
+                                                placeholder: (context, url) => Center(
+                                                  child: Text(
+                                                    ((profile?.name?.isNotEmpty ==
+                                                                    true
+                                                                ? profile!
+                                                                      .name![0]
+                                                                : null) ??
+                                                            (user?.email?.isNotEmpty ==
+                                                                    true
+                                                                ? user!
+                                                                      .email![0]
+                                                                : 'U'))
+                                                        .toUpperCase(),
+                                                    style: TextStyle(
+                                                      fontSize: 24,
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                      color: Theme.of(context)
+                                                          .colorScheme
+                                                          .onPrimaryContainer,
+                                                    ),
+                                                  ),
+                                                ),
+                                                errorWidget: (context, url, error) => Center(
+                                                  child: Text(
+                                                    ((profile?.name?.isNotEmpty ==
+                                                                    true
+                                                                ? profile!
+                                                                      .name![0]
+                                                                : null) ??
+                                                            (user?.email?.isNotEmpty ==
+                                                                    true
+                                                                ? user!
+                                                                      .email![0]
+                                                                : 'U'))
+                                                        .toUpperCase(),
+                                                    style: TextStyle(
+                                                      fontSize: 24,
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                      color: Theme.of(context)
+                                                          .colorScheme
+                                                          .onPrimaryContainer,
+                                                    ),
+                                                  ),
+                                                ),
+                                              )
+                                            : Center(
+                                                child: Text(
+                                                  ((profile?.name?.isNotEmpty ==
+                                                                  true
+                                                              ? profile!
+                                                                    .name![0]
+                                                              : null) ??
+                                                          (user?.email?.isNotEmpty ==
+                                                                  true
+                                                              ? user!.email![0]
+                                                              : 'U'))
+                                                      .toUpperCase(),
+                                                  style: TextStyle(
+                                                    fontSize: 24,
+                                                    fontWeight: FontWeight.bold,
+                                                    color: Theme.of(context)
+                                                        .colorScheme
+                                                        .onPrimaryContainer,
+                                                  ),
+                                                ),
+                                              ),
+                                      ),
+                                    ),
                                   ),
-                                  Text(
-                                    user?.email ?? 'Guest User',
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .titleMedium
-                                        ?.copyWith(fontWeight: FontWeight.w600),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
+                                  const SizedBox(width: 16),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          'Account',
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .labelSmall
+                                              ?.copyWith(
+                                                color: Theme.of(
+                                                  context,
+                                                ).colorScheme.outline,
+                                              ),
+                                        ),
+                                        Text(
+                                          profile?.name ??
+                                              user?.email ??
+                                              'Guest User',
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .titleMedium
+                                              ?.copyWith(
+                                                fontWeight: FontWeight.w600,
+                                              ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                        if (profile?.name != null)
+                                          Text(
+                                            user?.email ?? '',
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .bodySmall
+                                                ?.copyWith(
+                                                  color: Theme.of(context)
+                                                      .colorScheme
+                                                      .onSurfaceVariant,
+                                                ),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                      ],
+                                    ),
+                                  ),
+                                  Icon(
+                                    Icons.chevron_right_rounded,
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.outline,
                                   ),
                                 ],
                               ),
                             ),
-                          ],
-                        ),
+                          );
+                        },
                       );
                     },
                   ),

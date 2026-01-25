@@ -71,6 +71,44 @@ class ProfileRepository extends CacheRepository<UserProfile> {
     // Remote
     await supabase.from('profiles').upsert(profile.toJson());
   }
+
+  Future<void> updateName(String name) async {
+    final userId = supabase.auth.currentUser?.id;
+    if (userId == null) return;
+
+    var profile = box.get(userId);
+    if (profile == null) {
+      profile = UserProfile(
+        id: userId,
+        email: supabase.auth.currentUser?.email,
+        name: name,
+      );
+    } else {
+      profile = profile.copyWith(name: name);
+    }
+
+    await saveLocal(profile);
+    await supabase.from('profiles').upsert(profile.toJson());
+  }
+
+  Future<void> updatePhotoUrl(String? photoUrl) async {
+    final userId = supabase.auth.currentUser?.id;
+    if (userId == null) return;
+
+    var profile = box.get(userId);
+    if (profile == null) {
+      profile = UserProfile(
+        id: userId,
+        email: supabase.auth.currentUser?.email,
+        photoUrl: photoUrl,
+      );
+    } else {
+      profile = profile.copyWith(photoUrl: photoUrl);
+    }
+
+    await saveLocal(profile);
+    await supabase.from('profiles').upsert(profile.toJson());
+  }
 }
 
 final profileRepositoryProvider = Provider<ProfileRepository>((ref) {

@@ -19,12 +19,20 @@ class UserProfile extends HiveObject {
   @HiveField(4, defaultValue: false)
   final bool hasPendingSync;
 
+  @HiveField(5)
+  final String? name;
+
+  @HiveField(6)
+  final String? photoUrl;
+
   UserProfile({
     required this.id,
     this.email,
     this.activeSemesterId,
     DateTime? lastUpdated,
     this.hasPendingSync = false,
+    this.name,
+    this.photoUrl,
   }) : lastUpdated = lastUpdated ?? DateTime.now();
 
   factory UserProfile.fromJson(Map<String, dynamic> json) {
@@ -36,6 +44,8 @@ class UserProfile extends HiveObject {
         json['updated_at'] ?? DateTime.now().toIso8601String(),
       ),
       hasPendingSync: false,
+      name: json['full_name'],
+      photoUrl: json['avatar_url'],
     );
   }
 
@@ -45,6 +55,8 @@ class UserProfile extends HiveObject {
       // 'email': email, // Email resides in auth.users, do not duplicate in profiles
       'active_semester_id': activeSemesterId,
       'updated_at': lastUpdated.toIso8601String(),
+      'full_name': name,
+      'avatar_url': photoUrl,
     };
   }
 
@@ -54,6 +66,8 @@ class UserProfile extends HiveObject {
     String? activeSemesterId,
     DateTime? lastUpdated,
     bool? hasPendingSync,
+    String? name,
+    String? photoUrl,
   }) {
     return UserProfile(
       id: id ?? this.id,
@@ -61,6 +75,8 @@ class UserProfile extends HiveObject {
       activeSemesterId: activeSemesterId ?? this.activeSemesterId,
       lastUpdated: lastUpdated ?? this.lastUpdated,
       hasPendingSync: hasPendingSync ?? this.hasPendingSync,
+      name: name ?? this.name,
+      photoUrl: photoUrl ?? this.photoUrl,
     );
   }
 }
