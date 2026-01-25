@@ -7,6 +7,8 @@ import 'widgets/skeleton_screen.dart';
 import '../../core/constants/env.dart';
 import '../../main.dart';
 
+import 'package:tally/features/settings/data/repositories/settings_repository.dart';
+
 class AppInitializer extends StatefulWidget {
   const AppInitializer({super.key});
 
@@ -18,7 +20,7 @@ class _AppInitializerState extends State<AppInitializer> {
   bool _isInitialized = false;
   String? _errorMessage;
   late LocalStorageService _localStorage;
-  // late SettingsRepository _settingsRepo;
+  late SettingsRepository _settingsRepo;
 
   @override
   void initState() {
@@ -38,7 +40,7 @@ class _AppInitializerState extends State<AppInitializer> {
       _localStorage = LocalStorageService();
       await _localStorage.init();
 
-      // _settingsRepo = await SettingsRepository.init();
+      _settingsRepo = await SettingsRepository.init();
 
       if (mounted) {
         setState(() {
@@ -86,7 +88,10 @@ class _AppInitializerState extends State<AppInitializer> {
 
     // 3. Success State - Main App
     return ProviderScope(
-      overrides: [localStorageServiceProvider.overrideWithValue(_localStorage)],
+      overrides: [
+        localStorageServiceProvider.overrideWithValue(_localStorage),
+        settingsRepositoryProvider.overrideWithValue(_settingsRepo),
+      ],
       child: const AttendanceApp(),
     );
   }

@@ -8,6 +8,7 @@ import '../../../../core/presentation/widgets/section_header.dart';
 // import '../../../../core/services/backup_service.dart';
 // import '../../../../core/services/sync_service.dart';
 import 'package:tally/features/settings/data/repositories/semester_repository.dart';
+import '../../../../core/theme/theme_provider.dart';
 import 'widgets/semester_management_sheet.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
@@ -136,6 +137,24 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
                   const SizedBox(height: 16),
                   const SectionHeader(title: 'General'),
+                  Consumer(
+                    builder: (context, ref, _) {
+                      final themeMode = ref.watch(themeProvider);
+                      return ListTile(
+                        leading: const Icon(Icons.dark_mode_rounded),
+                        title: const Text('Appearance'),
+                        subtitle: Text(
+                          themeMode == ThemeMode.system
+                              ? 'System'
+                              : themeMode == ThemeMode.light
+                              ? 'Light'
+                              : 'Dark',
+                        ),
+                        trailing: const Icon(Icons.chevron_right),
+                        onTap: () => _showAppearanceSelector(context, ref),
+                      );
+                    },
+                  ),
                   const ListTile(
                     leading: Icon(Icons.notifications_rounded),
                     title: Text('Notifications'),
@@ -190,6 +209,124 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       backgroundColor: Colors.transparent,
       constraints: const BoxConstraints(maxWidth: 600),
       builder: (context) => const SemesterManagementSheet(),
+    );
+  }
+
+  void _showAppearanceSelector(BuildContext context, WidgetRef ref) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) => Container(
+        decoration: BoxDecoration(
+          color: Theme.of(context).scaffoldBackgroundColor,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+        ),
+        padding: const EdgeInsets.symmetric(vertical: 24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'Appearance',
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  ),
+                  IconButton(
+                    onPressed: () => Navigator.pop(context),
+                    icon: const Icon(Icons.close_rounded),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+            _buildThemeOptionSheetItem(
+              context,
+              ref,
+              'System',
+              ThemeMode.system,
+              Icons.brightness_auto_rounded,
+            ),
+            _buildThemeOptionSheetItem(
+              context,
+              ref,
+              'Light',
+              ThemeMode.light,
+              Icons.light_mode_rounded,
+            ),
+            _buildThemeOptionSheetItem(
+              context,
+              ref,
+              'Dark',
+              ThemeMode.dark,
+              Icons.dark_mode_rounded,
+            ),
+            const SizedBox(height: 24),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildThemeOptionSheetItem(
+    BuildContext context,
+    WidgetRef ref,
+    String label,
+    ThemeMode mode,
+    IconData icon,
+  ) {
+    final currentMode = ref.watch(themeProvider);
+    final isSelected = currentMode == mode;
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return InkWell(
+      onTap: () {
+        ref.read(themeProvider.notifier).setThemeMode(mode);
+        Navigator.pop(context);
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? colorScheme.primaryContainer.withValues(alpha: 0.3)
+              : null,
+          border: Border(
+            left: BorderSide(
+              color: isSelected ? colorScheme.primary : Colors.transparent,
+              width: 4,
+            ),
+          ),
+        ),
+        child: Row(
+          children: [
+            Icon(
+              icon,
+              color: isSelected
+                  ? colorScheme.primary
+                  : colorScheme.onSurfaceVariant,
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Text(
+                label,
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                  color: isSelected
+                      ? colorScheme.onSurface
+                      : colorScheme.onSurface,
+                ),
+              ),
+            ),
+            if (isSelected)
+              Icon(Icons.check_rounded, color: colorScheme.primary),
+          ],
+        ),
+      ),
     );
   }
 }
