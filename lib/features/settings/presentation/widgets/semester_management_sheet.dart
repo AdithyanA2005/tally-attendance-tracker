@@ -64,27 +64,18 @@ class _SemesterManagementSheetState
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               // Header
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    _isCreating
-                        ? (_editingId != null
-                              ? 'Edit Semester'
-                              : 'New Semester')
-                        : 'Switch Semester',
-                    style: const TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
+              if (_isCreating) ...[
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      _editingId != null ? 'Edit Semester' : 'New Semester',
+                      style: const TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
-                  ),
-                  if (!_isCreating)
                     IconButton(
-                      onPressed: () => Navigator.pop(context),
-                      icon: const Icon(Icons.close_rounded),
-                    )
-                  else
-                    TextButton(
                       onPressed: () {
                         setState(() {
                           _isCreating = false;
@@ -93,11 +84,18 @@ class _SemesterManagementSheetState
                           _startDate = DateTime.now();
                         });
                       },
-                      child: const Text('Cancel'),
+                      icon: const Icon(Icons.close_rounded),
                     ),
-                ],
-              ),
-              const SizedBox(height: 24),
+                  ],
+                ),
+                const SizedBox(height: 24),
+              ] else ...[
+                const Text(
+                  'Switch Semester',
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 24),
+              ],
 
               if (_isCreating)
                 _buildCreateForm()
@@ -123,9 +121,29 @@ class _SemesterManagementSheetState
         return Column(
           children: [
             if (sorted.isEmpty)
-              const Padding(
-                padding: EdgeInsets.all(16.0),
-                child: Text('No semesters found. Create one!'),
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 32),
+                child: Center(
+                  child: Column(
+                    children: [
+                      Icon(
+                        Icons.school_outlined,
+                        size: 48,
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.outline.withValues(alpha: 0.5),
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        'No semesters found',
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                          fontSize: 16,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
 
             ...sorted.map((semester) {
@@ -136,22 +154,15 @@ class _SemesterManagementSheetState
                 margin: const EdgeInsets.only(bottom: 12),
                 decoration: BoxDecoration(
                   color: isActive
-                      ? colorScheme.surface
+                      ? colorScheme.primary.withValues(alpha: 0.1)
                       : colorScheme.surfaceContainerLow.withValues(alpha: 0.5),
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
-                    color: isActive ? colorScheme.primary : Colors.transparent,
-                    width: 1.5,
+                    color: isActive
+                        ? colorScheme.primary
+                        : colorScheme.outlineVariant.withValues(alpha: 0.5),
+                    width: isActive ? 2 : 1,
                   ),
-                  boxShadow: isActive
-                      ? [
-                          BoxShadow(
-                            color: colorScheme.shadow.withValues(alpha: 0.05),
-                            blurRadius: 12,
-                            offset: const Offset(0, 4),
-                          ),
-                        ]
-                      : null,
                 ),
                 child: Material(
                   color: Colors.transparent,
@@ -164,26 +175,31 @@ class _SemesterManagementSheetState
 
                         // Force active semester provider refresh
                         ref.invalidate(activeSemesterProvider);
-
-                        // Keep sheet open to allow further actions (like deleting the old one)
-                        // previously: if (mounted) Navigator.pop(context);
                       }
                     },
                     borderRadius: BorderRadius.circular(16),
                     child: Padding(
-                      padding: const EdgeInsets.fromLTRB(20, 16, 8, 16),
+                      padding: const EdgeInsets.fromLTRB(16, 16, 8, 16),
                       child: Row(
                         children: [
-                          // Status Icon (Left side now? No, keep logic, just adjust spacing)
-                          if (isActive) ...[
-                            Icon(
-                              Icons.check_circle_rounded,
-                              color: colorScheme.primary,
+                          Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: isActive
+                                  ? colorScheme.primary.withValues(alpha: 0.2)
+                                  : colorScheme.surfaceContainerHighest
+                                        .withValues(alpha: 0.5),
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(
+                              Icons.school_rounded,
+                              color: isActive
+                                  ? colorScheme.primary
+                                  : colorScheme.onSurfaceVariant,
                               size: 24,
                             ),
-                            const SizedBox(width: 16),
-                          ],
-
+                          ),
+                          const SizedBox(width: 16),
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -193,11 +209,11 @@ class _SemesterManagementSheetState
                                   style: TextStyle(
                                     fontSize: 16,
                                     fontWeight: isActive
-                                        ? FontWeight.w600
-                                        : FontWeight.w500,
+                                        ? FontWeight.bold
+                                        : FontWeight.w600,
                                     color: isActive
-                                        ? colorScheme.onSurface
-                                        : colorScheme.onSurfaceVariant,
+                                        ? colorScheme.primary
+                                        : colorScheme.onSurface,
                                   ),
                                 ),
                                 const SizedBox(height: 4),
@@ -207,18 +223,34 @@ class _SemesterManagementSheetState
                                   ).format(semester.startDate),
                                   style: TextStyle(
                                     fontSize: 13,
-                                    color: colorScheme.outline,
+                                    color: isActive
+                                        ? colorScheme.primary.withValues(
+                                            alpha: 0.8,
+                                          )
+                                        : colorScheme.onSurfaceVariant,
                                   ),
                                 ),
                               ],
                             ),
                           ),
 
+                          if (isActive)
+                            Padding(
+                              padding: const EdgeInsets.only(right: 8.0),
+                              child: Icon(
+                                Icons.check_circle_rounded,
+                                color: colorScheme.primary,
+                                size: 24,
+                              ),
+                            ),
+
                           // Menu
                           PopupMenuButton<String>(
                             icon: Icon(
                               Icons.more_vert_rounded,
-                              color: colorScheme.outline,
+                              color: isActive
+                                  ? colorScheme.primary
+                                  : colorScheme.outline,
                             ),
                             onSelected: (value) {
                               if (value == 'edit') {
@@ -270,7 +302,7 @@ class _SemesterManagementSheetState
               );
             }),
 
-            const SizedBox(height: 16),
+            const SizedBox(height: 24),
             FilledButton.icon(
               onPressed: () => setState(() => _isCreating = true),
               icon: const Icon(Icons.add_rounded),
@@ -283,6 +315,7 @@ class _SemesterManagementSheetState
                 ),
               ),
             ),
+            const SizedBox(height: 16),
           ],
         );
       },

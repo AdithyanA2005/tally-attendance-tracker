@@ -329,7 +329,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.transparent,
+      showDragHandle: true,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       constraints: const BoxConstraints(maxWidth: 600),
       builder: (context) => const SemesterManagementSheet(),
     );
@@ -338,58 +339,50 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   void _showAppearanceSelector(BuildContext context, WidgetRef ref) {
     showModalBottomSheet(
       context: context,
-      backgroundColor: Colors.transparent,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      showDragHandle: true,
       isScrollControlled: true,
-      builder: (context) => Container(
-        decoration: BoxDecoration(
-          color: Theme.of(context).scaffoldBackgroundColor,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-        ),
-        padding: const EdgeInsets.symmetric(vertical: 24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text(
-                    'Appearance',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                  ),
-                  IconButton(
-                    onPressed: () => Navigator.pop(context),
-                    icon: const Icon(Icons.close_rounded),
-                  ),
-                ],
+      builder: (context) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const Text(
+                'Appearance',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
-            ),
-            const SizedBox(height: 16),
-            _buildThemeOptionSheetItem(
-              context,
-              ref,
-              'System',
-              ThemeMode.system,
-              Icons.brightness_auto_rounded,
-            ),
-            _buildThemeOptionSheetItem(
-              context,
-              ref,
-              'Light',
-              ThemeMode.light,
-              Icons.light_mode_rounded,
-            ),
-            _buildThemeOptionSheetItem(
-              context,
-              ref,
-              'Dark',
-              ThemeMode.dark,
-              Icons.dark_mode_rounded,
-            ),
-            const SizedBox(height: 24),
-          ],
+              const SizedBox(height: 24),
+              _buildThemeOptionSheetItem(
+                context,
+                ref,
+                'System Default',
+                'Matches your device settings',
+                ThemeMode.system,
+                Icons.brightness_auto_rounded,
+              ),
+              const SizedBox(height: 12),
+              _buildThemeOptionSheetItem(
+                context,
+                ref,
+                'Light Mode',
+                'Clean and bright interface',
+                ThemeMode.light,
+                Icons.light_mode_rounded,
+              ),
+              const SizedBox(height: 12),
+              _buildThemeOptionSheetItem(
+                context,
+                ref,
+                'Dark Mode',
+                'Easier on the eyes',
+                ThemeMode.dark,
+                Icons.dark_mode_rounded,
+              ),
+              const SizedBox(height: 24),
+            ],
+          ),
         ),
       ),
     );
@@ -440,6 +433,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     BuildContext context,
     WidgetRef ref,
     String label,
+    String description,
     ThemeMode mode,
     IconData icon,
   ) {
@@ -452,42 +446,73 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         ref.read(themeProvider.notifier).setThemeMode(mode);
         Navigator.pop(context);
       },
+      borderRadius: BorderRadius.circular(16),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: isSelected
-              ? colorScheme.primaryContainer.withValues(alpha: 0.3)
-              : null,
-          border: Border(
-            left: BorderSide(
-              color: isSelected ? colorScheme.primary : Colors.transparent,
-              width: 4,
-            ),
+              ? colorScheme.primary.withValues(alpha: 0.1)
+              : colorScheme.surfaceContainerLow.withValues(alpha: 0.5),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isSelected
+                ? colorScheme.primary
+                : colorScheme.outlineVariant.withValues(alpha: 0.5),
+            width: isSelected ? 2 : 1,
           ),
         ),
         child: Row(
           children: [
-            Icon(
-              icon,
-              color: isSelected
-                  ? colorScheme.primary
-                  : colorScheme.onSurfaceVariant,
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: isSelected
+                    ? colorScheme.primary.withValues(alpha: 0.2)
+                    : colorScheme.surfaceContainerHighest.withValues(
+                        alpha: 0.5,
+                      ),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                icon,
+                color: isSelected
+                    ? colorScheme.primary
+                    : colorScheme.onSurfaceVariant,
+                size: 24,
+              ),
             ),
             const SizedBox(width: 16),
             Expanded(
-              child: Text(
-                label,
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                  color: isSelected
-                      ? colorScheme.onSurface
-                      : colorScheme.onSurface,
-                ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    label,
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: isSelected
+                          ? FontWeight.bold
+                          : FontWeight.w600,
+                      color: isSelected
+                          ? colorScheme.primary
+                          : colorScheme.onSurface,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    description,
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: isSelected
+                          ? colorScheme.primary.withValues(alpha: 0.8)
+                          : colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ],
               ),
             ),
             if (isSelected)
-              Icon(Icons.check_rounded, color: colorScheme.primary),
+              Icon(Icons.check_circle_rounded, color: colorScheme.primary),
           ],
         ),
       ),
