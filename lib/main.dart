@@ -4,7 +4,7 @@ import 'core/theme/app_theme.dart';
 import 'core/presentation/app_router.dart';
 import 'core/presentation/app_initializer.dart';
 
-import 'core/theme/theme_provider.dart';
+import 'features/settings/presentation/providers/theme_provider.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -17,7 +17,7 @@ class AttendanceApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final router = ref.watch(goRouterProvider);
-    final themeMode = ref.watch(themeProvider);
+    final themeMode = ref.watch(themeModeProvider);
 
     return MaterialApp.router(
       title: 'Tally',

@@ -13,6 +13,8 @@ import '../data/repositories/attendance_repository.dart';
 import '../../settings/data/repositories/semester_repository.dart';
 
 import 'widgets/edit_session_sheet.dart';
+import 'widgets/day_note_sheet.dart';
+import 'package:tally/features/calendar/data/repositories/day_note_repository.dart';
 import 'package:tally/core/data/models/subject_model.dart';
 import '../../../../core/presentation/animations/fade_in_slide.dart';
 import '../../../../core/presentation/widgets/app_card.dart';
@@ -274,6 +276,14 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                                 ),
                               ),
                             ),
+
+                            // Day Note Section
+                            _buildDayNoteSection(
+                              context,
+                              ref,
+                              _selectedDay ?? _focusedDay,
+                            ),
+
                             Padding(
                               padding: const EdgeInsets.symmetric(
                                 horizontal: 24,
@@ -791,6 +801,96 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
         allSubjects: allSubjects,
         isNew: true,
       ),
+    );
+  }
+
+  Widget _buildDayNoteSection(
+    BuildContext context,
+    WidgetRef ref,
+    DateTime date,
+  ) {
+    // Using ValueListenableBuilder for instant updates without stream flickering
+    final repository = ref.watch(dayNoteRepositoryProvider);
+
+    return ValueListenableBuilder(
+      valueListenable: repository.listenToNotes(),
+      builder: (context, box, _) {
+        final note = repository.getNote(date);
+        final hasNote = note != null && note.content.isNotEmpty;
+
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+          child: InkWell(
+            onTap: () {
+              showModalBottomSheet(
+                context: context,
+                isScrollControlled: true,
+                showDragHandle: true,
+                backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+                builder: (context) =>
+                    DayNoteSheet(date: date, existingNote: note),
+              );
+            },
+            borderRadius: BorderRadius.circular(16),
+            child: Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: hasNote
+                    ? Theme.of(
+                        context,
+                      ).colorScheme.primaryContainer.withValues(alpha: 0.3)
+                    : Theme.of(
+                        context,
+                      ).colorScheme.surfaceContainerLow.withValues(alpha: 0.5),
+                borderRadius: BorderRadius.circular(16),
+                border: hasNote
+                    ? Border.all(
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.primary.withValues(alpha: 0.2),
+                      )
+                    : null,
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    hasNote ? Icons.note_alt_rounded : Icons.note_add_rounded,
+                    color: hasNote
+                        ? Theme.of(context).colorScheme.primary
+                        : Theme.of(context).colorScheme.onSurfaceVariant,
+                    size: 20,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      hasNote ? note.content : 'Add a note for this day...',
+                      style: TextStyle(
+                        fontStyle: hasNote
+                            ? FontStyle.normal
+                            : FontStyle.italic,
+                        color: hasNote
+                            ? Theme.of(context).colorScheme.onSurface
+                            : Theme.of(context).colorScheme.onSurfaceVariant,
+                        fontSize: 14,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  if (hasNote)
+                    Icon(
+                      Icons.edit_rounded,
+                      size: 16,
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.primary.withValues(alpha: 0.5),
+                    ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 

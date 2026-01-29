@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-// import '../../core/services/sync_service.dart';
+import '../../core/services/sync_service.dart';
 
 class ShellScreen extends ConsumerStatefulWidget {
   final Widget child;
@@ -19,9 +19,9 @@ class _ShellScreenState extends ConsumerState<ShellScreen> {
   void initState() {
     super.initState();
     // Trigger sync/migration when the app shell loads (User is logged in)
-    // WidgetsBinding.instance.addPostFrameCallback((_) {
-    //   ref.read(syncServiceProvider).sync();
-    // });
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(syncServiceProvider).sync();
+    });
   }
 
   @override

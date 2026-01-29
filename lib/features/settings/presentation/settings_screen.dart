@@ -9,7 +9,7 @@ import '../../../../core/presentation/widgets/section_header.dart';
 // import '../../../../core/services/backup_service.dart';
 // import '../../../../core/services/sync_service.dart';
 import 'package:tally/features/settings/data/repositories/semester_repository.dart';
-import '../../../../core/theme/theme_provider.dart';
+import 'package:tally/features/settings/presentation/providers/theme_provider.dart';
 import 'package:tally/core/data/repositories/profile_repository.dart';
 import '../../../../core/data/models/user_profile_model.dart';
 import 'account_screen.dart';
@@ -262,7 +262,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   const SectionHeader(title: 'General'),
                   Consumer(
                     builder: (context, ref, _) {
-                      final themeMode = ref.watch(themeProvider);
+                      final themeMode = ref.watch(themeModeProvider);
                       return ListTile(
                         leading: const Icon(Icons.dark_mode_rounded),
                         title: const Text('Appearance'),
@@ -437,13 +437,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     ThemeMode mode,
     IconData icon,
   ) {
-    final currentMode = ref.watch(themeProvider);
+    final currentMode = ref.watch(themeModeProvider);
     final isSelected = currentMode == mode;
     final colorScheme = Theme.of(context).colorScheme;
 
     return InkWell(
       onTap: () {
-        ref.read(themeProvider.notifier).setThemeMode(mode);
+        ref.read(themeModeProvider.notifier).setThemeMode(mode);
         Navigator.pop(context);
       },
       borderRadius: BorderRadius.circular(16),

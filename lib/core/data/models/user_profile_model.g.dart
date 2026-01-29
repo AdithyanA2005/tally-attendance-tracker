@@ -21,6 +21,7 @@ class UserProfileAdapter extends TypeAdapter<UserProfile> {
       email: fields[1] as String?,
       activeSemesterId: fields[2] as String?,
       lastUpdated: fields[3] as DateTime?,
+      hasPendingSync: fields[4] == null ? false : fields[4] as bool,
       name: fields[5] as String?,
       photoUrl: fields[6] as String?,
     );
@@ -29,7 +30,7 @@ class UserProfileAdapter extends TypeAdapter<UserProfile> {
   @override
   void write(BinaryWriter writer, UserProfile obj) {
     writer
-      ..writeByte(6)
+      ..writeByte(7)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -38,6 +39,8 @@ class UserProfileAdapter extends TypeAdapter<UserProfile> {
       ..write(obj.activeSemesterId)
       ..writeByte(3)
       ..write(obj.lastUpdated)
+      ..writeByte(4)
+      ..write(obj.hasPendingSync)
       ..writeByte(5)
       ..write(obj.name)
       ..writeByte(6)

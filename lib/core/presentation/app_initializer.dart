@@ -5,9 +5,9 @@ import '../../core/data/local_storage_service.dart';
 import '../../core/services/supabase_service.dart';
 import 'widgets/skeleton_screen.dart';
 import '../../core/constants/env.dart';
-import '../../main.dart';
-
 import 'package:tally/features/settings/data/repositories/settings_repository.dart';
+import 'package:tally/features/calendar/data/repositories/day_note_repository.dart';
+import '../../main.dart';
 
 class AppInitializer extends StatefulWidget {
   const AppInitializer({super.key});
@@ -21,6 +21,7 @@ class _AppInitializerState extends State<AppInitializer> {
   String? _errorMessage;
   late LocalStorageService _localStorage;
   late SettingsRepository _settingsRepo;
+  late DayNoteRepository _dayNoteRepo;
 
   @override
   void initState() {
@@ -41,6 +42,7 @@ class _AppInitializerState extends State<AppInitializer> {
       await _localStorage.init();
 
       _settingsRepo = await SettingsRepository.init();
+      _dayNoteRepo = await DayNoteRepository.init();
 
       if (mounted) {
         setState(() {
@@ -58,7 +60,6 @@ class _AppInitializerState extends State<AppInitializer> {
     }
   }
 
-  @override
   @override
   Widget build(BuildContext context) {
     if (_errorMessage != null) {
@@ -91,6 +92,7 @@ class _AppInitializerState extends State<AppInitializer> {
       overrides: [
         localStorageServiceProvider.overrideWithValue(_localStorage),
         settingsRepositoryProvider.overrideWithValue(_settingsRepo),
+        dayNoteRepositoryProvider.overrideWithValue(_dayNoteRepo),
       ],
       child: const AttendanceApp(),
     );

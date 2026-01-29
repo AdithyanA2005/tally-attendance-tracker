@@ -5,6 +5,7 @@ import 'package:tally/core/data/models/session_model.dart';
 import 'package:tally/core/data/models/timetable_entry_model.dart';
 import 'package:tally/core/data/models/semester_model.dart';
 import 'package:tally/core/data/models/user_profile_model.dart';
+import 'package:tally/features/calendar/data/models/day_note_model.dart';
 
 /// Service responsible for initializing and accessing Hive local storage boxes.
 ///
@@ -37,6 +38,9 @@ class LocalStorageService {
     }
     if (Hive.isAdapterRegistered(5) == false) {
       Hive.registerAdapter(UserProfileAdapter());
+    }
+    if (Hive.isAdapterRegistered(6) == false) {
+      Hive.registerAdapter(DayNoteAdapter());
     }
 
     await Hive.openBox<Subject>(subjectBoxName);

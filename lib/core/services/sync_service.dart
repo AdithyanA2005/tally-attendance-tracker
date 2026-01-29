@@ -12,15 +12,25 @@ import '../data/models/semester_model.dart';
 import '../services/supabase_service.dart';
 import '../../features/settings/data/repositories/settings_repository.dart';
 
+import 'package:tally/features/calendar/data/repositories/day_note_repository.dart';
+import 'package:tally/features/calendar/data/models/day_note_model.dart';
+
 // part 'sync_service.g.dart';
 
 class SyncService {
   final LocalStorageService _localStorage;
   final SettingsRepository _settings;
+  final DayNoteRepository _dayNotes;
   final SupabaseClient _supabase;
   final Ref? _ref; // Optional ref to invalidate providers
 
-  SyncService(this._localStorage, this._settings, this._supabase, [this._ref]);
+  SyncService(
+    this._localStorage,
+    this._settings,
+    this._supabase,
+    this._dayNotes, [
+    this._ref,
+  ]);
 
   static const String _kLastSyncTimeKey = 'last_sync_time';
 
@@ -96,6 +106,27 @@ class SyncService {
     } catch (_) {
       if (_localStorage.semesterBox.isNotEmpty) {
         defaultSemesterId = _localStorage.semesterBox.values.first.id;
+      }
+    }
+
+    // Day Notes (Push FIRST for responsiveness)
+    final notesToPush = _dayNotes.getAllNotes().where((n) => n.hasPendingSync);
+    debugPrint('MIGRATION: Pushing ${notesToPush.length} day notes...');
+
+    for (var note in notesToPush) {
+      try {
+        final json = note.toJson();
+        json['user_id'] = _supabase.auth.currentUser!.id;
+        await _supabase
+            .from('day_notes')
+            .upsert(json, onConflict: 'user_id, date_iso');
+
+        await _dayNotes.saveNoteInternal(note.copyWith(hasPendingSync: false));
+        pushed++;
+      } catch (e) {
+        failed++;
+        lastError = e.toString();
+        debugPrint('Failed to push day note ${note.dateIso}: $e');
       }
     }
 
@@ -254,38 +285,59 @@ class SyncService {
     int pulled = 0;
     int failed = 0;
 
-    final prefs = await SharedPreferences.getInstance();
-    final lastSyncStr = prefs.getString(_kLastSyncTimeKey);
-    final lastSyncTime = lastSyncStr != null
-        ? DateTime.parse(lastSyncStr)
-        : DateTime(2000);
+    // We don't use lastSyncTime anymore for Pull (Reconciliation Strategy)
+    // final prefs = await SharedPreferences.getInstance();
 
-    // Semesters (Pull FIRST)
+    // -------------------------------------------------------------------------
+    // 1. Semesters (Reconciliation)
+    // -------------------------------------------------------------------------
     try {
-      final semestersData = await _supabase
+      final remoteMeta = await _supabase
           .from('semesters')
-          .select()
-          .gt('updated_at', lastSyncTime.toIso8601String());
+          .select('id, updated_at');
+      final remoteMap = {
+        for (var item in remoteMeta)
+          item['id'] as String: DateTime.parse(item['updated_at']),
+      };
 
-      for (var json in semestersData) {
-        final remoteSemester = Semester.fromJson(json);
-        final localSemester = _localStorage.semesterBox.get(remoteSemester.id);
+      // Identify deletions
+      final localSemesters = _localStorage.semesterBox.values.toList();
+      for (var local in localSemesters) {
+        if (!local.hasPendingSync) {
+          if (!remoteMap.containsKey(local.id)) {
+            await _localStorage.semesterBox.delete(local.id);
+          }
+        }
+      }
 
-        if (localSemester == null ||
-            remoteSemester.lastUpdated.isAfter(localSemester.lastUpdated)) {
-          await _localStorage.semesterBox.put(
-            remoteSemester.id,
-            remoteSemester,
-          );
+      // Identify updates
+      final List<String> toFetch = [];
+      for (var entry in remoteMap.entries) {
+        final local = _localStorage.semesterBox.get(entry.key);
+        if (local == null || entry.value.isAfter(local.lastUpdated)) {
+          toFetch.add(entry.key);
+        }
+      }
+
+      if (toFetch.isNotEmpty) {
+        final freshData = await _supabase
+            .from('semesters')
+            .select()
+            .filter('id', 'in', toFetch);
+        for (var json in freshData) {
+          final s = Semester.fromJson(json);
+          await _localStorage.semesterBox.put(s.id, s);
           pulled++;
         }
       }
     } catch (e) {
       failed++;
-      debugPrint('Error pulling semesters: $e');
+      debugPrint('Error reconciling semesters: $e');
     }
 
-    // Profile
+    // -------------------------------------------------------------------------
+    // 2. Profile (Check Single Row)
+    // -------------------------------------------------------------------------
     try {
       final profileData = await _supabase
           .from('profiles')
@@ -305,70 +357,196 @@ class SyncService {
       debugPrint('Error pulling profile: $e');
     }
 
-    // subjects
+    // -------------------------------------------------------------------------
+    // 3. Subjects (Reconciliation)
+    // -------------------------------------------------------------------------
     try {
-      final subjectsData = await _supabase
+      final remoteMeta = await _supabase
           .from('subjects')
-          .select()
-          .gt('updated_at', lastSyncTime.toIso8601String());
+          .select('id, updated_at');
+      final remoteMap = {
+        for (var item in remoteMeta)
+          item['id'] as String: DateTime.parse(item['updated_at']),
+      };
 
-      for (var json in subjectsData) {
-        final remoteSubject = Subject.fromJson(json);
-        final localSubject = _localStorage.subjectBox.get(remoteSubject.id);
+      final localSubjects = _localStorage.subjectBox.values.toList();
+      for (var local in localSubjects) {
+        if (!local.hasPendingSync) {
+          if (!remoteMap.containsKey(local.id)) {
+            await _localStorage.subjectBox.delete(local.id);
+          }
+        }
+      }
 
-        if (localSubject == null ||
-            remoteSubject.lastUpdated.isAfter(localSubject.lastUpdated)) {
-          await _localStorage.subjectBox.put(remoteSubject.id, remoteSubject);
+      final List<String> toFetch = [];
+      for (var entry in remoteMap.entries) {
+        final local = _localStorage.subjectBox.get(entry.key);
+        if (local == null || entry.value.isAfter(local.lastUpdated)) {
+          toFetch.add(entry.key);
+        }
+      }
+
+      if (toFetch.isNotEmpty) {
+        final freshData = await _supabase
+            .from('subjects')
+            .select()
+            .filter('id', 'in', toFetch);
+        for (var json in freshData) {
+          final s = Subject.fromJson(json);
+          await _localStorage.subjectBox.put(s.id, s);
           pulled++;
         }
       }
     } catch (e) {
       failed++;
-      debugPrint('Error pulling subjects: $e');
+      debugPrint('Error reconciling subjects: $e');
     }
 
-    // sessions (attendance_logs)
+    // -------------------------------------------------------------------------
+    // 4. Sessions / Attendance Logs (Reconciliation)
+    // -------------------------------------------------------------------------
     try {
-      final sessionsData = await _supabase
+      final remoteMeta = await _supabase
           .from('attendance_logs')
-          .select()
-          .gt('updated_at', lastSyncTime.toIso8601String());
+          .select('id, updated_at');
+      final remoteMap = {
+        for (var item in remoteMeta)
+          item['id'] as String: DateTime.parse(item['updated_at']),
+      };
 
-      for (var json in sessionsData) {
-        final remoteSession = ClassSession.fromJson(json);
-        final localSession = _localStorage.sessionBox.get(remoteSession.id);
+      final localSessions = _localStorage.sessionBox.values.toList();
+      for (var local in localSessions) {
+        // Ignore virtual sessions
+        if (local.id.startsWith('virtual_')) continue;
 
-        if (localSession == null ||
-            remoteSession.lastUpdated.isAfter(localSession.lastUpdated)) {
-          await _localStorage.sessionBox.put(remoteSession.id, remoteSession);
-          pulled++;
+        if (!local.hasPendingSync) {
+          if (!remoteMap.containsKey(local.id)) {
+            await _localStorage.sessionBox.delete(local.id);
+          }
+        }
+      }
+
+      final List<String> toFetch = [];
+      for (var entry in remoteMap.entries) {
+        final local = _localStorage.sessionBox.get(entry.key);
+        if (local == null || entry.value.isAfter(local.lastUpdated)) {
+          toFetch.add(entry.key);
+        }
+      }
+
+      // Batch in chunks of 50 to avoid URL length limits if many updates
+      for (var i = 0; i < toFetch.length; i += 50) {
+        final end = (i + 50 < toFetch.length) ? i + 50 : toFetch.length;
+        final batch = toFetch.sublist(i, end);
+        if (batch.isNotEmpty) {
+          final freshData = await _supabase
+              .from('attendance_logs')
+              .select()
+              .filter('id', 'in', batch);
+          for (var json in freshData) {
+            final s = ClassSession.fromJson(json);
+            await _localStorage.sessionBox.put(s.id, s);
+            pulled++;
+          }
         }
       }
     } catch (e) {
       failed++;
-      debugPrint('Error pulling sessions: $e');
+      debugPrint('Error reconciling sessions: $e');
     }
 
-    // timetables
+    // -------------------------------------------------------------------------
+    // 5. Timetables (Reconciliation)
+    // -------------------------------------------------------------------------
     try {
-      final timetableData = await _supabase
+      final remoteMeta = await _supabase
           .from('timetables')
-          .select()
-          .gt('updated_at', lastSyncTime.toIso8601String());
+          .select('id, updated_at');
+      final remoteMap = {
+        for (var item in remoteMeta)
+          item['id'] as String: DateTime.parse(item['updated_at']),
+      };
 
-      for (var json in timetableData) {
-        final remoteEntry = TimetableEntry.fromJson(json);
-        final localEntry = _localStorage.timetableBox.get(remoteEntry.id);
+      final localEntries = _localStorage.timetableBox.values.toList();
+      for (var local in localEntries) {
+        if (!local.hasPendingSync) {
+          if (!remoteMap.containsKey(local.id)) {
+            await _localStorage.timetableBox.delete(local.id);
+          }
+        }
+      }
 
-        if (localEntry == null ||
-            remoteEntry.lastUpdated.isAfter(localEntry.lastUpdated)) {
-          await _localStorage.timetableBox.put(remoteEntry.id, remoteEntry);
+      final List<String> toFetch = [];
+      for (var entry in remoteMap.entries) {
+        final local = _localStorage.timetableBox.get(entry.key);
+        if (local == null || entry.value.isAfter(local.lastUpdated)) {
+          toFetch.add(entry.key);
+        }
+      }
+
+      if (toFetch.isNotEmpty) {
+        final freshData = await _supabase
+            .from('timetables')
+            .select()
+            .filter('id', 'in', toFetch);
+        for (var json in freshData) {
+          final t = TimetableEntry.fromJson(json);
+          await _localStorage.timetableBox.put(t.id, t);
           pulled++;
         }
       }
     } catch (e) {
       failed++;
-      debugPrint('Error pulling timetable: $e');
+      debugPrint('Error reconciling timetables: $e');
+    }
+
+    // -------------------------------------------------------------------------
+    // 6. Day Notes (Reconciliation)
+    // -------------------------------------------------------------------------
+    try {
+      final remoteMeta = await _supabase
+          .from('day_notes')
+          .select('date_iso, updated_at');
+
+      final remoteMap = {
+        for (var item in remoteMeta)
+          item['date_iso'] as String: DateTime.parse(item['updated_at']),
+      };
+
+      final localNotes = _dayNotes.getAllNotes();
+      for (var localNote in localNotes) {
+        if (!localNote.hasPendingSync) {
+          if (!remoteMap.containsKey(localNote.dateIso)) {
+            await _dayNotes.deleteNoteLocally(localNote.dateIso);
+          }
+        }
+      }
+
+      final List<String> toFetch = [];
+      for (var entry in remoteMap.entries) {
+        final key = entry.key;
+        final remoteTime = entry.value;
+        final localNote = _dayNotes.getNoteByDateKey(key);
+
+        if (localNote == null || remoteTime.isAfter(localNote.updatedAt)) {
+          toFetch.add(key);
+        }
+      }
+
+      if (toFetch.isNotEmpty) {
+        final freshData = await _supabase
+            .from('day_notes')
+            .select()
+            .filter('date_iso', 'in', toFetch);
+
+        for (var json in freshData) {
+          await _dayNotes.saveNoteInternal(DayNote.fromJson(json));
+          pulled++;
+        }
+      }
+    } catch (e) {
+      failed++;
+      debugPrint('Error reconciling day notes: $e');
     }
 
     if (failed > 0) return ('$pulled (Failed: $failed)', true);
@@ -476,3 +654,13 @@ class SyncService {
 //   final val = prefs.getString('last_sync_time');
 //   return val == null ? null : DateTime.parse(val);
 // }
+
+final syncServiceProvider = Provider<SyncService>((ref) {
+  return SyncService(
+    ref.watch(localStorageServiceProvider),
+    ref.watch(settingsRepositoryProvider),
+    SupabaseService().client,
+    ref.watch(dayNoteRepositoryProvider),
+    ref,
+  );
+});
