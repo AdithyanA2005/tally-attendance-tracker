@@ -1,4 +1,5 @@
 import 'package:hive/hive.dart';
+import 'syncable_model.dart';
 
 part 'session_model.g.dart';
 
@@ -15,7 +16,7 @@ enum AttendanceStatus {
 }
 
 @HiveType(typeId: 2)
-class ClassSession extends HiveObject {
+class ClassSession extends SyncableModel {
   @HiveField(0)
   final String id;
 

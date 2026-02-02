@@ -1,9 +1,10 @@
 import 'package:hive/hive.dart';
+import 'syncable_model.dart';
 
 part 'user_profile_model.g.dart';
 
 @HiveType(typeId: 5)
-class UserProfile extends HiveObject {
+class UserProfile extends SyncableModel {
   @HiveField(0)
   final String id;
 

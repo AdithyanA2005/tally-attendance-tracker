@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -29,11 +30,8 @@ class SemesterRepository extends CacheRepository<Semester> {
     initSync();
   }
 
-  @override
-  String getId(Semester item) => item.id;
-
+  // getId is no longer needed as CacheRepository uses item.id from SyncableModel
   // READs
-
   Stream<List<Semester>> watchAllSemesters() {
     return stream.map((box) {
       final list = box.values.toList();
@@ -88,13 +86,24 @@ class SemesterRepository extends CacheRepository<Semester> {
   }
 
   Future<void> updateSemester(Semester semester) async {
+    final updated = semester.copyWith(
+      hasPendingSync: true, // Mark dirty
+      lastUpdated: DateTime.now(),
+    );
+
     // 1. Optimistic
-    await saveLocal(semester);
+    await saveLocal(updated);
 
     // 2. Remote
-    final json = semester.toJson();
-    json['user_id'] = supabase.auth.currentUser!.id;
-    await supabase.from('semesters').upsert(json);
+    try {
+      final json = updated.toJson();
+      json['user_id'] = supabase.auth.currentUser!.id;
+      await supabase.from('semesters').upsert(json);
+      // Mark as synced
+      await saveLocal(updated.copyWith(hasPendingSync: false));
+    } catch (e) {
+      debugPrint('Proactive semester update failed: $e. Will retry later.');
+    }
   }
 
   Future<void> deleteSemester(String id) async {

@@ -1,9 +1,10 @@
 import 'package:hive/hive.dart';
+import 'syncable_model.dart';
 
 part 'semester_model.g.dart';
 
 @HiveType(typeId: 4)
-class Semester extends HiveObject {
+class Semester extends SyncableModel {
   @HiveField(0)
   final String id;
 

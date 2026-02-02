@@ -29,8 +29,6 @@ class _SubjectCache extends CacheRepository<Subject> {
       ) {
     initSync();
   }
-  @override
-  String getId(Subject item) => item.id;
 }
 
 class _SessionCache extends CacheRepository<ClassSession> {
@@ -43,8 +41,6 @@ class _SessionCache extends CacheRepository<ClassSession> {
       ) {
     initSync();
   }
-  @override
-  String getId(ClassSession item) => item.id;
 }
 
 class _TimetableCache extends CacheRepository<TimetableEntry> {
@@ -57,8 +53,6 @@ class _TimetableCache extends CacheRepository<TimetableEntry> {
       ) {
     initSync();
   }
-  @override
-  String getId(TimetableEntry item) => item.id;
 }
 
 class AttendanceRepository {
@@ -120,30 +114,44 @@ class AttendanceRepository {
       minimumAttendancePercentage: minAttendance,
       weeklyHours: weeklyHours,
       colorTag: color.value,
-      hasPendingSync: false,
+      hasPendingSync: true, // Mark dirty
       lastUpdated: DateTime.now(),
     );
 
-    // Optimistic
+    // 1. Optimistic Local Save
     await _subjects.saveLocal(subject);
 
-    final json = subject.toJson();
-    json['user_id'] = _supabase.auth.currentUser!.id;
-    await _supabase.from('subjects').upsert(json);
+    // 2. Proactive Remote Sync
+    try {
+      final json = subject.toJson();
+      json['user_id'] = _supabase.auth.currentUser!.id;
+      await _supabase.from('subjects').upsert(json);
+      // Mark as synced if successful
+      await _subjects.saveLocal(subject.copyWith(hasPendingSync: false));
+    } catch (e) {
+      debugPrint('Proactive sync failed: $e. Will retry later.');
+    }
   }
 
   Future<void> updateSubject(Subject subject) async {
     final updated = subject.copyWith(
-      hasPendingSync: false,
+      hasPendingSync: true, // Mark dirty
       lastUpdated: DateTime.now(),
     );
 
-    // Optimistic
+    // 1. Optimistic Local Save
     await _subjects.saveLocal(updated);
 
-    final json = updated.toJson();
-    json['user_id'] = _supabase.auth.currentUser!.id;
-    await _supabase.from('subjects').upsert(json);
+    // 2. Proactive Remote Sync
+    try {
+      final json = updated.toJson();
+      json['user_id'] = _supabase.auth.currentUser!.id;
+      await _supabase.from('subjects').upsert(json);
+      // Mark as synced if successful
+      await _subjects.saveLocal(updated.copyWith(hasPendingSync: false));
+    } catch (e) {
+      debugPrint('Proactive sync failed: $e. Will retry later.');
+    }
   }
 
   Future<void> deleteSubject(String id) async {
@@ -211,16 +219,23 @@ class AttendanceRepository {
 
     final updated = session.copyWith(
       id: finalId,
-      hasPendingSync: false,
+      hasPendingSync: true, // Mark dirty
       lastUpdated: DateTime.now(),
     );
 
-    // Optimistic
+    // 1. Optimistic Local Save
     await _sessions.saveLocal(updated);
 
-    final json = updated.toJson();
-    json['user_id'] = _supabase.auth.currentUser!.id;
-    await _supabase.from('attendance_logs').upsert(json);
+    // 2. Proactive Remote Sync
+    try {
+      final json = updated.toJson();
+      json['user_id'] = _supabase.auth.currentUser!.id;
+      await _supabase.from('attendance_logs').upsert(json);
+      // Mark as synced if successful
+      await _sessions.saveLocal(updated.copyWith(hasPendingSync: false));
+    } catch (e) {
+      debugPrint('Proactive session sync failed: $e. Will retry later.');
+    }
   }
 
   Future<void> updateSession(ClassSession session) async {
@@ -300,30 +315,44 @@ class AttendanceRepository {
       dayOfWeek: dayOfWeek,
       startTime: startTime,
       durationMinutes: durationMinutes,
-      hasPendingSync: false,
+      hasPendingSync: true, // Mark dirty
       lastUpdated: DateTime.now(),
     );
 
-    // Optimistic
+    // 1. Optimistic Local Save
     await _timetable.saveLocal(entry);
 
-    final json = entry.toJson();
-    json['user_id'] = _supabase.auth.currentUser!.id;
-    await _supabase.from('timetables').upsert(json);
+    // 2. Proactive Remote Sync
+    try {
+      final json = entry.toJson();
+      json['user_id'] = _supabase.auth.currentUser!.id;
+      await _supabase.from('timetables').upsert(json);
+      // Mark as synced if successful
+      await _timetable.saveLocal(entry.copyWith(hasPendingSync: false));
+    } catch (e) {
+      debugPrint('Proactive timetable sync failed: $e. Will retry later.');
+    }
   }
 
   Future<void> updateTimetableEntry(TimetableEntry entry) async {
     final updated = entry.copyWith(
-      hasPendingSync: false,
+      hasPendingSync: true, // Mark dirty
       lastUpdated: DateTime.now(),
     );
 
-    // Optimistic
+    // 1. Optimistic Local Save
     await _timetable.saveLocal(updated);
 
-    final json = updated.toJson();
-    json['user_id'] = _supabase.auth.currentUser!.id;
-    await _supabase.from('timetables').upsert(json);
+    // 2. Proactive Remote Sync
+    try {
+      final json = updated.toJson();
+      json['user_id'] = _supabase.auth.currentUser!.id;
+      await _supabase.from('timetables').upsert(json);
+      // Mark as synced if successful
+      await _timetable.saveLocal(updated.copyWith(hasPendingSync: false));
+    } catch (e) {
+      debugPrint('Proactive timetable update failed: $e. Will retry later.');
+    }
   }
 
   Future<void> deleteTimetableEntry(String id) async {

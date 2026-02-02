@@ -42,7 +42,7 @@ class _AppInitializerState extends State<AppInitializer> {
       await _localStorage.init();
 
       _settingsRepo = await SettingsRepository.init();
-      _dayNoteRepo = await DayNoteRepository.init();
+      _dayNoteRepo = await DayNoteRepository.init(SupabaseService().client);
 
       if (mounted) {
         setState(() {
@@ -92,7 +92,7 @@ class _AppInitializerState extends State<AppInitializer> {
       overrides: [
         localStorageServiceProvider.overrideWithValue(_localStorage),
         settingsRepositoryProvider.overrideWithValue(_settingsRepo),
-        dayNoteRepositoryProvider.overrideWithValue(_dayNoteRepo),
+        dayNoteRepositoryInternalProvider.overrideWithValue(_dayNoteRepo),
       ],
       child: const AttendanceApp(),
     );

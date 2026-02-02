@@ -1,10 +1,11 @@
 import 'package:hive/hive.dart';
 import 'package:flutter/material.dart';
+import 'syncable_model.dart';
 
 part 'subject_model.g.dart';
 
 @HiveType(typeId: 0)
-class Subject extends HiveObject {
+class Subject extends SyncableModel {
   @HiveField(0)
   final String id;
 

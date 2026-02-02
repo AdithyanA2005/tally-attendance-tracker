@@ -1,9 +1,16 @@
 import 'package:hive/hive.dart';
+import '../../../../core/data/models/syncable_model.dart';
 
 part 'day_note_model.g.dart';
 
 @HiveType(typeId: 6)
-class DayNote extends HiveObject {
+class DayNote extends SyncableModel {
+  @override
+  String get id => dateIso;
+
+  @override
+  DateTime get lastUpdated => updatedAt;
+
   @HiveField(0)
   final String dateIso; // Key: yyyy-MM-dd
 

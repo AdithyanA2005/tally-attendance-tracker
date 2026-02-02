@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:tally/core/data/local_storage_service.dart';
@@ -19,9 +20,7 @@ class ProfileRepository extends CacheRepository<UserProfile> {
     initSync();
   }
 
-  @override
-  String getId(UserProfile item) => item.id;
-
+  // getId is no longer needed as CacheRepository uses item.id from SyncableModel
   /// Returns the current user's profile stream
   Stream<UserProfile?> watchProfile() {
     return stream.map((box) {
@@ -62,14 +61,23 @@ class ProfileRepository extends CacheRepository<UserProfile> {
         activeSemesterId: semesterId,
       );
     } else {
-      profile = profile.copyWith(activeSemesterId: semesterId);
+      profile = profile.copyWith(
+        activeSemesterId: semesterId,
+        hasPendingSync: true,
+        lastUpdated: DateTime.now(),
+      );
     }
 
     // Optimistic
     await saveLocal(profile);
 
     // Remote
-    await supabase.from('profiles').upsert(profile.toJson());
+    try {
+      await supabase.from('profiles').upsert(profile.toJson());
+      await saveLocal(profile.copyWith(hasPendingSync: false));
+    } catch (e) {
+      debugPrint('Proactive profile sync failed: $e');
+    }
   }
 
   Future<void> updateName(String name) async {
@@ -84,11 +92,20 @@ class ProfileRepository extends CacheRepository<UserProfile> {
         name: name,
       );
     } else {
-      profile = profile.copyWith(name: name);
+      profile = profile.copyWith(
+        name: name,
+        hasPendingSync: true,
+        lastUpdated: DateTime.now(),
+      );
     }
 
     await saveLocal(profile);
-    await supabase.from('profiles').upsert(profile.toJson());
+    try {
+      await supabase.from('profiles').upsert(profile.toJson());
+      await saveLocal(profile.copyWith(hasPendingSync: false));
+    } catch (e) {
+      debugPrint('Proactive profile name sync failed: $e');
+    }
   }
 
   Future<void> updatePhotoUrl(String? photoUrl) async {
@@ -115,12 +132,21 @@ class ProfileRepository extends CacheRepository<UserProfile> {
           photoUrl: null,
         );
       } else {
-        profile = profile.copyWith(photoUrl: photoUrl);
+        profile = profile.copyWith(
+          photoUrl: photoUrl,
+          hasPendingSync: true,
+          lastUpdated: DateTime.now(),
+        );
       }
     }
 
     await saveLocal(profile);
-    await supabase.from('profiles').upsert(profile.toJson());
+    try {
+      await supabase.from('profiles').upsert(profile.toJson());
+      await saveLocal(profile.copyWith(hasPendingSync: false));
+    } catch (e) {
+      debugPrint('Proactive profile photo sync failed: $e');
+    }
   }
 }
 

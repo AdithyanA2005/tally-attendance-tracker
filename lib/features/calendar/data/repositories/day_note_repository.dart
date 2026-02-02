@@ -1,18 +1,20 @@
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/foundation.dart';
-import '../models/day_note_model.dart';
 import 'package:intl/intl.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import '../models/day_note_model.dart';
 
 class DayNoteRepository {
   static const String boxName = 'day_notes_box';
   final Box<DayNote> _box;
+  final SupabaseClient? _supabase;
 
-  DayNoteRepository(this._box);
+  DayNoteRepository(this._box, [this._supabase]);
 
-  static Future<DayNoteRepository> init() async {
+  static Future<DayNoteRepository> init([SupabaseClient? supabase]) async {
     final box = await Hive.openBox<DayNote>(boxName);
-    return DayNoteRepository(box);
+    return DayNoteRepository(box, supabase);
   }
 
   String _getDateKey(DateTime date) {
@@ -32,15 +34,28 @@ class DayNoteRepository {
       updatedAt: DateTime.now(),
       hasPendingSync: true,
     );
+
+    // 1. Local save
     await _box.put(key, note);
+
+    // 2. Proactive sync if supabase is available
+    if (_supabase != null && _supabase.auth.currentUser != null) {
+      try {
+        final json = note.toJson();
+        json['user_id'] = _supabase.auth.currentUser!.id;
+        await _supabase
+            .from('day_notes')
+            .upsert(json, onConflict: 'user_id, date_iso');
+
+        await _box.put(key, note.copyWith(hasPendingSync: false));
+      } catch (e) {
+        debugPrint('Proactive day note sync failed: $e');
+      }
+    }
   }
 
   Future<void> deleteNote(DateTime date) async {
-    // We treat delete as setting content to empty string for now, to sync deletion state.
-    // Or we need a tombstone mechanic.
-    // Simpler approach: DayNote content empty = "No note".
-    // And on sync if content is empty, we can delete row or keep it empty.
-    // Let's keep it empty for simplicity.
+    // Treat empty as delete for sync compatibility
     await saveNote(date, '');
   }
 
@@ -77,7 +92,12 @@ class DayNoteRepository {
 }
 
 final dayNoteRepositoryProvider = Provider<DayNoteRepository>((ref) {
+  // Try to get from ref if possible, otherwise throw (it should be overridden in main)
+  return ref.watch(dayNoteRepositoryInternalProvider);
+});
+
+final dayNoteRepositoryInternalProvider = Provider<DayNoteRepository>((ref) {
   throw UnimplementedError(
-    'dayNoteRepositoryProvider must be overridden in main',
+    'dayNoteRepositoryInternalProvider must be overridden in main',
   );
 });

@@ -109,10 +109,8 @@ class SyncService {
       }
     }
 
-    // Day Notes (Push FIRST for responsiveness)
+    // Day Notes
     final notesToPush = _dayNotes.getAllNotes().where((n) => n.hasPendingSync);
-    debugPrint('MIGRATION: Pushing ${notesToPush.length} day notes...');
-
     for (var note in notesToPush) {
       try {
         final json = note.toJson();
@@ -131,9 +129,10 @@ class SyncService {
     }
 
     // Semesters
-    final allSemesters = _localStorage.semesterBox.values;
-    debugPrint('MIGRATION: Pushing ${allSemesters.length} semesters...');
-    for (var semester in allSemesters) {
+    final semestersToPush = _localStorage.semesterBox.values.where(
+      (s) => s.hasPendingSync,
+    );
+    for (var semester in semestersToPush) {
       try {
         final json = semester.toJson();
         json['user_id'] = _supabase.auth.currentUser!.id;
@@ -168,109 +167,87 @@ class SyncService {
     }
 
     // Subjects
-    final allSubjects = _localStorage.subjectBox.values;
-    debugPrint('MIGRATION: Pushing ${allSubjects.length} subjects...');
-    for (var subject in allSubjects) {
+    final subjectsToPush = _localStorage.subjectBox.values.where(
+      (s) => s.hasPendingSync,
+    );
+    for (var subject in subjectsToPush) {
       // AUTO-FIX: Orphaned Subjects
+      var subjectToPush = subject;
       if (subject.semesterId.isEmpty && defaultSemesterId != null) {
-        debugPrint(
-          'Auto-fixing subject ${subject.id} with semester $defaultSemesterId',
-        );
-        final fixed = subject.copyWith(semesterId: defaultSemesterId);
-        await _localStorage.subjectBox.put(fixed.id, fixed);
-        subject = fixed;
+        subjectToPush = subject.copyWith(semesterId: defaultSemesterId);
       }
 
       try {
-        final json = subject.toJson();
+        final json = subjectToPush.toJson();
         json['user_id'] = _supabase.auth.currentUser!.id;
         await _supabase.from('subjects').upsert(json);
         await _localStorage.subjectBox.put(
-          subject.id,
-          subject.copyWith(hasPendingSync: false),
+          subjectToPush.id,
+          subjectToPush.copyWith(hasPendingSync: false),
         );
         pushed++;
       } catch (e) {
         failed++;
         lastError = e.toString();
-        debugPrint('Failed to push subject ${subject.id}: $e');
+        debugPrint('Failed to push subject ${subjectToPush.id}: $e');
       }
     }
 
     // Sessions
-    final allSessions = _localStorage.sessionBox.values;
-    // We push ALL sessions, not just dirty ones (except virtual)
-    final sessionsToPush = allSessions.where(
-      (e) => !e.id.startsWith('virtual_'),
-    );
-
-    debugPrint(
-      'MIGRATION: Pushing ${sessionsToPush.length} sessions (Total: ${allSessions.length})...',
+    final sessionsToPush = _localStorage.sessionBox.values.where(
+      (e) => e.hasPendingSync && !e.id.startsWith('virtual_'),
     );
 
     for (var session in sessionsToPush) {
       // AUTO-FIX: Orphaned Sessions
+      var sessionToPush = session;
       if (session.semesterId.isEmpty && defaultSemesterId != null) {
-        debugPrint(
-          'Auto-fixing session ${session.id} with semester $defaultSemesterId',
-        );
-        final fixed = session.copyWith(semesterId: defaultSemesterId);
-        await _localStorage.sessionBox.put(fixed.id, fixed);
-        session = fixed;
+        sessionToPush = session.copyWith(semesterId: defaultSemesterId);
       }
 
       try {
-        final json = session.toJson();
-        // debugPrint('SYNC DEBUG: Pushing Session JSON: $json');
-
+        final json = sessionToPush.toJson();
         json['user_id'] = _supabase.auth.currentUser!.id;
         await _supabase.from('attendance_logs').upsert(json);
 
         await _localStorage.sessionBox.put(
-          session.id,
-          session.copyWith(hasPendingSync: false),
+          sessionToPush.id,
+          sessionToPush.copyWith(hasPendingSync: false),
         );
         pushed++;
-        // debugPrint('SYNC DEBUG: Session ${session.id} pushed successfully.');
       } catch (e) {
         failed++;
         lastError = e.toString();
-        debugPrint('Failed to push session ${session.id}: $e');
+        debugPrint('Failed to push session ${sessionToPush.id}: $e');
       }
     }
 
     // Timetable
-    final allEntries = _localStorage.timetableBox.values;
-    final entriesToPush = allEntries.where((e) => !e.id.startsWith('virtual_'));
-    debugPrint(
-      'MIGRATION: Pushing ${entriesToPush.length} timetable entries...',
+    final entriesToPush = _localStorage.timetableBox.values.where(
+      (e) => e.hasPendingSync && !e.id.startsWith('virtual_'),
     );
 
     for (var entry in entriesToPush) {
       // AUTO-FIX: Orphaned Timetable
+      var entryToPush = entry;
       if (entry.semesterId.isEmpty && defaultSemesterId != null) {
-        debugPrint(
-          'Auto-fixing timetable ${entry.id} with semester $defaultSemesterId',
-        );
-        final fixed = entry.copyWith(semesterId: defaultSemesterId);
-        await _localStorage.timetableBox.put(fixed.id, fixed);
-        entry = fixed;
+        entryToPush = entry.copyWith(semesterId: defaultSemesterId);
       }
 
       try {
-        final json = entry.toJson();
+        final json = entryToPush.toJson();
         json['user_id'] = _supabase.auth.currentUser!.id;
         await _supabase.from('timetables').upsert(json);
 
         await _localStorage.timetableBox.put(
-          entry.id,
-          entry.copyWith(hasPendingSync: false),
+          entryToPush.id,
+          entryToPush.copyWith(hasPendingSync: false),
         );
         pushed++;
       } catch (e) {
         failed++;
         lastError = e.toString();
-        debugPrint('Failed to push timetable entry ${entry.id}: $e');
+        debugPrint('Failed to push timetable entry ${entryToPush.id}: $e');
       }
     }
 
