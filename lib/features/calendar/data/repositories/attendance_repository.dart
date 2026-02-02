@@ -215,6 +215,10 @@ class AttendanceRepository {
       finalId = existing.id;
     } catch (_) {
       // No duplicate found
+      // If this was a virtual session ID, generate a real persistent UUID
+      if (finalId.startsWith('virtual_')) {
+        finalId = const Uuid().v4();
+      }
     }
 
     final updated = session.copyWith(

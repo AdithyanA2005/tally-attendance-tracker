@@ -351,7 +351,13 @@ class _EditSessionSheetState extends ConsumerState<EditSessionSheet> {
                 if (!widget.isNew) ...[
                   Expanded(
                     child: TextButton(
-                      onPressed: _isSaving
+                      onPressed:
+                          (_isSaving ||
+                              (!widget.session.isExtraClass &&
+                                  widget.session.id.startsWith('virtual_') &&
+                                  widget.session.status ==
+                                      AttendanceStatus.scheduled &&
+                                  (widget.session.notes?.isEmpty ?? true)))
                           ? null
                           : () async {
                               setState(() => _isSaving = true);
