@@ -9,6 +9,7 @@ import 'package:tally/core/data/repositories/profile_repository.dart';
 import 'package:tally/features/auth/data/repositories/auth_repository.dart';
 
 import '../../../../core/presentation/widgets/section_header.dart';
+import 'widgets/change_password_sheet.dart';
 
 class AccountScreen extends ConsumerStatefulWidget {
   const AccountScreen({super.key});
@@ -218,10 +219,14 @@ class _AccountScreenState extends ConsumerState<AccountScreen> {
                       label: 'Change Password',
                       icon: Icons.key_rounded,
                       onTap: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Password reset coming soon'),
-                          ),
+                        showModalBottomSheet(
+                          context: context,
+                          isScrollControlled: true,
+                          showDragHandle: true,
+                          backgroundColor: Theme.of(
+                            context,
+                          ).scaffoldBackgroundColor,
+                          builder: (context) => const ChangePasswordSheet(),
                         );
                       },
                       showChevron: true,

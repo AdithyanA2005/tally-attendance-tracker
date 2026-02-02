@@ -43,6 +43,13 @@ class AuthRepository {
   Future<void> signOut() async {
     await _supabase.auth.signOut();
   }
+
+  // Update Password
+  Future<UserResponse> updatePassword(String newPassword) async {
+    return await _supabase.auth.updateUser(
+      UserAttributes(password: newPassword),
+    );
+  }
 }
 
 @Riverpod(keepAlive: true)
