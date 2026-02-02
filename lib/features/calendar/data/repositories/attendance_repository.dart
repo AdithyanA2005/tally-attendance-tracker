@@ -331,4 +331,35 @@ class AttendanceRepository {
     await _timetable.deleteLocal(id);
     await _supabase.from('timetables').delete().eq('id', id);
   }
+  // Sync Methods for Immediate Access (Fixes Initial Load Spinner)
+
+  List<Subject> getSubjectsSync({String? semesterId}) {
+    final targetSemesterId = semesterId ?? _activeSemesterId;
+    if (targetSemesterId == null) return [];
+    return _subjects.box.values
+        .where((s) => s.semesterId == targetSemesterId)
+        .toList();
+  }
+
+  List<ClassSession> getAllSessionsSync({String? semesterId}) {
+    final targetSemesterId = semesterId ?? _activeSemesterId;
+    if (targetSemesterId == null) return [];
+    return _sessions.box.values
+        .where((s) => s.semesterId == targetSemesterId)
+        .toList();
+  }
+
+  List<TimetableEntry> getTimetableSync({int? dayOfWeek, String? semesterId}) {
+    final targetSemesterId = semesterId ?? _activeSemesterId;
+    if (targetSemesterId == null) return [];
+
+    var query = _timetable.box.values.where(
+      (e) => e.semesterId == targetSemesterId,
+    );
+
+    if (dayOfWeek != null) {
+      query = query.where((e) => e.dayOfWeek == dayOfWeek);
+    }
+    return query.toList();
+  }
 }

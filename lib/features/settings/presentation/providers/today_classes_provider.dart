@@ -19,39 +19,37 @@ final dailyTimetableProvider = StreamProvider.family<List<TimetableEntry>, int>(
 
 final todayClassesProvider = Provider<AsyncValue<List<TodayClassItem>>>((ref) {
   final weekday = DateTime.now().weekday;
+  final repository = ref.watch(attendanceRepositoryProvider);
 
   // 2. Watch the stable family provider
   final timetableAsync = ref.watch(dailyTimetableProvider(weekday));
   final sessionsAsync = ref.watch(allSessionsStreamProvider);
   final subjectsAsync = ref.watch(subjectsStreamProvider);
 
-  // 3. Handle loading states gracefully
-  // If ANY are loading, we return loading.
-  // Note: StreamProviders with "startWith" might still be async for one frame.
-  if (timetableAsync.isLoading ||
-      sessionsAsync.isLoading ||
-      subjectsAsync.isLoading) {
-    return const AsyncValue.loading();
-  }
+  // 3. Fallback to Synchronous Data (Fixes Initial Load Spinner)
+  // If the stream hasn't emitted yet (isLoading && no value), access Hive directly.
+  final timetable =
+      timetableAsync.valueOrNull ??
+      repository.getTimetableSync(dayOfWeek: weekday);
 
-  // 4. Handle errors
-  if (timetableAsync.hasError) {
+  final sessions = sessionsAsync.valueOrNull ?? repository.getAllSessionsSync();
+
+  final subjects = subjectsAsync.valueOrNull ?? repository.getSubjectsSync();
+
+  // 4. Handle errors (Only if we actually have an error AND no data)
+  if (timetableAsync.hasError && !timetableAsync.hasValue) {
     return AsyncValue.error(timetableAsync.error!, timetableAsync.stackTrace!);
   }
-  if (sessionsAsync.hasError) {
+  if (sessionsAsync.hasError && !sessionsAsync.hasValue) {
     return AsyncValue.error(sessionsAsync.error!, sessionsAsync.stackTrace!);
   }
-  if (subjectsAsync.hasError) {
+  if (subjectsAsync.hasError && !subjectsAsync.hasValue) {
     return AsyncValue.error(subjectsAsync.error!, subjectsAsync.stackTrace!);
   }
 
   // 5. Combine data
   return AsyncValue.data(
-    _combineData(
-      timetable: timetableAsync.value ?? [],
-      sessions: sessionsAsync.value ?? [],
-      subjects: subjectsAsync.value ?? [],
-    ),
+    _combineData(timetable: timetable, sessions: sessions, subjects: subjects),
   );
 });
 

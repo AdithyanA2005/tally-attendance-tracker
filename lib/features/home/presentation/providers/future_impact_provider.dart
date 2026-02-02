@@ -36,26 +36,30 @@ final fullTimetableProvider = StreamProvider<List<TimetableEntry>>((ref) {
 });
 
 final futureImpactProvider = Provider<AsyncValue<FutureImpactSummary?>>((ref) {
+  final repository = ref.watch(attendanceRepositoryProvider);
+  // Full timetable stream (no day filter)
   final fullTimetableAsync = ref.watch(fullTimetableProvider);
   final allStatsAsync = ref.watch(subjectStatsListProvider);
   final sessionsAsync = ref.watch(allSessionsStreamProvider);
 
-  if (fullTimetableAsync.isLoading ||
-      allStatsAsync.isLoading ||
-      sessionsAsync.isLoading) {
-    return const AsyncValue.loading();
-  }
+  // Fallback to sync data
+  final timetable =
+      fullTimetableAsync.valueOrNull ??
+      repository.getTimetableSync(dayOfWeek: null);
+  final stats =
+      allStatsAsync.valueOrNull ??
+      []; // Stats provider handles its own sync fallback now
+  final sessions = sessionsAsync.valueOrNull ?? repository.getAllSessionsSync();
 
-  if (fullTimetableAsync.hasError) {
+  // If stats provider is technically loading (shouldn't be with the fix), we might get empty list.
+  // But since stats provider now returns AsyncValue.data immediately, we are good.
+
+  if (fullTimetableAsync.hasError && !fullTimetableAsync.hasValue) {
     return AsyncValue.error(
       fullTimetableAsync.error!,
       fullTimetableAsync.stackTrace!,
     );
   }
-
-  final timetable = fullTimetableAsync.value ?? [];
-  final stats = allStatsAsync.value ?? [];
-  final sessions = sessionsAsync.value ?? [];
 
   if (timetable.isEmpty || stats.isEmpty) {
     return const AsyncValue.data(null);

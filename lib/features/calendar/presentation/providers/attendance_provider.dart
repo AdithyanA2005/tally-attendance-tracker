@@ -27,23 +27,23 @@ final allSessionsStreamProvider = StreamProvider<List<ClassSession>>((ref) {
 final subjectStatsListProvider = Provider<AsyncValue<List<SubjectStats>>>((
   ref,
 ) {
+  final repository = ref.watch(attendanceRepositoryProvider);
   final subjectsAsync = ref.watch(subjectsStreamProvider);
   final sessionsAsync = ref.watch(allSessionsStreamProvider);
 
-  if (subjectsAsync.isLoading || sessionsAsync.isLoading) {
-    return const AsyncValue.loading();
-  }
+  // Fallback to sync data
+  final subjects = subjectsAsync.valueOrNull ?? repository.getSubjectsSync();
+  final allSessions =
+      sessionsAsync.valueOrNull ?? repository.getAllSessionsSync();
 
-  if (subjectsAsync.hasError) {
+  // Handle errors only if we have no data
+  if (subjectsAsync.hasError && !subjectsAsync.hasValue) {
     return AsyncValue.error(subjectsAsync.error!, subjectsAsync.stackTrace!);
   }
 
-  if (sessionsAsync.hasError) {
+  if (sessionsAsync.hasError && !sessionsAsync.hasValue) {
     return AsyncValue.error(sessionsAsync.error!, sessionsAsync.stackTrace!);
   }
-
-  final subjects = subjectsAsync.value ?? [];
-  final allSessions = sessionsAsync.value ?? [];
 
   return AsyncValue.data(
     subjects.map((subject) {
