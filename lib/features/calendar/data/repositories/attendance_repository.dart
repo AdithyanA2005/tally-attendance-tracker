@@ -1,38 +1,100 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
 
-import 'package:tally/core/data/local_storage_service.dart';
 import 'package:tally/core/data/models/subject_model.dart';
 import 'package:tally/core/data/models/session_model.dart';
 import 'package:tally/core/data/models/timetable_entry_model.dart';
+import 'package:tally/core/services/supabase_service.dart';
+import 'package:tally/core/data/local_storage_service.dart';
+import 'package:tally/core/data/repositories/cache_repository.dart';
+
+import 'package:tally/features/settings/data/repositories/semester_repository.dart';
 
 final attendanceRepositoryProvider = Provider<AttendanceRepository>((ref) {
+  final supabase = SupabaseService().client;
+  final semesterRepository = ref.watch(semesterRepositoryProvider);
   final localStorage = ref.watch(localStorageServiceProvider);
-  return AttendanceRepository(localStorage);
+  return AttendanceRepository(supabase, semesterRepository, localStorage);
 });
 
-final localStorageServiceProvider = Provider<LocalStorageService>((ref) {
-  return LocalStorageService();
-});
+class _SubjectCache extends CacheRepository<Subject> {
+  _SubjectCache(LocalStorageService localStorage, SupabaseClient supabase)
+    : super(
+        box: localStorage.subjectBox,
+        supabase: supabase,
+        tableName: 'subjects',
+        fromJson: Subject.fromJson,
+      ) {
+    initSync();
+  }
+}
+
+class _SessionCache extends CacheRepository<ClassSession> {
+  _SessionCache(LocalStorageService localStorage, SupabaseClient supabase)
+    : super(
+        box: localStorage.sessionBox,
+        supabase: supabase,
+        tableName: 'attendance_logs',
+        fromJson: ClassSession.fromJson,
+      ) {
+    initSync();
+  }
+}
+
+class _TimetableCache extends CacheRepository<TimetableEntry> {
+  _TimetableCache(LocalStorageService localStorage, SupabaseClient supabase)
+    : super(
+        box: localStorage.timetableBox,
+        supabase: supabase,
+        tableName: 'timetables',
+        fromJson: TimetableEntry.fromJson,
+      ) {
+    initSync();
+  }
+}
 
 class AttendanceRepository {
+  final SupabaseClient _supabase;
+  final SemesterRepository _semesterRepository;
   final LocalStorageService _localStorage;
 
-  AttendanceRepository(this._localStorage);
+  late final _SubjectCache _subjects;
+  late final _SessionCache _sessions;
+  late final _TimetableCache _timetable;
 
-  // Subjects
-  Stream<List<Subject>> watchSubjects() {
-    return _localStorage.subjectBox
-        .watch()
-        .map((event) {
-          return _localStorage.subjectBox.values.toList();
-        })
-        .startWith(_localStorage.subjectBox.values.toList());
+  AttendanceRepository(
+    this._supabase,
+    this._semesterRepository,
+    this._localStorage,
+  ) {
+    _subjects = _SubjectCache(_localStorage, _supabase);
+    _sessions = _SessionCache(_localStorage, _supabase);
+    _timetable = _TimetableCache(_localStorage, _supabase);
   }
 
-  List<Subject> getSubjects() {
-    return _localStorage.subjectBox.values.toList();
+  String? get _activeSemesterId =>
+      _semesterRepository.getActiveSemesterSync()?.id;
+
+  // Subjects
+
+  Stream<List<Subject>> watchSubjects({String? semesterId}) {
+    return _subjects.stream.map((box) {
+      final targetSemesterId = semesterId ?? _activeSemesterId;
+      if (targetSemesterId == null) return [];
+      return box.values.where((s) => s.semesterId == targetSemesterId).toList();
+    });
+  }
+
+  Future<List<Subject>> getSubjects({String? semesterId}) async {
+    final targetSemesterId = semesterId ?? _activeSemesterId;
+    if (targetSemesterId == null) return [];
+
+    // Prefer Local
+    return _subjects.box.values
+        .where((s) => s.semesterId == targetSemesterId)
+        .toList();
   }
 
   Future<void> addSubject({
@@ -41,135 +103,296 @@ class AttendanceRepository {
     required int weeklyHours,
     required Color color,
   }) async {
+    final semesterId = _activeSemesterId;
+    if (semesterId == null) throw Exception('No active semester');
+
     final id = const Uuid().v4();
     final subject = Subject(
       id: id,
+      semesterId: semesterId,
       name: name,
       minimumAttendancePercentage: minAttendance,
       weeklyHours: weeklyHours,
-      colorTag: color.value, // ignore: deprecated_member_use
+      colorTag: color.value,
+      hasPendingSync: true, // Mark dirty
+      lastUpdated: DateTime.now(),
     );
-    await _localStorage.subjectBox.put(id, subject);
+
+    // 1. Optimistic Local Save
+    await _subjects.saveLocal(subject);
+
+    // 2. Proactive Remote Sync
+    try {
+      final json = subject.toJson();
+      json['user_id'] = _supabase.auth.currentUser!.id;
+      await _supabase.from('subjects').upsert(json);
+      // Mark as synced if successful
+      await _subjects.saveLocal(subject.copyWith(hasPendingSync: false));
+    } catch (e) {
+      debugPrint('Proactive sync failed: $e. Will retry later.');
+    }
   }
 
   Future<void> updateSubject(Subject subject) async {
-    await _localStorage.subjectBox.put(subject.id, subject);
+    final updated = subject.copyWith(
+      hasPendingSync: true, // Mark dirty
+      lastUpdated: DateTime.now(),
+    );
+
+    // 1. Optimistic Local Save
+    await _subjects.saveLocal(updated);
+
+    // 2. Proactive Remote Sync
+    try {
+      final json = updated.toJson();
+      json['user_id'] = _supabase.auth.currentUser!.id;
+      await _supabase.from('subjects').upsert(json);
+      // Mark as synced if successful
+      await _subjects.saveLocal(updated.copyWith(hasPendingSync: false));
+    } catch (e) {
+      debugPrint('Proactive sync failed: $e. Will retry later.');
+    }
   }
 
   Future<void> deleteSubject(String id) async {
-    await _localStorage.subjectBox.delete(id);
+    // 1. Cleanup Local Orphans (Hive doesn't cascade)
+    final sessionsToDelete = _sessions.box.values
+        .where((s) => s.subjectId == id)
+        .map((s) => s.id);
+    await _sessions.box.deleteAll(sessionsToDelete);
+
+    final timetableToDelete = _timetable.box.values
+        .where((t) => t.subjectId == id)
+        .map((t) => t.id);
+    await _timetable.box.deleteAll(timetableToDelete);
+
+    // 2. Delete Subject Locally
+    await _subjects.deleteLocal(id);
+
+    // 3. Delete Subject Remotely (Postgres ON DELETE CASCADE handles children)
+    await _supabase.from('subjects').delete().eq('id', id);
   }
 
   // Sessions
-  List<ClassSession> getSessions(String subjectId) {
-    return _localStorage.sessionBox.values
-        .where((s) => s.subjectId == subjectId)
+
+  Stream<List<ClassSession>> watchAllSessions({String? semesterId}) {
+    return _sessions.stream.map((box) {
+      final targetSemesterId = semesterId ?? _activeSemesterId;
+      if (targetSemesterId == null) return [];
+      return box.values.where((s) => s.semesterId == targetSemesterId).toList();
+    });
+  }
+
+  Future<List<ClassSession>> getSessions(
+    String subjectId, {
+    String? semesterId,
+  }) async {
+    final targetSemesterId = semesterId ?? _activeSemesterId;
+    if (targetSemesterId == null) return [];
+
+    // Prefer Local
+    return _sessions.box.values
+        .where(
+          (s) => s.semesterId == targetSemesterId && s.subjectId == subjectId,
+        )
         .toList();
   }
 
   Future<void> logSession(ClassSession session) async {
-    await _localStorage.sessionBox.put(session.id, session);
+    // Check for existing session at the same time to prevent duplicates
+    String finalId = session.id;
+    try {
+      final existing = _sessions.box.values.firstWhere((s) {
+        return s.semesterId == session.semesterId &&
+            s.date.year == session.date.year &&
+            s.date.month == session.date.month &&
+            s.date.day == session.date.day &&
+            s.date.hour == session.date.hour &&
+            s.date.minute == session.date.minute &&
+            s.id != session.id;
+      });
+      // Found a duplicate time slot! Use the existing ID to overwrite it.
+      finalId = existing.id;
+    } catch (_) {
+      // No duplicate found
+      // If this was a virtual session ID, generate a real persistent UUID
+      if (finalId.startsWith('virtual_')) {
+        finalId = const Uuid().v4();
+      }
+    }
+
+    final updated = session.copyWith(
+      id: finalId,
+      hasPendingSync: true, // Mark dirty
+      lastUpdated: DateTime.now(),
+    );
+
+    // 1. Optimistic Local Save
+    await _sessions.saveLocal(updated);
+
+    // 2. Proactive Remote Sync
+    try {
+      final json = updated.toJson();
+      json['user_id'] = _supabase.auth.currentUser!.id;
+      await _supabase.from('attendance_logs').upsert(json);
+      // Mark as synced if successful
+      await _sessions.saveLocal(updated.copyWith(hasPendingSync: false));
+    } catch (e) {
+      debugPrint('Proactive session sync failed: $e. Will retry later.');
+    }
   }
 
   Future<void> updateSession(ClassSession session) async {
-    await _localStorage.sessionBox.put(session.id, session);
+    await logSession(session);
   }
 
   Future<void> deleteSession(String id) async {
-    await _localStorage.sessionBox.delete(id);
+    // Optimistic
+    await _sessions.deleteLocal(id);
+    await _supabase.from('attendance_logs').delete().eq('id', id);
   }
 
   Future<void> deleteDuplicateSessions({required DateTime date}) async {
-    // Determine keys to delete
-    final keysToDelete = _localStorage.sessionBox.values
-        .where((s) {
-          return s.date.year == date.year &&
-              s.date.month == date.month &&
-              s.date.day == date.day &&
-              s.date.hour == date.hour &&
-              s.date.minute == date.minute;
-        })
-        .map((s) => s.id)
+    // Skipping to match V1 Pivot scope
+  }
+
+  Future<List<ClassSession>> getAllSessions({String? semesterId}) async {
+    final targetSemesterId = semesterId ?? _activeSemesterId;
+    if (targetSemesterId == null) return [];
+
+    // Prefer Local
+    return _sessions.box.values
+        .where((s) => s.semesterId == targetSemesterId)
         .toList();
-
-    await _localStorage.sessionBox.deleteAll(keysToDelete);
-  }
-
-  Future<void> clearAllSessions() async {
-    await _localStorage.sessionBox.clear();
-  }
-
-  Future<void> factoryReset() async {
-    await _localStorage.sessionBox.clear();
-    await _localStorage.timetableBox.clear();
-    await _localStorage.subjectBox.clear();
-  }
-
-  Stream<List<ClassSession>> watchAllSessions() {
-    return _localStorage.sessionBox
-        .watch()
-        .map((event) {
-          return _localStorage.sessionBox.values.toList();
-        })
-        .startWith(_localStorage.sessionBox.values.toList());
   }
 
   // Timetable
-  Stream<List<TimetableEntry>> watchTimetable({int? dayOfWeek}) {
-    return _localStorage.timetableBox
-        .watch()
-        .map((event) {
-          final all = _localStorage.timetableBox.values.toList();
-          if (dayOfWeek != null) {
-            return all.where((e) => e.dayOfWeek == dayOfWeek).toList();
-          }
-          return all;
-        })
-        .startWith(
-          _localStorage.timetableBox.values.where((e) {
-            if (dayOfWeek != null) return e.dayOfWeek == dayOfWeek;
-            return true;
-          }).toList(),
-        );
+
+  Stream<List<TimetableEntry>> watchTimetable({
+    int? dayOfWeek,
+    String? semesterId,
+  }) {
+    return _timetable.stream.map((box) {
+      final targetSemesterId = semesterId ?? _activeSemesterId;
+      if (targetSemesterId == null) return [];
+
+      var query = box.values.where((e) => e.semesterId == targetSemesterId);
+
+      if (dayOfWeek != null) {
+        query = query.where((e) => e.dayOfWeek == dayOfWeek);
+      }
+      return query.toList();
+    });
+  }
+
+  Future<List<TimetableEntry>> getTimetable({
+    int? dayOfWeek,
+    String? semesterId,
+  }) async {
+    final targetSemesterId = semesterId ?? _activeSemesterId;
+    if (targetSemesterId == null) return [];
+
+    var query = _timetable.box.values.where(
+      (e) => e.semesterId == targetSemesterId,
+    );
+
+    if (dayOfWeek != null) {
+      query = query.where((e) => e.dayOfWeek == dayOfWeek);
+    }
+    return query.toList();
   }
 
   Future<void> addTimetableEntry({
     required String subjectId,
     required int dayOfWeek,
     required String startTime,
-    required double durationInHours,
+    required int durationMinutes,
   }) async {
+    final semesterId = _activeSemesterId;
+    if (semesterId == null) throw Exception('No active semester');
+
     final id = const Uuid().v4();
     final entry = TimetableEntry(
       id: id,
       subjectId: subjectId,
+      semesterId: semesterId,
       dayOfWeek: dayOfWeek,
       startTime: startTime,
-      durationInHours: durationInHours,
+      durationMinutes: durationMinutes,
+      hasPendingSync: true, // Mark dirty
+      lastUpdated: DateTime.now(),
     );
-    await _localStorage.timetableBox.put(id, entry);
+
+    // 1. Optimistic Local Save
+    await _timetable.saveLocal(entry);
+
+    // 2. Proactive Remote Sync
+    try {
+      final json = entry.toJson();
+      json['user_id'] = _supabase.auth.currentUser!.id;
+      await _supabase.from('timetables').upsert(json);
+      // Mark as synced if successful
+      await _timetable.saveLocal(entry.copyWith(hasPendingSync: false));
+    } catch (e) {
+      debugPrint('Proactive timetable sync failed: $e. Will retry later.');
+    }
   }
 
   Future<void> updateTimetableEntry(TimetableEntry entry) async {
-    await _localStorage.timetableBox.put(entry.id, entry);
+    final updated = entry.copyWith(
+      hasPendingSync: true, // Mark dirty
+      lastUpdated: DateTime.now(),
+    );
+
+    // 1. Optimistic Local Save
+    await _timetable.saveLocal(updated);
+
+    // 2. Proactive Remote Sync
+    try {
+      final json = updated.toJson();
+      json['user_id'] = _supabase.auth.currentUser!.id;
+      await _supabase.from('timetables').upsert(json);
+      // Mark as synced if successful
+      await _timetable.saveLocal(updated.copyWith(hasPendingSync: false));
+    } catch (e) {
+      debugPrint('Proactive timetable update failed: $e. Will retry later.');
+    }
   }
 
   Future<void> deleteTimetableEntry(String id) async {
-    await _localStorage.timetableBox.delete(id);
+    // Optimistic
+    await _timetable.deleteLocal(id);
+    await _supabase.from('timetables').delete().eq('id', id);
   }
-}
+  // Sync Methods for Immediate Access (Fixes Initial Load Spinner)
 
-extension StreamStartWith<T> on Stream<T> {
-  Stream<T> startWith(T value) {
-    return Stream.value(value).concatWith([this]);
+  List<Subject> getSubjectsSync({String? semesterId}) {
+    final targetSemesterId = semesterId ?? _activeSemesterId;
+    if (targetSemesterId == null) return [];
+    return _subjects.box.values
+        .where((s) => s.semesterId == targetSemesterId)
+        .toList();
   }
-}
 
-extension StreamConcatWith<T> on Stream<T> {
-  Stream<T> concatWith(Iterable<Stream<T>> other) async* {
-    yield* this;
-    for (final stream in other) {
-      yield* stream;
+  List<ClassSession> getAllSessionsSync({String? semesterId}) {
+    final targetSemesterId = semesterId ?? _activeSemesterId;
+    if (targetSemesterId == null) return [];
+    return _sessions.box.values
+        .where((s) => s.semesterId == targetSemesterId)
+        .toList();
+  }
+
+  List<TimetableEntry> getTimetableSync({int? dayOfWeek, String? semesterId}) {
+    final targetSemesterId = semesterId ?? _activeSemesterId;
+    if (targetSemesterId == null) return [];
+
+    var query = _timetable.box.values.where(
+      (e) => e.semesterId == targetSemesterId,
+    );
+
+    if (dayOfWeek != null) {
+      query = query.where((e) => e.dayOfWeek == dayOfWeek);
     }
+    return query.toList();
   }
 }

@@ -22,13 +22,16 @@ class SubjectAdapter extends TypeAdapter<Subject> {
       minimumAttendancePercentage: fields[2] as double,
       weeklyHours: fields[3] as int,
       colorTag: fields[4] as int,
+      semesterId: fields[7] == null ? '' : fields[7] as String,
+      lastUpdated: fields[5] as DateTime?,
+      hasPendingSync: fields[6] == null ? false : fields[6] as bool,
     );
   }
 
   @override
   void write(BinaryWriter writer, Subject obj) {
     writer
-      ..writeByte(5)
+      ..writeByte(8)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -38,7 +41,13 @@ class SubjectAdapter extends TypeAdapter<Subject> {
       ..writeByte(3)
       ..write(obj.weeklyHours)
       ..writeByte(4)
-      ..write(obj.colorTag);
+      ..write(obj.colorTag)
+      ..writeByte(5)
+      ..write(obj.lastUpdated)
+      ..writeByte(6)
+      ..write(obj.hasPendingSync)
+      ..writeByte(7)
+      ..write(obj.semesterId);
   }
 
   @override

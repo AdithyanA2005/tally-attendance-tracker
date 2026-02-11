@@ -1,0 +1,158 @@
+import 'package:flutter/foundation.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:tally/core/data/local_storage_service.dart';
+import 'package:tally/core/data/models/user_profile_model.dart';
+import 'package:tally/core/data/repositories/cache_repository.dart';
+import 'package:tally/core/services/supabase_service.dart';
+
+class ProfileRepository extends CacheRepository<UserProfile> {
+  final LocalStorageService _localStorage;
+
+  ProfileRepository(LocalStorageService localStorage, SupabaseClient supabase)
+    : _localStorage = localStorage,
+      super(
+        box: localStorage.profileBox,
+        supabase: supabase,
+        tableName: 'profiles',
+        fromJson: UserProfile.fromJson,
+      ) {
+    initSync();
+  }
+
+  // getId is no longer needed as CacheRepository uses item.id from SyncableModel
+  /// Returns the current user's profile stream
+  Stream<UserProfile?> watchProfile() {
+    return stream.map((box) {
+      // We assume the box contains the current user's profile
+      // We can filter by auth.uid if needed, but RLS ensures we only get ours usually.
+      // Or we can explicitly return the one matching curr user.
+      final userId = supabase.auth.currentUser?.id;
+      if (userId == null) return null;
+
+      if (box.containsKey(userId)) {
+        return box.get(userId);
+      }
+      // Fallback: return the first one found (if RLS restricts to 1)
+      if (box.isNotEmpty) return box.getAt(0);
+      return null;
+    });
+  }
+
+  /// Synchronous helper
+  UserProfile? getProfileSync() {
+    final userId = supabase.auth.currentUser?.id;
+    if (userId == null) return null;
+    return box.get(userId);
+  }
+
+  Future<void> updateActiveSemester(String semesterId) async {
+    final userId = supabase.auth.currentUser?.id;
+    if (userId == null) return;
+
+    // Get current profile or create one (optimistically)
+    var profile = box.get(userId);
+
+    if (profile == null) {
+      // Should exist if we are logged in and sync happened, but handle edge case
+      profile = UserProfile(
+        id: userId,
+        email: supabase.auth.currentUser?.email,
+        activeSemesterId: semesterId,
+      );
+    } else {
+      profile = profile.copyWith(
+        activeSemesterId: semesterId,
+        hasPendingSync: true,
+        lastUpdated: DateTime.now(),
+      );
+    }
+
+    // Optimistic
+    await saveLocal(profile);
+
+    // Remote
+    try {
+      await supabase.from('profiles').upsert(profile.toJson());
+      await saveLocal(profile.copyWith(hasPendingSync: false));
+    } catch (e) {
+      debugPrint('Proactive profile sync failed: $e');
+    }
+  }
+
+  Future<void> updateName(String name) async {
+    final userId = supabase.auth.currentUser?.id;
+    if (userId == null) return;
+
+    var profile = box.get(userId);
+    if (profile == null) {
+      profile = UserProfile(
+        id: userId,
+        email: supabase.auth.currentUser?.email,
+        name: name,
+      );
+    } else {
+      profile = profile.copyWith(
+        name: name,
+        hasPendingSync: true,
+        lastUpdated: DateTime.now(),
+      );
+    }
+
+    await saveLocal(profile);
+    try {
+      await supabase.from('profiles').upsert(profile.toJson());
+      await saveLocal(profile.copyWith(hasPendingSync: false));
+    } catch (e) {
+      debugPrint('Proactive profile name sync failed: $e');
+    }
+  }
+
+  Future<void> updatePhotoUrl(String? photoUrl) async {
+    final userId = supabase.auth.currentUser?.id;
+    if (userId == null) return;
+
+    var profile = box.get(userId);
+    if (profile == null) {
+      profile = UserProfile(
+        id: userId,
+        email: supabase.auth.currentUser?.email,
+        photoUrl: photoUrl,
+      );
+    } else {
+      if (photoUrl == null) {
+        // copyWith doesn't support setting to null, so we recreate the object
+        profile = UserProfile(
+          id: profile.id,
+          email: profile.email,
+          activeSemesterId: profile.activeSemesterId,
+          lastUpdated: DateTime.now(),
+          hasPendingSync: profile.hasPendingSync,
+          name: profile.name,
+          photoUrl: null,
+        );
+      } else {
+        profile = profile.copyWith(
+          photoUrl: photoUrl,
+          hasPendingSync: true,
+          lastUpdated: DateTime.now(),
+        );
+      }
+    }
+
+    await saveLocal(profile);
+    try {
+      await supabase.from('profiles').upsert(profile.toJson());
+      await saveLocal(profile.copyWith(hasPendingSync: false));
+    } catch (e) {
+      debugPrint('Proactive profile photo sync failed: $e');
+    }
+  }
+}
+
+final profileRepositoryProvider = Provider<ProfileRepository>((ref) {
+  return ProfileRepository(
+    ref.watch(localStorageServiceProvider),
+    SupabaseService().client,
+  );
+});

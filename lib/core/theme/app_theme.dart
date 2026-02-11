@@ -18,6 +18,11 @@ class AppTheme {
 
   static const Color _calmRed = Color(0xFFE17055); // Burnt Terra
 
+  // Public accessors
+  static const Color primaryColor = _primary;
+  static const Color accentColor = _accent;
+  static const Color errorColor = _calmRed;
+
   static ThemeData get lightTheme {
     return ThemeData(
       useMaterial3: true,
@@ -32,6 +37,8 @@ class AppTheme {
         error: _calmRed,
         onSurface: _textDark,
         onSurfaceVariant: _textSub,
+        primaryContainer: const Color(0xFFF0F0F0), // Neutral Lighter Grey
+        onPrimaryContainer: _textDark,
       ),
       scaffoldBackgroundColor: _backgroundLight,
       fontFamily: GoogleFonts.outfit().fontFamily,
@@ -147,6 +154,8 @@ class AppTheme {
         secondary: _accent,
         tertiary: const Color(0xFFAAAAAA),
         error: _calmRed,
+        primaryContainer: const Color(0xFF333333), // Neutral Darker Grey
+        onPrimaryContainer: Colors.white,
       ),
       scaffoldBackgroundColor: const Color(0xFF121212),
       fontFamily: GoogleFonts.outfit().fontFamily,

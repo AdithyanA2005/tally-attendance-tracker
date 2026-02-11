@@ -5,9 +5,13 @@ import 'package:tally/core/data/models/timetable_entry_model.dart';
 import 'package:tally/core/data/models/session_model.dart';
 import 'package:tally/core/data/models/subject_model.dart';
 
+import '../../data/repositories/semester_repository.dart';
+
 // 1. Define the stream provider separately to ensure stability
 final dailyTimetableProvider = StreamProvider.family<List<TimetableEntry>, int>(
   (ref, dayOfWeek) {
+    // Watch active semester to trigger rebuilds
+    ref.watch(activeSemesterProvider);
     final repository = ref.watch(attendanceRepositoryProvider);
     return repository.watchTimetable(dayOfWeek: dayOfWeek);
   },
@@ -15,39 +19,37 @@ final dailyTimetableProvider = StreamProvider.family<List<TimetableEntry>, int>(
 
 final todayClassesProvider = Provider<AsyncValue<List<TodayClassItem>>>((ref) {
   final weekday = DateTime.now().weekday;
+  final repository = ref.watch(attendanceRepositoryProvider);
 
   // 2. Watch the stable family provider
   final timetableAsync = ref.watch(dailyTimetableProvider(weekday));
   final sessionsAsync = ref.watch(allSessionsStreamProvider);
   final subjectsAsync = ref.watch(subjectsStreamProvider);
 
-  // 3. Handle loading states gracefully
-  // If ANY are loading, we return loading.
-  // Note: StreamProviders with "startWith" might still be async for one frame.
-  if (timetableAsync.isLoading ||
-      sessionsAsync.isLoading ||
-      subjectsAsync.isLoading) {
-    return const AsyncValue.loading();
-  }
+  // 3. Fallback to Synchronous Data (Fixes Initial Load Spinner)
+  // If the stream hasn't emitted yet (isLoading && no value), access Hive directly.
+  final timetable =
+      timetableAsync.valueOrNull ??
+      repository.getTimetableSync(dayOfWeek: weekday);
 
-  // 4. Handle errors
-  if (timetableAsync.hasError) {
+  final sessions = sessionsAsync.valueOrNull ?? repository.getAllSessionsSync();
+
+  final subjects = subjectsAsync.valueOrNull ?? repository.getSubjectsSync();
+
+  // 4. Handle errors (Only if we actually have an error AND no data)
+  if (timetableAsync.hasError && !timetableAsync.hasValue) {
     return AsyncValue.error(timetableAsync.error!, timetableAsync.stackTrace!);
   }
-  if (sessionsAsync.hasError) {
+  if (sessionsAsync.hasError && !sessionsAsync.hasValue) {
     return AsyncValue.error(sessionsAsync.error!, sessionsAsync.stackTrace!);
   }
-  if (subjectsAsync.hasError) {
+  if (subjectsAsync.hasError && !subjectsAsync.hasValue) {
     return AsyncValue.error(subjectsAsync.error!, subjectsAsync.stackTrace!);
   }
 
   // 5. Combine data
   return AsyncValue.data(
-    _combineData(
-      timetable: timetableAsync.value ?? [],
-      sessions: sessionsAsync.value ?? [],
-      subjects: subjectsAsync.value ?? [],
-    ),
+    _combineData(timetable: timetable, sessions: sessions, subjects: subjects),
   );
 });
 
@@ -88,12 +90,11 @@ List<TodayClassItem> _combineData({
       orElse: () => ClassSession(
         id: '',
         subjectId: '',
+        semesterId: entry.semesterId,
         date: DateTime(0),
         status: AttendanceStatus.scheduled,
         durationMinutes: (subjectMap[entry.subjectId]!.weeklyHours / 5 * 60)
             .round(),
-        // This is a placeholder default; ideally we'd use timetable duration
-        // but converting hours to int minutes safely is needed.
       ),
     );
 
@@ -142,8 +143,9 @@ List<TodayClassItem> _combineData({
           id: session.id,
           dayOfWeek: session.date.weekday,
           subjectId: session.subjectId,
+          semesterId: session.semesterId,
           startTime: timeStr,
-          durationInHours: 1.0, // Default duration for extra classes
+          durationMinutes: 60, // Default duration for extra classes
         ),
         subject: subject,
         originalSubject: subject,

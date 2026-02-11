@@ -19,18 +19,21 @@ class ClassSessionAdapter extends TypeAdapter<ClassSession> {
     return ClassSession(
       id: fields[0] as String,
       subjectId: fields[1] as String,
+      semesterId: fields[9] == null ? '' : fields[9] as String,
       date: fields[2] as DateTime,
       status: fields[3] as AttendanceStatus,
       isExtraClass: fields[4] as bool,
       notes: fields[5] as String?,
       durationMinutes: fields[6] as int,
+      lastUpdated: fields[7] as DateTime?,
+      hasPendingSync: fields[8] == null ? false : fields[8] as bool,
     );
   }
 
   @override
   void write(BinaryWriter writer, ClassSession obj) {
     writer
-      ..writeByte(7)
+      ..writeByte(10)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -44,7 +47,13 @@ class ClassSessionAdapter extends TypeAdapter<ClassSession> {
       ..writeByte(5)
       ..write(obj.notes)
       ..writeByte(6)
-      ..write(obj.durationMinutes);
+      ..write(obj.durationMinutes)
+      ..writeByte(7)
+      ..write(obj.lastUpdated)
+      ..writeByte(8)
+      ..write(obj.hasPendingSync)
+      ..writeByte(9)
+      ..write(obj.semesterId);
   }
 
   @override

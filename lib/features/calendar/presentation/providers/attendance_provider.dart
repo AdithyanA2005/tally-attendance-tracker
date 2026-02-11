@@ -5,39 +5,45 @@ import 'package:tally/core/data/models/session_model.dart';
 import '../../domain/attendance_calculator.dart';
 import '../../domain/entities/subject_stats.dart';
 
+import '../../../settings/data/repositories/semester_repository.dart';
+
 // Stream of all subjects
 final subjectsStreamProvider = StreamProvider<List<Subject>>((ref) {
+  // Watch active semester to trigger rebuilds
+  final activeSemester = ref.watch(activeSemesterProvider);
   final repository = ref.watch(attendanceRepositoryProvider);
-  return repository.watchSubjects();
+  return repository.watchSubjects(semesterId: activeSemester.value?.id);
 });
 
 // Stream of all sessions (Reactive)
 final allSessionsStreamProvider = StreamProvider<List<ClassSession>>((ref) {
+  // Watch active semester to trigger rebuilds
+  final activeSemester = ref.watch(activeSemesterProvider);
   final repository = ref.watch(attendanceRepositoryProvider);
-  return repository.watchAllSessions();
+  return repository.watchAllSessions(semesterId: activeSemester.value?.id);
 });
 
 // Stream of stats for all subjects (Reactive)
 final subjectStatsListProvider = Provider<AsyncValue<List<SubjectStats>>>((
   ref,
 ) {
+  final repository = ref.watch(attendanceRepositoryProvider);
   final subjectsAsync = ref.watch(subjectsStreamProvider);
   final sessionsAsync = ref.watch(allSessionsStreamProvider);
 
-  if (subjectsAsync.isLoading || sessionsAsync.isLoading) {
-    return const AsyncValue.loading();
-  }
+  // Fallback to sync data
+  final subjects = subjectsAsync.valueOrNull ?? repository.getSubjectsSync();
+  final allSessions =
+      sessionsAsync.valueOrNull ?? repository.getAllSessionsSync();
 
-  if (subjectsAsync.hasError) {
+  // Handle errors only if we have no data
+  if (subjectsAsync.hasError && !subjectsAsync.hasValue) {
     return AsyncValue.error(subjectsAsync.error!, subjectsAsync.stackTrace!);
   }
 
-  if (sessionsAsync.hasError) {
+  if (sessionsAsync.hasError && !sessionsAsync.hasValue) {
     return AsyncValue.error(sessionsAsync.error!, sessionsAsync.stackTrace!);
   }
-
-  final subjects = subjectsAsync.value ?? [];
-  final allSessions = sessionsAsync.value ?? [];
 
   return AsyncValue.data(
     subjects.map((subject) {
@@ -74,7 +80,7 @@ final subjectStatsListProvider = Provider<AsyncValue<List<SubjectStats>>>((
         conducted,
         subject.minimumAttendancePercentage,
       );
-      final prediction = AttendanceCalculator.predictAttendanceIfSkipped(
+      final prediction = AttendanceCalculator.predictAttendanceIfAttended(
         present,
         conducted,
       );

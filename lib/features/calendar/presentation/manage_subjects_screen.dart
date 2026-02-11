@@ -181,6 +181,11 @@ class ManageSubjectsScreen extends ConsumerWidget {
       context: context,
       isScrollControlled: true,
       useSafeArea: true,
+      showDragHandle: true,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
       constraints: const BoxConstraints(maxWidth: 600),
       builder: (context) => SubjectFormSheet(subjectToEdit: subject),
     );

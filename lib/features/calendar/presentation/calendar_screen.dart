@@ -7,12 +7,14 @@ import 'package:intl/intl.dart';
 import 'providers/calendar_provider.dart';
 import 'providers/pending_attendance_provider.dart';
 import 'package:tally/core/data/models/timetable_entry_model.dart';
-import '../../settings/data/repositories/settings_repository.dart';
 import 'package:tally/core/data/models/session_model.dart';
 import '../../../../core/presentation/widgets/bulk_action_chip.dart';
 import '../data/repositories/attendance_repository.dart';
+import '../../settings/data/repositories/semester_repository.dart';
 
 import 'widgets/edit_session_sheet.dart';
+import 'widgets/day_note_card.dart'; // Changed from day_note_sheet.dart to day_note_card.dart
+
 import 'package:tally/core/data/models/subject_model.dart';
 import '../../../../core/presentation/animations/fade_in_slide.dart';
 import '../../../../core/presentation/widgets/app_card.dart';
@@ -46,8 +48,14 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     final eventsAsync = ref.watch(calendarEventsProvider);
     final subjectMap = ref.watch(allSubjectsMapProvider);
     final timetableAsync = ref.watch(fullTimetableStreamProvider);
-    final settingsRepo = ref.watch(settingsRepositoryProvider);
-    final semesterStartDate = settingsRepo.getSemesterStartDate();
+    final activeSemester = ref.watch(activeSemesterProvider);
+    final rawStartDate =
+        activeSemester.value?.startDate ?? DateTime(2023, 1, 1);
+    final semesterStartDate = DateTime(
+      rawStartDate.year,
+      rawStartDate.month,
+      rawStartDate.day,
+    );
 
     return Scaffold(
       body: RefreshIndicator(
@@ -268,6 +276,10 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                                 ),
                               ),
                             ),
+
+                            // Day Note Section
+                            DayNoteCard(date: _selectedDay ?? _focusedDay),
+
                             Padding(
                               padding: const EdgeInsets.symmetric(
                                 horizontal: 24,
@@ -372,6 +384,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                                     subjectMap[session.subjectId] ??
                                     Subject(
                                       id: '?',
+                                      semesterId: session.semesterId,
                                       name: 'Unknown',
                                       minimumAttendancePercentage: 0,
                                       weeklyHours: 0,
@@ -502,6 +515,8 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                                                                   .subjectId] ??
                                                               Subject(
                                                                 id: '?',
+                                                                semesterId: session
+                                                                    .semesterId,
                                                                 name: 'Unknown',
                                                                 minimumAttendancePercentage:
                                                                     0,
@@ -644,7 +659,19 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     }
 
     final weekday = day.weekday;
-    final scheduledForDay = timetable.where((e) => e.dayOfWeek == weekday);
+    final scheduledForDay =
+        timetable.where((e) => e.dayOfWeek == weekday).toList()..sort((a, b) {
+          // Sort by start time (HH:mm format)
+          final aTime = a.startTime.split(':');
+          final bTime = b.startTime.split(':');
+          final aHour = int.parse(aTime[0]);
+          final aMin = int.parse(aTime[1]);
+          final bHour = int.parse(bTime[0]);
+          final bMin = int.parse(bTime[1]);
+
+          if (aHour != bHour) return aHour.compareTo(bHour);
+          return aMin.compareTo(bMin);
+        });
     final combined = <ClassSession>[];
     final usedSessionIds = <String>{};
 
@@ -679,9 +706,10 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
           ClassSession(
             id: 'virtual_${entry.id}_${day.toIso8601String()}',
             subjectId: entry.subjectId,
+            semesterId: entry.semesterId,
             date: d,
             status: AttendanceStatus.scheduled,
-            durationMinutes: (entry.durationInHours * 60).toInt(),
+            durationMinutes: entry.durationMinutes,
           ),
         );
       }
@@ -694,7 +722,14 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
       }
     }
 
-    combined.sort((a, b) => a.date.compareTo(b.date));
+    // Sort by time (hour then minute) explicitly
+    combined.sort((a, b) {
+      if (a.date.hour != b.date.hour) {
+        return a.date.hour.compareTo(b.date.hour);
+      }
+      return a.date.minute.compareTo(b.date.minute);
+    });
+
     return combined;
   }
 
@@ -707,7 +742,11 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.transparent,
+      showDragHandle: true,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
       constraints: const BoxConstraints(maxWidth: 600),
       builder: (context) => EditSessionSheet(
         session: session,
@@ -717,7 +756,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     );
   }
 
-  void _showAddExtraClassDialog(BuildContext context) {
+  void _showAddExtraClassDialog(BuildContext context) async {
     // Determine time: if selected day is today, use now(), else use 9:00 AM of selected day
     DateTime baseTime = _selectedDay ?? DateTime.now();
     final now = DateTime.now();
@@ -729,16 +768,26 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
 
     // Default subject (first one or placeholder)
     final allSubjects = ref.read(allSubjectsMapProvider).values.toList();
+    final semesterId = await ref
+        .read(semesterRepositoryProvider)
+        .getActiveSemesterId();
+
+    if (!context.mounted) return;
 
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.transparent,
+      showDragHandle: true,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
       constraints: const BoxConstraints(maxWidth: 600),
       builder: (context) => EditSessionSheet(
         session: ClassSession(
           id: const Uuid().v4(),
           subjectId: allSubjects.isNotEmpty ? allSubjects.first.id : '',
+          semesterId: semesterId ?? '',
           date: baseTime,
           status: AttendanceStatus.scheduled,
           durationMinutes: 60,
@@ -761,7 +810,11 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
 
     // Mark all classes with the given status
     for (final session in sessions) {
-      final updatedSession = session.copyWith(status: status);
+      // If it's a virtual session, give it a real UUID
+      final isVirtual = session.id.startsWith('virtual_');
+      final realId = isVirtual ? const Uuid().v4() : session.id;
+
+      final updatedSession = session.copyWith(id: realId, status: status);
       await repo.logSession(updatedSession);
     }
 

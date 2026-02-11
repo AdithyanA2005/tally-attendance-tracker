@@ -1,12 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
-import '../../calendar/data/repositories/attendance_repository.dart';
-import '../data/repositories/settings_repository.dart';
-import '../../../../core/services/backup_service.dart';
+
+import '../../auth/data/repositories/auth_repository.dart';
 import '../../../../core/presentation/widgets/section_header.dart';
+// import '../../../../core/services/backup_service.dart';
+// import '../../../../core/services/sync_service.dart';
+import 'package:tally/features/settings/data/repositories/semester_repository.dart';
+import 'package:tally/features/settings/presentation/providers/theme_provider.dart';
+import 'package:tally/core/data/repositories/profile_repository.dart';
+import '../../../../core/data/models/user_profile_model.dart';
+import 'account_screen.dart';
+import 'widgets/semester_management_sheet.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -18,9 +25,6 @@ class SettingsScreen extends ConsumerStatefulWidget {
 class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   @override
   Widget build(BuildContext context) {
-    final settingsRepo = ref.watch(settingsRepositoryProvider);
-    final semesterStart = settingsRepo.getSemesterStartDate();
-
     return Scaffold(
       body: Center(
         child: ConstrainedBox(
@@ -43,106 +47,273 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               ),
               SliverList(
                 delegate: SliverChildListDelegate([
-                  const SectionHeader(title: 'Semester'),
-                  ListTile(
-                    leading: const Icon(Icons.date_range_rounded),
-                    title: const Text('Semester Start Date'),
-                    subtitle: Text(
-                      DateFormat('MMMM d, yyyy').format(semesterStart),
-                    ),
-                    trailing: const Icon(Icons.edit_calendar_rounded, size: 20),
-                    onTap: () async {
-                      final picked = await showDatePicker(
-                        context: context,
-                        initialDate: semesterStart,
-                        firstDate: DateTime(2020),
-                        lastDate: DateTime(2030),
+                  // Profile Section
+                  Consumer(
+                    builder: (context, ref, _) {
+                      final user = ref
+                          .watch(authRepositoryProvider)
+                          .currentUser;
+                      // Watch profile for name/photo updates
+                      final profileStream = ref.watch(
+                        profileRepositoryProvider.select(
+                          (repo) => repo.watchProfile(),
+                        ),
                       );
-                      if (picked != null) {
-                        await settingsRepo.setSemesterStartDate(picked);
-                        setState(() {});
-                      }
+
+                      return StreamBuilder<UserProfile?>(
+                        stream: profileStream,
+                        initialData: ref
+                            .read(profileRepositoryProvider)
+                            .getProfileSync(),
+                        builder: (context, snapshot) {
+                          final profile = snapshot.data;
+
+                          return InkWell(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const AccountScreen(),
+                                ),
+                              );
+                            },
+                            child: Padding(
+                              padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+                              child: Row(
+                                children: [
+                                  SizedBox(
+                                    width: 64,
+                                    height: 64,
+                                    child: ClipOval(
+                                      child: Container(
+                                        color: Theme.of(
+                                          context,
+                                        ).colorScheme.primaryContainer,
+                                        child: profile?.photoUrl != null
+                                            ? CachedNetworkImage(
+                                                imageUrl: profile!.photoUrl!,
+                                                fit: BoxFit.cover,
+                                                placeholder: (context, url) => Center(
+                                                  child: Text(
+                                                    ((profile?.name?.isNotEmpty ==
+                                                                    true
+                                                                ? profile!
+                                                                      .name![0]
+                                                                : null) ??
+                                                            (user?.email?.isNotEmpty ==
+                                                                    true
+                                                                ? user!
+                                                                      .email![0]
+                                                                : 'U'))
+                                                        .toUpperCase(),
+                                                    style: TextStyle(
+                                                      fontSize: 24,
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                      color: Theme.of(context)
+                                                          .colorScheme
+                                                          .onPrimaryContainer,
+                                                    ),
+                                                  ),
+                                                ),
+                                                errorWidget: (context, url, error) => Center(
+                                                  child: Text(
+                                                    ((profile?.name?.isNotEmpty ==
+                                                                    true
+                                                                ? profile!
+                                                                      .name![0]
+                                                                : null) ??
+                                                            (user?.email?.isNotEmpty ==
+                                                                    true
+                                                                ? user!
+                                                                      .email![0]
+                                                                : 'U'))
+                                                        .toUpperCase(),
+                                                    style: TextStyle(
+                                                      fontSize: 24,
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                      color: Theme.of(context)
+                                                          .colorScheme
+                                                          .onPrimaryContainer,
+                                                    ),
+                                                  ),
+                                                ),
+                                              )
+                                            : Center(
+                                                child: Text(
+                                                  ((profile?.name?.isNotEmpty ==
+                                                                  true
+                                                              ? profile!
+                                                                    .name![0]
+                                                              : null) ??
+                                                          (user?.email?.isNotEmpty ==
+                                                                  true
+                                                              ? user!.email![0]
+                                                              : 'U'))
+                                                      .toUpperCase(),
+                                                  style: TextStyle(
+                                                    fontSize: 24,
+                                                    fontWeight: FontWeight.bold,
+                                                    color: Theme.of(context)
+                                                        .colorScheme
+                                                        .onPrimaryContainer,
+                                                  ),
+                                                ),
+                                              ),
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 16),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          'Account',
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .labelSmall
+                                              ?.copyWith(
+                                                color: Theme.of(
+                                                  context,
+                                                ).colorScheme.outline,
+                                              ),
+                                        ),
+                                        Text(
+                                          profile?.name ??
+                                              user?.email ??
+                                              'Guest User',
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .titleMedium
+                                              ?.copyWith(
+                                                fontWeight: FontWeight.w600,
+                                              ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                        if (profile?.name != null)
+                                          Text(
+                                            user?.email ?? '',
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .bodySmall
+                                                ?.copyWith(
+                                                  color: Theme.of(context)
+                                                      .colorScheme
+                                                      .onSurfaceVariant,
+                                                ),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                      ],
+                                    ),
+                                  ),
+                                  Icon(
+                                    Icons.chevron_right_rounded,
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.outline,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
+                      );
                     },
                   ),
-                  const Divider(),
+
                   const SectionHeader(title: 'Academics'),
                   ListTile(
-                    leading: const Icon(Icons.calendar_month),
-                    title: const Text('Timetable'),
-                    subtitle: const Text('Edit your weekly schedule'),
-                    trailing: const Icon(Icons.chevron_right),
-                    onTap: () => context.push('/timetable'),
+                    leading: const Icon(Icons.school_rounded),
+                    title: const Text('Current Semester'),
+                    subtitle: Consumer(
+                      builder: (context, ref, _) {
+                        final activeAsync = ref.watch(activeSemesterProvider);
+                        final active = activeAsync.value;
+                        if (active == null) {
+                          return const Text('No active semester');
+                        }
+                        return Text('Current: ${active.name}');
+                      },
+                    ),
+                    trailing: const Icon(Icons.swap_horiz_rounded),
+                    onTap: () => _showSemesterSwitcher(context, ref),
                   ),
                   ListTile(
-                    leading: const Icon(Icons.class_),
+                    leading: const Icon(Icons.class_rounded),
                     title: const Text('Subjects'),
-                    subtitle: const Text('Add or edit subjects'),
+                    subtitle: const Text('Manage subjects & criteria'),
                     trailing: const Icon(Icons.chevron_right),
                     onTap: () => context.push('/manage_subjects'),
                   ),
-                  const Divider(),
-                  const SectionHeader(title: 'Backup & Restore'),
                   ListTile(
-                    title: const Text('Share Backup'),
-                    subtitle: const Text('Send backup file via other apps.'),
-                    leading: const Icon(Icons.share_rounded),
-                    onTap: () async {
-                      await ref.read(backupServiceProvider).exportData();
+                    leading: const Icon(Icons.calendar_month_rounded),
+                    title: const Text('Timetable'),
+                    subtitle: const Text('Edit weekly schedule'),
+                    trailing: const Icon(Icons.chevron_right),
+                    onTap: () => context.push('/timetable'),
+                  ),
+
+                  const SizedBox(height: 16),
+                  const SectionHeader(title: 'General'),
+                  Consumer(
+                    builder: (context, ref, _) {
+                      final themeMode = ref.watch(themeModeProvider);
+                      return ListTile(
+                        leading: const Icon(Icons.dark_mode_rounded),
+                        title: const Text('Appearance'),
+                        subtitle: Text(
+                          themeMode == ThemeMode.system
+                              ? 'System'
+                              : themeMode == ThemeMode.light
+                              ? 'Light'
+                              : 'Dark',
+                        ),
+                        trailing: const Icon(Icons.chevron_right),
+                        onTap: () => _showAppearanceSelector(context, ref),
+                      );
                     },
                   ),
-                  ListTile(
-                    title: const Text('Save to Device'),
-                    subtitle: const Text('Download backup to your files.'),
-                    leading: const Icon(Icons.save_alt_rounded),
-                    onTap: () async {
-                      await ref
-                          .read(backupServiceProvider)
-                          .saveBackupToDevice();
-                      if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Backup saved to Downloads!'),
-                          ),
-                        );
-                      }
-                    },
-                  ),
-                  ListTile(
-                    title: const Text('Import Data'),
-                    subtitle: const Text('Restore from a backup file.'),
-                    leading: const Icon(Icons.file_download_rounded),
-                    onTap: () async {
-                      _importBackup(context, ref);
-                    },
-                  ),
-                  const Divider(),
-                  const SectionHeader(title: 'Danger Zone'),
-                  ListTile(
-                    title: const Text(
-                      'Factory Reset App',
-                      style: TextStyle(color: Colors.red),
-                    ),
-                    subtitle: const Text('Delete all data and start fresh.'),
-                    leading: const Icon(
-                      Icons.delete_forever_rounded,
-                      color: Colors.red,
-                    ),
-                    onTap: () async {
-                      await _confirmReset(context, ref);
-                    },
-                  ),
-                  const Divider(),
-                  const SectionHeader(title: 'App'),
                   const ListTile(
-                    leading: Icon(Icons.notifications),
+                    leading: Icon(Icons.notifications_rounded),
                     title: Text('Notifications'),
                     subtitle: Text('Smart reminders (Coming Soon)'),
                     trailing: Switch(value: false, onChanged: null),
                   ),
-                  const ListTile(
-                    leading: Icon(Icons.info_outline),
-                    title: Text('About'),
-                    subtitle: Text('Attendance Intelligence v1.0'),
+                  ListTile(
+                    leading: const Icon(Icons.info_outline_rounded),
+                    title: const Text('About'),
+                    subtitle: const Text('Attendance Intelligence v1.0'),
+                    onTap: () {
+                      showAboutDialog(
+                        context: context,
+                        applicationName: 'Tally',
+                        applicationVersion: '1.0.0',
+                        applicationLegalese: 'Copyright © 2026',
+                      );
+                    },
+                  ),
+
+                  const SizedBox(height: 16),
+                  const SectionHeader(title: 'Account'),
+                  ListTile(
+                    leading: Icon(
+                      Icons.logout_rounded,
+                      color: Theme.of(context).colorScheme.error,
+                    ),
+                    title: Text(
+                      'Sign Out',
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.error,
+                      ),
+                    ),
+                    onTap: () async {
+                      await _showSignOutDialog(context, ref);
+                    },
                   ),
                 ]),
               ),
@@ -154,96 +325,197 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     );
   }
 
-  Future<void> _importBackup(BuildContext context, WidgetRef ref) async {
+  void _showSemesterSwitcher(BuildContext context, WidgetRef ref) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      constraints: const BoxConstraints(maxWidth: 600),
+      builder: (context) => const SemesterManagementSheet(),
+    );
+  }
+
+  void _showAppearanceSelector(BuildContext context, WidgetRef ref) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      showDragHandle: true,
+      isScrollControlled: true,
+      builder: (context) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const Text(
+                'Appearance',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 24),
+              _buildThemeOptionSheetItem(
+                context,
+                ref,
+                'System Default',
+                'Matches your device settings',
+                ThemeMode.system,
+                Icons.brightness_auto_rounded,
+              ),
+              const SizedBox(height: 12),
+              _buildThemeOptionSheetItem(
+                context,
+                ref,
+                'Light Mode',
+                'Clean and bright interface',
+                ThemeMode.light,
+                Icons.light_mode_rounded,
+              ),
+              const SizedBox(height: 12),
+              _buildThemeOptionSheetItem(
+                context,
+                ref,
+                'Dark Mode',
+                'Easier on the eyes',
+                ThemeMode.dark,
+                Icons.dark_mode_rounded,
+              ),
+              const SizedBox(height: 24),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _showSignOutDialog(BuildContext context, WidgetRef ref) async {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Restore Backup?'),
+        title: const Text('Sign Out'),
         content: const Text(
-          'This will OVERWRITE all current data with the backup. This action cannot be undone.',
+          'Are you sure you want to sign out of your account?',
+          style: TextStyle(fontSize: 16),
         ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        actionsPadding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+            child: Text(
+              'Cancel',
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+            ),
           ),
-          TextButton(
+          FilledButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Restore'),
+            style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.error,
+              foregroundColor: Theme.of(context).colorScheme.onError,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            child: const Text('Sign Out'),
           ),
         ],
       ),
     );
 
-    if (confirmed == true) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('Restoring backup...')));
-      }
-
-      try {
-        await ref.read(backupServiceProvider).importData();
-        if (context.mounted) {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(const SnackBar(content: Text('Restore successful!')));
-          // Navigate to Home/Dashboard to refresh all providers
-          context.go('/');
-        }
-      } catch (e) {
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Restore failed: $e'),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
-      }
+    if (confirmed == true && mounted) {
+      await ref.read(authRepositoryProvider).signOut();
     }
   }
 
-  Future<void> _confirmReset(BuildContext context, WidgetRef ref) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Factory Reset App?'),
-        content: const Text(
-          'This will DELETE EVERYTHING: Subjects, Timetable, Logs, and Settings.\n\nThis action cannot be undone.',
+  Widget _buildThemeOptionSheetItem(
+    BuildContext context,
+    WidgetRef ref,
+    String label,
+    String description,
+    ThemeMode mode,
+    IconData icon,
+  ) {
+    final currentMode = ref.watch(themeModeProvider);
+    final isSelected = currentMode == mode;
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return InkWell(
+      onTap: () {
+        ref.read(themeModeProvider.notifier).setThemeMode(mode);
+        Navigator.pop(context);
+      },
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? colorScheme.primary.withValues(alpha: 0.1)
+              : colorScheme.surfaceContainerLow.withValues(alpha: 0.5),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isSelected
+                ? colorScheme.primary
+                : colorScheme.outlineVariant.withValues(alpha: 0.5),
+            width: isSelected ? 2 : 1,
+          ),
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Delete Everything'),
-          ),
-        ],
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: isSelected
+                    ? colorScheme.primary.withValues(alpha: 0.2)
+                    : colorScheme.surfaceContainerHighest.withValues(
+                        alpha: 0.5,
+                      ),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                icon,
+                color: isSelected
+                    ? colorScheme.primary
+                    : colorScheme.onSurfaceVariant,
+                size: 24,
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    label,
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: isSelected
+                          ? FontWeight.bold
+                          : FontWeight.w600,
+                      color: isSelected
+                          ? colorScheme.primary
+                          : colorScheme.onSurface,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    description,
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: isSelected
+                          ? colorScheme.primary.withValues(alpha: 0.8)
+                          : colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            if (isSelected)
+              Icon(Icons.check_circle_rounded, color: colorScheme.primary),
+          ],
+        ),
       ),
     );
-
-    if (confirmed == true) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Performing factory reset...')),
-        );
-      }
-
-      // Clear all data
-      await ref.read(attendanceRepositoryProvider).factoryReset();
-      await ref.read(settingsRepositoryProvider).clearAllSettings();
-
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('App has been reset to fresh state.')),
-        );
-        // Navigate to Home to reflect changes and potentially refresh state
-        context.go('/');
-      }
-    }
   }
 }

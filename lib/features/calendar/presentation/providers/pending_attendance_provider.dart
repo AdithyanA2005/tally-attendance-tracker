@@ -4,17 +4,17 @@ import 'attendance_provider.dart';
 import '../../data/repositories/attendance_repository.dart';
 import 'package:tally/core/data/models/subject_model.dart';
 import 'package:tally/core/data/models/session_model.dart';
-import '../../../settings/data/repositories/settings_repository.dart';
+import '../../../settings/data/repositories/semester_repository.dart';
 
 class PendingClassItem {
   final Subject subject;
   final DateTime dateTime;
-  final double durationInHours;
+  final int durationMinutes;
 
   PendingClassItem({
     required this.subject,
     required this.dateTime,
-    required this.durationInHours,
+    required this.durationMinutes,
   });
 }
 
@@ -50,8 +50,9 @@ final pendingAttendanceProvider = Provider<AsyncValue<List<PendingClassItem>>>((
   final todayStart = DateTime(now.year, now.month, now.day);
 
   // Get Semester Start Date
-  final settingsRepo = ref.watch(settingsRepositoryProvider);
-  final semesterStartDate = settingsRepo.getSemesterStartDate();
+  final activeSemester = ref.watch(activeSemesterProvider);
+  final semesterStartDate =
+      activeSemester.value?.startDate ?? DateTime(2023, 1, 1);
 
   // Look back 7 days, EXCLUDING today (today is handled by Today's Schedule)
   for (int i = 1; i <= 7; i++) {
@@ -111,7 +112,7 @@ final pendingAttendanceProvider = Provider<AsyncValue<List<PendingClassItem>>>((
           PendingClassItem(
             subject: subjectMap[entry.subjectId]!,
             dateTime: classDateTime,
-            durationInHours: entry.durationInHours,
+            durationMinutes: entry.durationMinutes,
           ),
         );
       }
@@ -127,12 +128,15 @@ final pendingAttendanceProvider = Provider<AsyncValue<List<PendingClassItem>>>((
 
 // Helper provider for full timetable
 final fullTimetableStreamProvider = StreamProvider((ref) {
+  final activeSemester = ref.watch(activeSemesterProvider);
   final repo = ref.watch(attendanceRepositoryProvider);
-  return repo.watchTimetable(); // No day filter = all days
+  // No day filter = all days
+  return repo.watchTimetable(semesterId: activeSemester.value?.id);
 });
 
 // Helper provider for all sessions
 final sessionsStreamProvider = StreamProvider((ref) {
+  final activeSemester = ref.watch(activeSemesterProvider);
   final repo = ref.watch(attendanceRepositoryProvider);
-  return repo.watchAllSessions();
+  return repo.watchAllSessions(semesterId: activeSemester.value?.id);
 });
