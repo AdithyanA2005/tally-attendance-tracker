@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'dart:async';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'widgets/skeleton_screen.dart';
 import '../../features/home/presentation/home_screen.dart';
@@ -29,9 +29,7 @@ GoRouter goRouter(GoRouterRef ref) {
   return GoRouter(
     navigatorKey: _rootNavigatorKey,
     initialLocation: '/',
-    refreshListenable: GoRouterRefreshStream(
-      ref.watch(authStateProvider.stream),
-    ),
+    refreshListenable: RiverpodRefreshListenable(ref, authStateProvider),
     redirect: (context, state) {
       // 1. Check Loading State
       if (authState.isLoading) {
@@ -109,19 +107,13 @@ GoRouter goRouter(GoRouterRef ref) {
   );
 }
 
-class GoRouterRefreshStream extends ChangeNotifier {
-  GoRouterRefreshStream(Stream<dynamic> stream) {
-    notifyListeners();
-    _subscription = stream.asBroadcastStream().listen(
-      (dynamic _) => notifyListeners(),
-    );
-  }
-
-  late final StreamSubscription<dynamic> _subscription;
-
-  @override
-  void dispose() {
-    _subscription.cancel();
-    super.dispose();
+class RiverpodRefreshListenable extends ChangeNotifier {
+  RiverpodRefreshListenable(
+    Ref ref,
+    ProviderListenable<AsyncValue<dynamic>> provider,
+  ) {
+    ref.listen(provider, (previous, next) {
+      notifyListeners();
+    });
   }
 }

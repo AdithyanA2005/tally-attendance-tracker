@@ -5,6 +5,7 @@ part 'timetable_entry_model.g.dart';
 
 @HiveType(typeId: 1)
 class TimetableEntry extends SyncableModel {
+  @override
   @HiveField(0)
   final String id;
 
@@ -23,9 +24,11 @@ class TimetableEntry extends SyncableModel {
   @HiveField(5, defaultValue: true)
   final bool isRecurring;
 
+  @override
   @HiveField(6)
   final DateTime lastUpdated;
 
+  @override
   @HiveField(7, defaultValue: false)
   final bool hasPendingSync;
 

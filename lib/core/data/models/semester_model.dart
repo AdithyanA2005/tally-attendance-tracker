@@ -5,6 +5,7 @@ part 'semester_model.g.dart';
 
 @HiveType(typeId: 4)
 class Semester extends SyncableModel {
+  @override
   @HiveField(0)
   final String id;
 
@@ -17,9 +18,11 @@ class Semester extends SyncableModel {
   @HiveField(3)
   final bool isActive;
 
+  @override
   @HiveField(4)
   final DateTime lastUpdated;
 
+  @override
   @HiveField(5, defaultValue: false)
   final bool hasPendingSync;
 

@@ -113,7 +113,7 @@ class AttendanceRepository {
       name: name,
       minimumAttendancePercentage: minAttendance,
       weeklyHours: weeklyHours,
-      colorTag: color.value,
+      colorTag: color.toARGB32(),
       hasPendingSync: true, // Mark dirty
       lastUpdated: DateTime.now(),
     );

@@ -58,7 +58,7 @@ class SkeletonScreen extends StatelessWidget {
                 child: ListView.separated(
                   physics: const NeverScrollableScrollPhysics(),
                   itemCount: 4,
-                  separatorBuilder: (_, __) => const SizedBox(height: 16),
+                  separatorBuilder: (_, _) => const SizedBox(height: 16),
                   itemBuilder: (_, index) {
                     return Row(
                       crossAxisAlignment: CrossAxisAlignment.start,

@@ -1,6 +1,5 @@
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -22,15 +21,13 @@ class SyncService {
   final SettingsRepository _settings;
   final DayNoteRepository _dayNotes;
   final SupabaseClient _supabase;
-  final Ref? _ref; // Optional ref to invalidate providers
 
   SyncService(
     this._localStorage,
     this._settings,
     this._supabase,
-    this._dayNotes, [
-    this._ref,
-  ]);
+    this._dayNotes,
+  );
 
   static const String _kLastSyncTimeKey = 'last_sync_time';
 
@@ -638,6 +635,5 @@ final syncServiceProvider = Provider<SyncService>((ref) {
     ref.watch(settingsRepositoryProvider),
     SupabaseService().client,
     ref.watch(dayNoteRepositoryProvider),
-    ref,
   );
 });

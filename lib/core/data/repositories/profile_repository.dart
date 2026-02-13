@@ -7,11 +7,8 @@ import 'package:tally/core/data/repositories/cache_repository.dart';
 import 'package:tally/core/services/supabase_service.dart';
 
 class ProfileRepository extends CacheRepository<UserProfile> {
-  final LocalStorageService _localStorage;
-
   ProfileRepository(LocalStorageService localStorage, SupabaseClient supabase)
-    : _localStorage = localStorage,
-      super(
+    : super(
         box: localStorage.profileBox,
         supabase: supabase,
         tableName: 'profiles',

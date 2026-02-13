@@ -20,6 +20,7 @@ class DayNote extends SyncableModel {
   @HiveField(2)
   final DateTime updatedAt;
 
+  @override
   @HiveField(3, defaultValue: false)
   final bool hasPendingSync;
 

@@ -17,6 +17,7 @@ enum AttendanceStatus {
 
 @HiveType(typeId: 2)
 class ClassSession extends SyncableModel {
+  @override
   @HiveField(0)
   final String id;
 
@@ -38,9 +39,11 @@ class ClassSession extends SyncableModel {
   @HiveField(6)
   final int durationMinutes;
 
+  @override
   @HiveField(7)
   final DateTime lastUpdated;
 
+  @override
   @HiveField(8, defaultValue: false)
   final bool hasPendingSync;
 

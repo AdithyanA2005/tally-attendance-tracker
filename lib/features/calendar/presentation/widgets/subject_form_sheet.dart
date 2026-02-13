@@ -64,7 +64,7 @@ class _SubjectFormSheetState extends ConsumerState<SubjectFormSheet> {
           currentName != s.name ||
           currentMinAtt != s.minimumAttendancePercentage ||
           currentWeeklyHours != s.weeklyHours ||
-          _selectedColor.value != s.color.value;
+          _selectedColor.toARGB32() != s.color.toARGB32();
     }
 
     if (isValid != _isFormValid || hasChanges != _hasChanges) {

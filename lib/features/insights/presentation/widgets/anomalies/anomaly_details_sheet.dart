@@ -24,8 +24,9 @@ class AnomalyDetailsSheet extends StatelessWidget {
         padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
         itemCount: summary.anomalies.length + 1, // +1 for Header
         separatorBuilder: (context, index) {
-          if (index == 0)
+          if (index == 0) {
             return const SizedBox.shrink(); // No separator after header (it has its own spacing)
+          }
           return const SizedBox(height: 16);
         },
         itemBuilder: (context, index) {

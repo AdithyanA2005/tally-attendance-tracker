@@ -6,6 +6,7 @@ part 'subject_model.g.dart';
 
 @HiveType(typeId: 0)
 class Subject extends SyncableModel {
+  @override
   @HiveField(0)
   final String id;
 
@@ -21,9 +22,11 @@ class Subject extends SyncableModel {
   @HiveField(4)
   final int colorTag; // Storing int value of Color
 
+  @override
   @HiveField(5)
   final DateTime lastUpdated;
 
+  @override
   @HiveField(6, defaultValue: false)
   final bool hasPendingSync;
 

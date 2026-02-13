@@ -95,9 +95,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                                                 fit: BoxFit.cover,
                                                 placeholder: (context, url) => Center(
                                                   child: Text(
-                                                    ((profile?.name?.isNotEmpty ==
+                                                    ((profile.name?.isNotEmpty ==
                                                                     true
-                                                                ? profile!
+                                                                ? profile
                                                                       .name![0]
                                                                 : null) ??
                                                             (user?.email?.isNotEmpty ==
@@ -118,9 +118,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                                                 ),
                                                 errorWidget: (context, url, error) => Center(
                                                   child: Text(
-                                                    ((profile?.name?.isNotEmpty ==
+                                                    ((profile.name?.isNotEmpty ==
                                                                     true
-                                                                ? profile!
+                                                                ? profile
                                                                       .name![0]
                                                                 : null) ??
                                                             (user?.email?.isNotEmpty ==

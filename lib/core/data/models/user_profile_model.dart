@@ -5,6 +5,7 @@ part 'user_profile_model.g.dart';
 
 @HiveType(typeId: 5)
 class UserProfile extends SyncableModel {
+  @override
   @HiveField(0)
   final String id;
 
@@ -14,9 +15,11 @@ class UserProfile extends SyncableModel {
   @HiveField(2)
   final String? activeSemesterId;
 
+  @override
   @HiveField(3)
   final DateTime lastUpdated;
 
+  @override
   @HiveField(4, defaultValue: false)
   final bool hasPendingSync;
 
